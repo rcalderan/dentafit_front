@@ -1,0 +1,146 @@
+:host {
+    display: block;
+}
+
+.registration-container {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+}
+
+h1 {
+    color: var(--primary-color);
+    font-size: 2rem;
+    align-self: flex-start;
+}
+
+.section-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem 2rem;
+    width: 100%;
+    max-width: 900px;
+    box-shadow: var(--shadow-md);
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 1.2rem;
+    display: block;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.2rem;
+}
+
+.col-12 {
+    grid-column: span 12;
+}
+
+.col-8 {
+    grid-column: span 8;
+}
+
+.col-4 {
+    grid-column: span 4;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.input-group label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+input[type="text"],
+select,
+textarea {
+    background-color: var(--input-bg);
+    border: none;
+    border-radius: var(--input-radius);
+    padding: 0.8rem 1rem;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239ab9eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1.2rem;
+}
+
+.input-with-prefix {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.prefix {
+    position: absolute;
+    left: 1rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.input-with-prefix input {
+    padding-left: 3rem;
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    width: 100%;
+    max-width: 900px;
+}
+
+.btn {
+    padding: 0.8rem 2.5rem;
+    border-radius: var(--input-radius);
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-save {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-update {
+    background-color: var(--input-bg);
+    color: var(--primary-color);
+}
+
+.btn-delete {
+    background-color: transparent;
+    border: 1px solid var(--danger-color);
+    color: var(--danger-color);
+}
+
+.btn-save:hover {
+    background-color: var(--primary-hover);
+    box-shadow: 0 4px 12px rgba(154, 185, 235, 0.3);
+}
+
+.uppercase {
+    text-transform: uppercase;
+}

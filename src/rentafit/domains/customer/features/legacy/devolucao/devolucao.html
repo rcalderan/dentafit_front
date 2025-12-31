@@ -1,0 +1,54 @@
+<div class="winform-window">
+  <div class="winform-header">
+    <span>Devolução</span>
+    <div class="winform-header-buttons">
+      <span class="winform-header-button">L</span>
+      <span class="winform-header-button">X</span>
+    </div>
+  </div>
+
+  <div class="winform-content">
+    <!-- Pesquisa -->
+    <label class="winform-label" style="left: 24px; top: 66px;">Pesq.</label>
+    <input type="text" class="winform-input" style="left: 77px; top: 52px; width: 64px; font-size: 14px; font-weight: bold;" [(ngModel)]="pesqContrato" placeholder="00000">
+    
+    <label class="winform-label" style="left: 24px; top: 86px;">Contrato</label>
+    <div class="winform-label" style="left: 77px; top: 86px; font-size: 14px;">{{ contratoId }}</div>
+
+    <!-- Cliente -->
+    <label class="winform-label" style="left: 26px; top: 124px;">Cliente</label>
+    <input type="text" class="winform-input" style="left: 77px; top: 114px; width: 64px;" [(ngModel)]="clienteCodigo" disabled>
+    <input type="text" class="winform-input" style="left: 142px; top: 114px; width: 531px;" [(ngModel)]="clienteNome" disabled>
+
+    <!-- Datas -->
+    <div class="winform-label" style="left: 77px; top: 145px; font-size: 10px;">Retirada</div>
+    <input type="text" class="winform-input" style="left: 77px; top: 164px; width: 107px; font-size: 14px; font-weight: bold;" [(ngModel)]="dataRetirada" placeholder="00/00/0000">
+
+    <div class="winform-label" style="left: 314px; top: 145px; font-size: 10px;">Uso</div>
+    <input type="text" class="winform-input" style="left: 314px; top: 164px; width: 107px; font-size: 14px; font-weight: bold;" [(ngModel)]="dataUso" placeholder="00/00/0000">
+
+    <div class="winform-label" style="left: 565px; top: 145px; font-size: 10px;">Devolução</div>
+    <input type="text" class="winform-input" style="left: 565px; top: 164px; width: 107px; font-size: 14px; font-weight: bold;" [(ngModel)]="dataDevolucao" placeholder="00/00/0000">
+
+    <!-- TreeView Placeholder -->
+    <div class="winform-treeview" style="left: 77px; top: 205px; width: 595px; height: 271px;">
+      <!-- Itens list -->
+    </div>
+
+    <!-- Botão Contrato -->
+    <button class="winform-button" style="left: 77px; top: 476px; width: 75px; height: 23px;">Contrato</button>
+
+    <!-- Comunicado (Hidden by default) -->
+    <div class="winform-groupbox" style="left: 701px; top: 114px; width: 258px; height: 120px; display: none;">
+        <textarea class="winform-input" style="width: 100%; height: 100%; color: red;" [(ngModel)]="comunicado"></textarea>
+    </div>
+
+    <!-- Calendário (Hidden by default) -->
+    <div style="left: 701px; top: 251px; position: absolute; display: none;">
+        <label class="winform-label">Selecione a data da devolução</label>
+        <div class="winform-calendar" style="margin-top: 17px;">
+            <!-- Calendar UI -->
+        </div>
+    </div>
+  </div>
+</div>

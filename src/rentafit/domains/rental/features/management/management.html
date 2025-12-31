@@ -1,0 +1,78 @@
+<div class="management-container">
+    <h1>Gestão de Locações</h1>
+
+    <!-- Filters and Stats -->
+    <div class="header-grid">
+        <div class="section-card stats-card">
+            <div class="stat-item">
+                <span class="stat-label">Pendentes de Entrega</span>
+                <span class="stat-value">12</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Para Devolver Hoje</span>
+                <span class="stat-value">8</span>
+            </div>
+            <div class="stat-item overdue">
+                <span class="stat-label">Atrasados</span>
+                <span class="stat-value">3</span>
+            </div>
+        </div>
+
+        <div class="section-card filter-card">
+            <span class="section-title">Filtros</span>
+            <div class="form-grid">
+                <div class="input-group col-8">
+                    <label>Buscar por Cliente ou Contrato</label>
+                    <input type="text" placeholder="Nome, CPF ou Nº..." class="uppercase">
+                </div>
+                <div class="input-group col-4">
+                    <label>Status</label>
+                    <select>
+                        <option value="">Todos</option>
+                        <option value="1">Ativos</option>
+                        <option value="2">Finalizados</option>
+                        <option value="3">Cancelados</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-save" style="margin-top: 1rem; width: 100%;">Filtrar</button>
+        </div>
+    </div>
+
+    <!-- Rentals Table -->
+    <div class="section-card table-card">
+        <span class="section-title">Contratos de Locação</span>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nº</th>
+                        <th>Cliente</th>
+                        <th>Data Uso</th>
+                        <th>Devolução</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2024-001</td>
+                        <td>RICHARD CALDERAN</td>
+                        <td>29/12/2023</td>
+                        <td>02/01/2024</td>
+                        <td>R$ 450,00</td>
+                        <td><span class="status-badge status-active">Em Aberto</span></td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="action-btn">👁️</button>
+                                <button class="action-btn">💰</button>
+                                <button class="action-btn">✓</button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

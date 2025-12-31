@@ -1,0 +1,78 @@
+<div class="registration-container">
+    <h1>Cadastro de Produto</h1>
+
+    <!-- Basic Information -->
+    <div class="section-card">
+        <span class="section-title">Informações do Produto</span>
+        <div class="form-grid">
+            <div class="input-group col-8">
+                <label>Nome do Produto</label>
+                <input type="text" class="uppercase">
+            </div>
+            <div class="input-group col-4">
+                <label>Categoria</label>
+                <select>
+                    <option value="">Selecione...</option>
+                    <option value="1">Traje Masculino</option>
+                    <option value="2">Traje Feminino</option>
+                    <option value="3">Acessório</option>
+                </select>
+            </div>
+            <div class="input-group col-4">
+                <label>Código Interno</label>
+                <input type="text" placeholder="Auto" readonly>
+            </div>
+            <div class="input-group col-4">
+                <label>Tamanho</label>
+                <input type="text" class="uppercase">
+            </div>
+            <div class="input-group col-4">
+                <label>Cor</label>
+                <input type="text" class="uppercase">
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing and Stock -->
+    <div class="section-card">
+        <span class="section-title">Preço e Estoque</span>
+        <div class="form-grid">
+            <div class="input-group col-4">
+                <label>Preço de Locação</label>
+                <div class="input-with-prefix">
+                    <span class="prefix">R$</span>
+                    <input type="text" placeholder="0,00">
+                </div>
+            </div>
+            <div class="input-group col-4">
+                <label>Preço de Custo</label>
+                <div class="input-with-prefix">
+                    <span class="prefix">R$</span>
+                    <input type="text" placeholder="0,00">
+                </div>
+            </div>
+            <div class="input-group col-4">
+                <label>Quantidade em Estoque</label>
+                <input type="text" placeholder="0">
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Details -->
+    <div class="section-card">
+        <span class="section-title">Detalhes Adicionais</span>
+        <div class="form-grid">
+            <div class="input-group col-12">
+                <label>Descrição/Observações</label>
+                <textarea rows="4" class="uppercase"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+        <button class="btn btn-save">Salvar Produto</button>
+        <button class="btn btn-update">Atualizar</button>
+        <button class="btn btn-delete">Excluir</button>
+    </div>
+</div>

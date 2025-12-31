@@ -1,0 +1,71 @@
+<div class="admin-container">
+    <h1>Administração do Sistema</h1>
+
+    <div class="admin-grid">
+        <!-- System Logs -->
+        <div class="section-card logs-section">
+            <span class="section-title">Logs do Sistema</span>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Horário</th>
+                            <th>Usuário</th>
+                            <th>Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>12:45:02</td>
+                            <td>admin</td>
+                            <td>CADASTRO_CLIENTE: RICHARD</td>
+                        </tr>
+                        <tr>
+                            <td>11:20:15</td>
+                            <td>vendedor1</td>
+                            <td>NOVA_LOCACAO: 2024-001</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn-link">Ver todos os logs →</button>
+        </div>
+
+        <!-- System Stats -->
+        <div class="section-card stats-section">
+            <span class="section-title">Estatísticas de Uso</span>
+            <div class="stats-list">
+                <div class="stat-row">
+                    <span>Espaço em Disco</span>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 25%"></div>
+                    </div>
+                </div>
+                <div class="stat-row">
+                    <span>Performance (ms)</span>
+                    <div class="progress-bar">
+                        <div class="progress" style="width: 15%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Config -->
+        <div class="section-card pricing-section">
+            <span class="section-title">Configuração de Preços</span>
+            <div class="pricing-grid">
+                <div class="price-item">
+                    <span class="dot" style="background: #9ab9eb"></span>
+                    <span class="label">Categoria A</span>
+                    <span class="value">R$ 250,00</span>
+                </div>
+                <div class="price-item">
+                    <span class="dot" style="background: #f19b9b"></span>
+                    <span class="label">Categoria B</span>
+                    <span class="value">R$ 180,00</span>
+                </div>
+            </div>
+            <button class="btn btn-update" style="width: 100%; margin-top: 1rem;">Editar Preços</button>
+        </div>
+    </div>
+</div>

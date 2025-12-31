@@ -1,0 +1,66 @@
+<div class="winform-window">
+  <div class="winform-header">
+    <span>Locação</span>
+    <div class="winform-header-buttons">
+      <span class="winform-header-button">L</span>
+      <span class="winform-header-button">X</span>
+    </div>
+  </div>
+
+  <div class="winform-content">
+    <!-- Cliente -->
+    <label class="winform-label" style="left: 6px; top: 43px;">Cliente</label>
+    <input type="text" class="winform-input" style="left: 57px; top: 36px; width: 52px;" [(ngModel)]="clienteCodigo">
+    <input type="text" class="winform-input" style="left: 115px; top: 36px; width: 462px;" [(ngModel)]="clienteNome">
+
+    <!-- Datas -->
+    <label class="winform-label" style="left: 6px; top: 121px;">Retira</label>
+    <input type="text" class="winform-input" style="left: 57px; top: 114px; width: 88px;" [(ngModel)]="dataRetirada" placeholder="00/00/0000">
+
+    <label class="winform-label" style="left: 277px; top: 121px;">Usa</label>
+    <input type="text" class="winform-input" style="left: 309px; top: 114px; width: 88px;" [(ngModel)]="dataUso" placeholder="00/00/0000">
+
+    <label class="winform-label" style="left: 560px; top: 121px;">Devolve</label>
+    <input type="text" class="winform-input" style="left: 593px; top: 114px; width: 88px;" [(ngModel)]="dataDevolucao" placeholder="00/00/0000">
+
+    <!-- Comunicado -->
+    <div style="left: 683px; top: 38px; position: absolute; display: flex; align-items: center; color: red;">
+      <input type="checkbox" [(ngModel)]="comunicado">
+      <label style="margin-left: 4px; font-size: 12px;">Comunicado</label>
+    </div>
+
+    <!-- Itens Header -->
+    <label class="winform-label" style="left: 44px; top: 167px;">codigo</label>
+    <label class="winform-label" style="left: 338px; top: 167px;">Descrição</label>
+    <label class="winform-label" style="left: 764px; top: 172px;">Valor</label>
+
+    <!-- Itens Input -->
+    <input type="text" class="winform-input" style="left: 44px; top: 192px; width: 58px;" [(ngModel)]="itemCodigo" disabled>
+    <input type="text" class="winform-input" style="left: 109px; top: 192px; width: 643px;" [(ngModel)]="itemDescricao">
+    <div style="left: 730px; top: 199px; position: absolute; font-weight: bold;">R$</div>
+    <input type="text" class="winform-input" style="left: 758px; top: 192px; width: 69px; text-align: center;" [(ngModel)]="itemValor">
+    <div class="winform-label" style="left: 683px; top: 198px; color: blue; cursor: pointer; font-size: 10px;">Apaga</div>
+
+    <!-- TreeView Placeholder -->
+    <div class="winform-treeview" style="left: 44px; top: 252px; width: 638px; height: 282px;">
+      <!-- Itens list would go here -->
+    </div>
+
+    <!-- Footer -->
+    <button class="winform-button" style="left: 155px; top: 559px; width: 483px; height: 32px; font-weight: bold;">Formas de Pagamento</button>
+    
+    <label class="winform-label" style="left: 689px; top: 561px; font-weight: bold;">Total R$</label>
+    <input type="text" class="winform-input" style="left: 758px; top: 556px; width: 69px; text-align: center;" [(ngModel)]="total" disabled>
+
+    <!-- Sub-panels (Hidden by default in original) -->
+    <div class="winform-groupbox" style="left: 427px; top: 20px; width: 154px; height: 152px; display: none;">
+      <span class="winform-groupbox-title">Seu codigo</span>
+      <!-- Atendente controls -->
+    </div>
+
+    <div class="winform-groupbox" style="left: 218px; top: 95px; width: 519px; height: 419px; display: none;">
+      <span class="winform-groupbox-title">Formas de Pagamento</span>
+      <!-- Payment forms controls -->
+    </div>
+  </div>
+</div>

@@ -1,0 +1,66 @@
+<div class="winform-window">
+  <div class="winform-header">
+    <span>Relatorio de Locação</span>
+    <div class="winform-header-buttons">
+      <span class="winform-header-button">L</span>
+      <span class="winform-header-button">X</span>
+    </div>
+  </div>
+
+  <div class="winform-content">
+    <!-- Filtros -->
+    <div style="left: 29px; top: 54px; position: absolute; display: flex; align-items: center;">
+      <input type="checkbox" [(ngModel)]="porData">
+      <label style="margin-left: 4px; font-size: 12px;">Por Data</label>
+    </div>
+
+    <select class="winform-input" style="left: 146px; top: 54px; width: 126px; height: 24px;" [(ngModel)]="organizarPor">
+      <option>Organizar Por</option>
+      <option>Nome</option>
+      <option>Data</option>
+    </select>
+
+    <!-- GroupBox Por Data -->
+    <div class="winform-groupbox" style="left: 29px; top: 73px; width: 243px; height: 205px;" [class.disabled]="!porData">
+      <label class="winform-label" style="left: 2px; top: 19px;">De</label>
+      <input type="text" class="winform-input" style="left: 26px; top: 13px; width: 87px;" [(ngModel)]="dataDe" placeholder="00/00/0000">
+      
+      <label class="winform-label" style="left: 121px; top: 19px;">Até</label>
+      <input type="text" class="winform-input" style="left: 150px; top: 12px; width: 85px;" [(ngModel)]="dataAte" placeholder="00/00/0000">
+
+      <div class="winform-calendar" style="left: 9px; top: 36px; width: 220px; height: 150px; background: white; border: 1px solid #808080;">
+        <!-- Calendar Placeholder -->
+      </div>
+    </div>
+
+    <div style="left: 29px; top: 302px; position: absolute; display: flex; align-items: center;">
+      <input type="checkbox" [(ngModel)]="incluirAcessorios">
+      <label style="margin-left: 4px; font-size: 12px;">Incluir Acessorios e Observações</label>
+    </div>
+
+    <div style="left: 29px; top: 339px; position: absolute; display: flex; align-items: center;">
+      <input type="checkbox" [(ngModel)]="porTipo">
+      <label style="margin-left: 4px; font-size: 12px;">Por Tipo</label>
+    </div>
+
+    <select class="winform-input" style="left: 105px; top: 340px; width: 96px; height: 33px; font-size: 15px; font-weight: bold;" [(ngModel)]="tipo" [disabled]="!porTipo">
+      <option>N</option>
+      <option>C</option>
+      <option>Q</option>
+      <option>D</option>
+      <option>V</option>
+      <option>T</option>
+    </select>
+
+    <!-- TreeView / List -->
+    <div class="winform-treeview" style="left: 284px; top: 73px; width: 581px; height: 485px;">
+      <!-- Results -->
+    </div>
+
+    <input type="text" class="winform-input" style="left: 284px; top: 54px; width: 154px;" disabled>
+
+    <!-- Buttons -->
+    <button class="winform-button" style="left: 193px; top: 588px; width: 79px; height: 29px; font-size: 12px;">Relata</button>
+    <button class="winform-button" style="left: 744px; top: 584px; width: 121px; height: 33px; font-size: 12px;">Imprime</button>
+  </div>
+</div>

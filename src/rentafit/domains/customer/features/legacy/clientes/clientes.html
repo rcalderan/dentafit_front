@@ -1,0 +1,126 @@
+<div class="winform-container">
+    <div class="winform-window">
+        <div class="winform-title-bar">
+            <span class="winform-title">Cliente</span>
+            <div class="winform-controls">
+                <button class="win-btn">_</button>
+                <button class="win-btn">□</button>
+                <button class="win-btn close">X</button>
+            </div>
+        </div>
+
+        <div class="winform-content">
+            <fieldset class="winform-groupbox">
+                <legend>Cliente</legend>
+
+                <!-- Absolute positioned elements to mimic WinForms -->
+                <div class="win-control" style="top: 55px; left: 48px;">
+                    <label class="win-label">codigo</label>
+                    <input type="text" class="win-input" style="width: 89px;" [(ngModel)]="customer().codigo">
+                </div>
+
+                <div class="win-control" style="top: 137px; left: 48px;">
+                    <label class="win-label">Nome</label>
+                    <input type="text" class="win-input uppercase" style="width: 705px;" [(ngModel)]="customer().nome">
+                </div>
+
+                <div class="win-control" style="top: 180px; left: 48px;">
+                    <label class="win-label">CPF</label>
+                    <input type="text" class="win-input" style="width: 120px;" [(ngModel)]="customer().cpf">
+                </div>
+
+                <div class="win-control" style="top: 183px; left: 502px;">
+                    <label class="win-label">RG</label>
+                    <input type="text" class="win-input" style="width: 252px;" [(ngModel)]="customer().rg">
+                </div>
+
+                <div class="win-control" style="top: 229px; left: 48px;">
+                    <label class="win-label">Nascimento</label>
+                    <input type="text" class="win-input" style="width: 89px;" [(ngModel)]="customer().nascimento">
+                </div>
+
+                <div class="win-control" style="top: 180px; left: 174px; flex-direction: row; align-items: center;">
+                    <input type="checkbox" id="win-auth" [(ngModel)]="customer().autenticado">
+                    <label for="win-auth" class="win-label" style="margin-bottom: 0; margin-left: 5px;">Autenticado</label>
+                </div>
+
+                <div class="win-control" style="top: 217px; left: 163px;">
+                    <fieldset class="winform-groupbox-inner" style="width: 198px; height: 48px;">
+                        <legend>Sexo</legend>
+                        <div style="display: flex; gap: 20px; padding-top: 5px;">
+                            <label class="win-label"><input type="radio" name="sexo" value="Masculino" [(ngModel)]="customer().sexo"> Masculino</label>
+                            <label class="win-label"><input type="radio" name="sexo" value="Feminino" [(ngModel)]="customer().sexo"> Feminino</label>
+                        </div>
+                    </fieldset>
+                </div>
+
+                <div class="win-control" style="top: 302px; left: 664px;">
+                    <label class="win-label">CEP</label>
+                    <input type="text" class="win-input" style="width: 89px;" [(ngModel)]="customer().cep">
+                </div>
+
+                <div class="win-control" style="top: 361px; left: 47px;">
+                    <label class="win-label">Endereço</label>
+                    <input type="text" class="win-input uppercase" style="width: 625px;" [(ngModel)]="customer().endereco">
+                </div>
+
+                <div class="win-control" style="top: 361px; left: 678px;">
+                    <label class="win-label">Numero</label>
+                    <input type="text" class="win-input uppercase" style="width: 75px;" [(ngModel)]="customer().numero">
+                </div>
+
+                <div class="win-control" style="top: 404px; left: 47px;">
+                    <label class="win-label">Bairro</label>
+                    <input type="text" class="win-input uppercase" style="width: 378px;" [(ngModel)]="customer().bairro">
+                </div>
+
+                <div class="win-control" style="top: 305px; left: 47px;">
+                    <label class="win-label">Cidade</label>
+                    <input type="text" class="win-input uppercase" style="width: 252px;" [(ngModel)]="customer().cidade">
+                </div>
+
+                <div class="win-control" style="top: 305px; left: 305px;">
+                    <label class="win-label">UF</label>
+                    <input type="text" class="win-input uppercase" style="width: 52px;" [(ngModel)]="customer().uf">
+                </div>
+
+                <div class="win-control" style="top: 464px; left: 47px;">
+                    <label class="win-label">Fone1</label>
+                    <input type="text" class="win-input" style="width: 124px;" [(ngModel)]="customer().fone1">
+                </div>
+
+                <div class="win-control" style="top: 464px; left: 266px;">
+                    <label class="win-label">Fone2</label>
+                    <input type="text" class="win-input" style="width: 124px;" [(ngModel)]="customer().fone2">
+                </div>
+
+                <div class="win-control" style="top: 467px; left: 485px;">
+                    <label class="win-label">e-mail</label>
+                    <input type="text" class="win-input" style="width: 265px;" [(ngModel)]="customer().email">
+                </div>
+
+                <div class="win-control" style="top: 513px; left: 45px;">
+                    <label class="win-label">Obs</label>
+                    <textarea class="win-input uppercase" style="width: 705px; height: 73px;" [(ngModel)]="customer().observacao"></textarea>
+                </div>
+
+                <!-- Buttons -->
+                <div class="win-button-row" style="top: 593px; left: 330px;">
+                    <button class="win-button-classic" style="width: 129px; height: 46px;" (click)="save()">Salvar</button>
+                </div>
+                <div class="win-button-row" style="top: 600px; left: 43px;">
+                    <button class="win-button-classic" style="width: 103px; height: 32px;" (click)="update()">Atualizar</button>
+                </div>
+                <div class="win-button-row" style="top: 600px; left: 643px;">
+                    <button class="win-button-classic" style="width: 104px; height: 32px;" (click)="delete()">Excluir</button>
+                </div>
+
+                <!-- Status Labels Mockup -->
+                <div class="win-status-labels" style="top: 630px; left: 45px;">
+                    <span>L: 0</span>
+                    <span>X: 0</span>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,53 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+    --primary-color: #9ab9eb;
+    --primary-hover: #86a6d6;
+    --bg-color: #f7faff;
+    --card-bg: #ffffff;
+    --text-color: #4a4a4a;
+    --text-muted: #8e8e8e;
+    --input-bg: #e9eff7;
+    --danger-color: #f19b9b;
+    --border-radius: 16px;
+    --input-radius: 12px;
+    --shadow-sm: 0 2px 8px rgba(154, 185, 235, 0.05);
+    --shadow-md: 0 4px 20px rgba(154, 185, 235, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Outfit', 'Inter', sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+/* Base Form Tags (optional resetting) */
+input,
+select,
+textarea,
+button {
+    font-family: inherit;
+    font-size: 1rem;
+}

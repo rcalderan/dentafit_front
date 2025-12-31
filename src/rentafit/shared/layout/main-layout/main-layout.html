@@ -1,0 +1,112 @@
+<div class="layout-container" [class.mobile-view]="isMobile()">
+    <!-- Overlay para fechar menu no mobile -->
+    @if (isMobile() && isSidebarVisible()) {
+    <div class="sidebar-overlay" (click)="toggleSidebar()"></div>
+    }
+
+    <aside class="sidebar" [class.hidden]="!isSidebarVisible()">
+        <nav class="nav-menu">
+            <a routerLink="/finance/dashboard" routerLinkActive="active" class="nav-item" title="Finance">
+                <i class="icon">🏠</i>
+            </a>
+            
+            <div class="nav-item-container" [class.open]="isCustomerSubmenuOpen()">
+                <button class="nav-item" (click)="toggleCustomerSubmenu()" title="Customers">
+                    <i class="icon">👤</i>
+                </button>
+                @if (isCustomerSubmenuOpen()) {
+                <div class="submenu">
+                    <a routerLink="/customer/registration" routerLinkActive="active" class="submenu-item" title="New Customer">
+                        <i class="icon">✨</i>
+                    </a>
+                    <a routerLink="/customer/legacy" routerLinkActive="active" class="submenu-item" title="Legacy Customer">
+                        <i class="icon">🏛️</i>
+                    </a>
+                    <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item" title="Devolucao Legacy">
+                        <i class="icon">🔄</i>
+                    </a>
+                </div>
+                }
+            </div>
+
+            <div class="nav-item-container" [class.open]="isRentalSubmenuOpen()">
+                <button class="nav-item" (click)="toggleRentalSubmenu()" title="Rental">
+                    <i class="icon">📋</i>
+                </button>
+                @if (isRentalSubmenuOpen()) {
+                <div class="submenu">
+                    <a routerLink="/rental/management" routerLinkActive="active" class="submenu-item" title="Management">
+                        <i class="icon">📊</i>
+                    </a>
+                    <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item" title="Devolucao">
+                        <i class="icon">🔄</i>
+                    </a>
+                </div>
+                }
+            </div>
+            
+            <div class="nav-item-container" [class.open]="isProductSubmenuOpen()">
+                <button class="nav-item" (click)="toggleProductSubmenu()" title="Products">
+                    <i class="icon">👗</i>
+                </button>
+                @if (isProductSubmenuOpen()) {
+                <div class="submenu">
+                    <a routerLink="/product/registration" routerLinkActive="active" class="submenu-item" title="New Product">
+                        <i class="icon">✨</i>
+                    </a>
+                    <a routerLink="/customer/clothes" routerLinkActive="active" class="submenu-item" title="Legacy Clothes">
+                        <i class="icon">🏛️</i>
+                    </a>
+                </div>
+                }
+            </div>
+
+            <div class="nav-item-container" [class.open]="isReportsSubmenuOpen()">
+                <button class="nav-item" (click)="toggleReportsSubmenu()" title="Reports">
+                    <i class="icon">📈</i>
+                </button>
+                @if (isReportsSubmenuOpen()) {
+                <div class="submenu">
+                    <a routerLink="/finance/relatorio-locacao-legacy" routerLinkActive="active" class="submenu-item" title="Relatorio Locação">
+                        <i class="icon">📋</i>
+                    </a>
+                    <a routerLink="/finance/relatorio-devolucao-legacy" routerLinkActive="active" class="submenu-item" title="Relatorio Devolução">
+                        <i class="icon">🔄</i>
+                    </a>
+                </div>
+                }
+            </div>
+
+            <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item" title="Admin">
+                <i class="icon">⚙️</i>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="floating-action">
+        <button class="btn-new-contract" routerLink="/rental/new">
+            <span class="plus-icon">+</span>
+            <span class="btn-text">Novo Contrato</span>
+        </button>
+        <button class="btn-new-contract legacy" routerLink="/rental/legacy">
+            <span class="plus-icon">🏛️</span>
+            <span class="btn-text">Novo Contrato (Legacy)</span>
+        </button>
+    </div>
+
+    <main class="main-content">
+        <header class="top-bar">
+            <div class="left-section">
+                @if (isMobile()) {
+                <button class="menu-toggle" (click)="toggleSidebar()">
+                    <i>☰</i>
+                </button>
+                }
+                <h1>Dashboard</h1>
+            </div>
+        </header>
+        <div class="content-area">
+            <router-outlet></router-outlet>
+        </div>
+    </main>
+</div>
