@@ -1,78 +1,75 @@
-import { Component, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-
-export interface Endereco {
-  cep: string;
-  logradouro: string;
-  numero: string;
-  bairro: string;
-  cidade: string;
-  uf: string;
-}
-
-export interface Customer {
-  id: number;
-  nome: string;
-  cpf: string;
-  rg: string;
-  nascimento: string;
-  sexo: 'male' | 'female' | 'other';
-  autenticacao: boolean;
-  fones: string[];
-  observacao: string;
-  email: string;
-  endereco: Endereco;
-}
-
-const CUSTOMERS_MOCK: Customer[] = [
-  {
-    id: 1,
-    nome: 'JOÃO DA SILVA',
-    cpf: '123.456.789-00',
-    rg: '12.345.678-9',
-    nascimento: '1990-05-15',
-    sexo: 'male',
-    autenticacao: true,
-    fones: ['(11) 98888-8888', '(11) 3333-3333'],
-    observacao: 'CLIENTE PREFERENCIAL',
-    email: 'joao@email.com',
-    endereco: {
-      cep: '01234-567',
-      logradouro: 'RUA DAS FLORES',
-      numero: '123',
-      bairro: 'CENTRO',
-      cidade: 'SÃO PAULO',
-      uf: 'SP'
-    }
-  },
-  {
-    id: 2,
-    nome: 'MARIA SOUZA',
-    cpf: '987.654.321-11',
-    rg: '98.765.432-1',
-    nascimento: '1985-10-20',
-    sexo: 'female',
-    autenticacao: false,
-    fones: ['(21) 97777-7777'],
-    observacao: '',
-    email: 'maria@email.com',
-    endereco: {
-      cep: '20000-000',
-      logradouro: 'AVENIDA BRASIL',
-      numero: '500',
-      bairro: 'COPACABANA',
-      cidade: 'RIO DE JANEIRO',
-      uf: 'RJ'
-    }
-  }
-];
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Customer } from '../../data/customer';
 
 @Component({
   selector: 'rentafit-registration',
-  imports: [FormsModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './registration.html',
   styleUrl: './registration.css',
 })
-export class Registration {
-  customer = signal<Customer>(CUSTOMERS_MOCK[0]);
+export class Registration implements OnInit {
+  private fb = inject(FormBuilder);
+
+  private existingCustomer: Customer = {
+    id:'uuid-1234-5678-9012',
+  legacyId: "1",
+  name: "João Silva 2",
+  document: "12345678901",
+  email: "joao.silva@example.com",
+  isAuthenticated: false,
+  notes: "Cliente regular",
+  address: {
+    zipCode: "12345-672",
+    street: "Rua das Flores 2",
+    neighborhood: "Centro",
+    city: "São Paulo",
+    state: "SP"
+  },
+  number: "123",
+  complement: "Apto 45",
+  phones: [
+    "11987654321",
+    "1133334444",
+    "1133334444"
+  ]
+}
+
+  customerData = signal<Customer | null>(null);
+
+  form: FormGroup = this.fb.group({
+    id: [{ value: this.existingCustomer?.id || 0, disabled: true }],
+    legacyId: [this.existingCustomer?.legacyId || ''],
+    name: [this.existingCustomer?.name || '', [Validators.required, Validators.minLength(3)]],
+    document: [this.existingCustomer?.document || '', [Validators.required]],
+    isAuthenticated: [{ value: this.existingCustomer?.isAuthenticated || false, disabled: true }],
+    address: this.fb.group({
+      street: [this.existingCustomer?.address?.street || ''],
+      neighborhood: [this.existingCustomer?.address?.neighborhood || ''],
+      city: [this.existingCustomer?.address?.city || ''],
+      state: [this.existingCustomer?.address?.state || '', [Validators.maxLength(2)]],
+      zipCode: [this.existingCustomer?.address?.zipCode || '']
+    }),
+    phones: this.fb.array(
+      this.existingCustomer?.phones?.map(phone => this.fb.control(phone)) || [
+        this.fb.control(''),
+        this.fb.control('')
+      ]
+    ),
+    email: [this.existingCustomer?.email || '', [Validators.email]],
+    number: [this.existingCustomer?.number || ''],
+    complement: [this.existingCustomer?.complement || ''],
+    notes: ['']
+  });
+
+  ngOnInit(): void {
+
+  }
+
+  save() {
+    if (this.form.valid) {
+      const customerToSave = this.form.getRawValue();
+      console.log('Salvando cliente:', customerToSave);
+    }
+  }
 }

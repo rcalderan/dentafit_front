@@ -1,104 +1,120 @@
-<div class="customer-registration-container">
+<div class="customer-registration-container" [formGroup]="form">
     <h1>Cadastro de Cliente</h1>
 
     <!-- Informações Pessoais -->
     <div class="section-card">
         <span class="section-title">Informações Pessoais</span>
         <div class="form-grid">
-            <div class="input-group col-8">
-                <label>Nome Completo</label>
-                <input type="text" class="uppercase" [(ngModel)]="customer().nome">
-            </div>
-            <div class="input-group col-4">
-                <label>Data de Nascimento</label>
-                <input type="date" [(ngModel)]="customer().nascimento">
-            </div>
-            <div class="input-group col-4">
-                <label>CPF</label>
-                <input type="text" placeholder="000.000.000-00" [(ngModel)]="customer().cpf">
-            </div>
-            <div class="input-group col-8">
-                <label>Gênero</label>
-                <div class="radio-group">
-                    <label class="radio-option"><input type="radio" name="gender" value="male" [(ngModel)]="customer().sexo"> Masculino</label>
-                    <label class="radio-option"><input type="radio" name="gender" value="female" [(ngModel)]="customer().sexo"> Feminino</label>
-                    <label class="radio-option"><input type="radio" name="gender" value="other" [(ngModel)]="customer().sexo"> Outro</label>
-                </div>
-            </div>
-            <div class="input-group col-4">
-                <label>RG</label>
-                <input type="text" [(ngModel)]="customer().rg">
-            </div>
             <div class="input-group col-4">
                 <label>Código</label>
-                <input type="text" placeholder="Auto" readonly [value]="customer().id">
+                <input type="text" placeholder="Auto" formControlName="legacyId">
             </div>
-            <div class="input-group col-4"
+            <div class="input-group col-1"
                 style="flex-direction: row; align-items: center; gap: 0.5rem; justify-content: flex-end;">
-                <input type="checkbox" id="auth-check" [(ngModel)]="customer().autenticacao">
-                <label for="auth-check" style="color: var(--text-color); margin-top: 4px;">Autenticado</label>
+                <input type="checkbox" id="auth-check" formControlName="isAuthenticated">
+                <label for="auth-check" style="color: var(--text-color); margin-top: 4px;">isAuthenticated</label>
             </div>
-        </div>
-    </div>
+            <div class="input-group col-12">
+                <label>Nome Completo</label>
+                <input type="text" class="uppercase" formControlName="name">
+            </div>
+            <!-- <div class="input-group col-4">
+                <label>Data de Nascimento</label>
+                <input type="date" formControlName="nascimento">
+            </div> -->
+            <div class="input-group col-3">
+                <label>CPF</label>
+                <input type="text" placeholder="000.000.000-00" formControlName="document">
+            </div>
+            <!-- <div class="input-group col-8">
+                <label>Gênero</label>
+                <div class="radio-group">
+                    <label class="radio-option"><input type="radio" value="male" formControlName="sexo"> Masculino</label>
+                    <label class="radio-option"><input type="radio" value="female" formControlName="sexo"> Feminino</label>
+                    <label class="radio-option"><input type="radio" value="other" formControlName="sexo"> Outro</label>
+                </div>
+            </div> 
+            <div class="input-group col-4">
+                <label>RG</label>
+                <input type="text" formControlName="rg">
+            </div> -->
+            <div class="input-group col-6">
+                <label>E-mail</label>
+                <input type="email" formControlName="email">
+            </div>
 
-    <!-- Endereço -->
-    <div class="section-card">
-        <span class="section-title">Endereço</span>
-        <div class="form-grid">
-            <div class="input-group col-9">
-                <label>Logradouro</label>
-                <input type="text" class="uppercase" [(ngModel)]="customer().endereco.logradouro">
+        </div>
+        <!-- Endereço -->
+        <div class="section-card" style=" background-color:#afb1c9;">
+            <div formGroupName="address">
+                <span class="section-title">Endereço</span>
+                <div class="form-grid">
+                    <div class="input-group col-4">
+                        <label>CEP</label>
+                        <input type="text" formControlName="zipCode">
+                    </div>
+                    <div class="input-group col-12">
+                        <label>Logradouro</label>
+                        <input type="text" class="uppercase" formControlName="street">
+                    </div>
+                    <div class="input-group col-6">
+                        <label>Bairro</label>
+                        <input type="text" class="uppercase" formControlName="neighborhood">
+                    </div>
+                    <div class="input-group col-4">
+                        <label>Cidade</label>
+                        <input type="text" class="uppercase" formControlName="city">
+                    </div>
+                    <div class="input-group col-2">
+                        <label>Estado</label>
+                        <input type="text" class="uppercase" maxlength="2" formControlName="state">
+                    </div>
+
+                </div>
+
             </div>
             <div class="input-group col-3">
                 <label>Número</label>
-                <input type="text" class="uppercase" [(ngModel)]="customer().endereco.numero">
+                <input type="text" class="uppercase" formControlName="number">
             </div>
-            <div class="input-group col-4">
-                <label>Bairro</label>
-                <input type="text" class="uppercase" [(ngModel)]="customer().endereco.bairro">
+
+            <div class="input-group col-3">
+                <label>Complemento</label>
+                <input type="text" class="uppercase" formControlName="complement">
             </div>
-            <div class="input-group col-4">
-                <label>Cidade</label>
-                <input type="text" class="uppercase" [(ngModel)]="customer().endereco.cidade">
-            </div>
-            <div class="input-group col-2">
-                <label>Estado (UF)</label>
-                <input type="text" class="uppercase" maxlength="2" [(ngModel)]="customer().endereco.uf">
-            </div>
-            <div class="input-group col-2">
-                <label>CEP</label>
-                <input type="text" [(ngModel)]="customer().endereco.cep">
-            </div>
+
+        </div>
+
+
+
+
+        <div class="input-group col-12">
+            <label>Observações</label>
+            <textarea rows="3" class="uppercase" formControlName="notes"></textarea>
         </div>
     </div>
+
 
     <!-- Contato -->
     <div class="section-card">
         <span class="section-title">Contato</span>
-        <div class="form-grid">
+        <div class="form-grid" formArrayName="phones">
             <div class="input-group col-3">
                 <label>Telefone 1</label>
-                <input type="tel" [(ngModel)]="customer().fones[0]">
+                <input type="tel" [formControlName]="0">
             </div>
             <div class="input-group col-3">
                 <label>Telefone 2</label>
-                <input type="tel" [(ngModel)]="customer().fones[1]">
+                <input type="tel" [formControlName]="1">
             </div>
-            <div class="input-group col-6">
-                <label>E-mail</label>
-                <input type="email" [(ngModel)]="customer().email">
-            </div>
-            <div class="input-group col-12">
-                <label>Observações</label>
-                <textarea rows="3" class="uppercase" [(ngModel)]="customer().observacao"></textarea>
-            </div>
+
         </div>
     </div>
 
     <!-- Actions -->
     <div class="actions">
-        <button class="btn btn-save">Salvar</button>
-        <button class="btn btn-update">Atualiza</button>
-        <button class="btn btn-delete">Excluir</button>
+        <button class="btn btn-save" (click)="save()" [disabled]="form.invalid">Salvar</button>
+        <button class="btn btn-update" disabled>Atualiza</button>
+        <button class="btn btn-delete" [disabled]="form.invalid">Excluir</button>
     </div>
 </div>
