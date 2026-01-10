@@ -66,6 +66,10 @@ export const routes: Routes = [
                 loadComponent: () => import('./domains/finance/features/dashboard/dashboard').then(m => m.Dashboard)
             },
             {
+                path: 'finance/nfse-backup',
+                loadComponent: () => import('./domains/finance/features/nfse-upload/nfse-upload').then(m => m.NfseUpload)
+            },
+            {
                 path: 'admin/dashboard',
                 loadComponent: () => import('./domains/admin/features/dashboard/dashboard').then(m => m.Dashboard)
             }
