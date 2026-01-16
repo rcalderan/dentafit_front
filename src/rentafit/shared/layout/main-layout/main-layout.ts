@@ -2,17 +2,21 @@ import { Component, inject, signal, effect } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { filter } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../domains/auth/services/auth.service';
+import { UserRole } from '../../../domains/auth/data/user.model';
 
 @Component({
   selector: 'rentafit-main-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css'
 })
 export class MainLayout {
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly router = inject(Router);
+  protected readonly authService = inject(AuthService);
 
   protected readonly isMobile = signal(false);
   protected readonly isSidebarVisible = signal(true);
@@ -20,6 +24,9 @@ export class MainLayout {
   protected readonly isProductSubmenuOpen = signal(false);
   protected readonly isRentalSubmenuOpen = signal(false);
   protected readonly isReportsSubmenuOpen = signal(false);
+
+  // Expõe UserRole para uso no template
+  protected readonly UserRole = UserRole;
 
   constructor() {
     // Detecta se a tela é mobile/tablet
@@ -76,5 +83,17 @@ export class MainLayout {
     const nextState = !this.isReportsSubmenuOpen();
     this.closeAllSubmenus();
     this.isReportsSubmenuOpen.set(nextState);
+  }
+
+  protected logout(): void {
+    this.authService.logout();
+  }
+
+  protected hasRole(role: UserRole): boolean {
+    return this.authService.hasRole(role);
+  }
+
+  protected hasAnyRole(roles: UserRole[]): boolean {
+    return this.authService.hasAnyRole(roles);
   }
 }

@@ -1,6 +1,9 @@
 import { Routes } from '@angular/router';
 import { Login } from './domains/auth/features/login/login';
 import { MainLayout } from './shared/layout/main-layout/main-layout';
+import { authGuard } from './domains/auth/guards/auth.guard';
+import { roleGuard } from './domains/auth/guards/role.guard';
+import { UserRole } from './domains/auth/data/user.model';
 
 export const routes: Routes = [
     { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
@@ -8,18 +11,25 @@ export const routes: Routes = [
     {
         path: '',
         component: MainLayout,
+        canActivate: [authGuard],
         children: [
             {
                 path: 'customer/registration',
-                loadComponent: () => import('./domains/customer/features/registration/registration').then(m => m.Registration)
+                loadComponent: () => import('./domains/customer/features/registration/registration').then(m => m.Registration),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },
             {
                 path: 'customer/legacy',
-                loadComponent: () => import('./domains/customer/features/legacy/clientes/clientes').then(m => m.ClientesLegacy)
+                loadComponent: () => import('./domains/customer/features/legacy/clientes/clientes').then(m => m.ClientesLegacy),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN] }
             },
             {
                 path: 'customer/clothes',
-                loadComponent: () => import('./domains/product/features/legacy/clothes/clothes').then(m => m.Clothes)
+                loadComponent: () => import('./domains/product/features/legacy/clothes/clothes').then(m => m.Clothes),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },
             {
                 path: 'customer/search',
@@ -27,7 +37,9 @@ export const routes: Routes = [
             },
             {
                 path: 'product/registration',
-                loadComponent: () => import('./domains/product/features/registration/registration').then(m => m.Registration)
+                loadComponent: () => import('./domains/product/features/registration/registration').then(m => m.Registration),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },
             {
                 path: 'product/search',
@@ -35,43 +47,63 @@ export const routes: Routes = [
             },
             {
                 path: 'product/stock',
-                loadComponent: () => import('./domains/product/features/stock/stock').then(m => m.Stock)
+                loadComponent: () => import('./domains/product/features/stock/stock').then(m => m.Stock),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },
             {
                 path: 'rental/new',
-                loadComponent: () => import('./domains/rental/features/new-rental/new-rental').then(m => m.NewRental)
+                loadComponent: () => import('./domains/rental/features/new-rental/new-rental').then(m => m.NewRental),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },
             {
                 path: 'rental/management',
-                loadComponent: () => import('./domains/rental/features/management/management').then(m => m.Management)
+                loadComponent: () => import('./domains/rental/features/management/management').then(m => m.Management),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },
             {
                 path: 'rental/legacy',
-                loadComponent: () => import('./domains/rental/features/legacy/locacao/locacao').then(m => m.LocacaoComponent)
+                loadComponent: () => import('./domains/rental/features/legacy/locacao/locacao').then(m => m.LocacaoComponent),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN] }
             },
             {
                 path: 'customer/devolucao-legacy',
-                loadComponent: () => import('./domains/customer/features/legacy/devolucao/devolucao').then(m => m.DevolucaoLegacy)
+                loadComponent: () => import('./domains/customer/features/legacy/devolucao/devolucao').then(m => m.DevolucaoLegacy),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN] }
             },
             {
                 path: 'finance/relatorio-locacao-legacy',
-                loadComponent: () => import('./domains/finance/features/legacy/relatorios/relatorio-locacao').then(m => m.RelatorioLocacaoLegacy)
+                loadComponent: () => import('./domains/finance/features/legacy/relatorios/relatorio-locacao').then(m => m.RelatorioLocacaoLegacy),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN] }
             },
             {
                 path: 'finance/relatorio-devolucao-legacy',
-                loadComponent: () => import('./domains/finance/features/legacy/relatorios/relatorio-devolucao').then(m => m.RelatorioDevolucaoLegacy)
+                loadComponent: () => import('./domains/finance/features/legacy/relatorios/relatorio-devolucao').then(m => m.RelatorioDevolucaoLegacy),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN] }
             },
             {
                 path: 'finance/dashboard',
-                loadComponent: () => import('./domains/finance/features/dashboard/dashboard').then(m => m.Dashboard)
+                loadComponent: () => import('./domains/finance/features/dashboard/dashboard').then(m => m.Dashboard),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER] }
             },
             {
                 path: 'finance/nfse-backup',
-                loadComponent: () => import('./domains/finance/features/nfse-upload/nfse-upload').then(m => m.NfseUpload)
+                loadComponent: () => import('./domains/finance/features/nfse-upload/nfse-upload').then(m => m.NfseUpload),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER] }
             },
             {
                 path: 'admin/dashboard',
-                loadComponent: () => import('./domains/admin/features/dashboard/dashboard').then(m => m.Dashboard)
+                loadComponent: () => import('./domains/admin/features/dashboard/dashboard').then(m => m.Dashboard),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER] }
             }
         ]
     }

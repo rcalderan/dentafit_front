@@ -1,0 +1,40 @@
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  EMPLOYEE = 'EMPLOYEE',
+  CUSTOMER = 'CUSTOMER'
+}
+      // *  this.id = user.getId();
+      //   this.username = user.getUsername();
+      //   this.name = user.getPerson() != null ? user.getPerson().getName() : null;
+      //   this.pin = user.getPin();
+      //   this.legacyId = user.getPerson() != null ? user.getPerson().getLegacyId() : null;
+      //   this.roles = user.getRoles() != null ? user.getRoles().stream()
+      //           .map(role -> role.getRole().name())
+      //           .toList() : List.of();
+      //   this.isActive = Boolean.TRUE.equals(user.getIsActive());
+export interface User {
+  id: string;
+  username: string;
+  legacyId?: string;
+  email?: string;
+  name?: string;
+  role: UserRole;
+  active: boolean;
+  createdAt?: string;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}

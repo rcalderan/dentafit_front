@@ -54,6 +54,15 @@
     background-color: var(--card-bg);
 }
 
+.error-message {
+    background-color: #ff4444;
+    color: white;
+    padding: 0.8rem;
+    border-radius: var(--input-radius);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
 button {
     width: 100%;
     padding: 1rem;
@@ -76,6 +85,11 @@ button:hover {
 
 button:active {
     transform: translateY(0);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 @media (max-width: 480px) {

@@ -1,16 +1,59 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, signal } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'rentafit-login',
-  imports: [],
+  imports: [FormsModule, CommonModule],
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
 export class Login {
-  constructor(private router: Router) { }
+  username = '';
+  password = '';
+  errorMessage = signal<string | null>(null);
+  isLoading = signal(false);
+
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) { }
 
   login() {
-    this.router.navigate(['/finance/dashboard']);
+    if (!this.username || !this.password) {
+      this.errorMessage.set('Por favor, preencha todos os campos');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    this.authService.login(this.username, this.password).subscribe({
+      next: (user) => {
+        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/finance/dashboard';
+
+        this.router.navigate([returnUrl]).then(
+          (success) => {
+            if (!success) {
+              console.warn('Acesso negado, redirecionando...');
+              this.router.navigate(['/customer/search']);
+            }
+            this.isLoading.set(false);
+          },
+          (error) => {
+            this.isLoading.set(false);
+            console.error('Erro ao redirecionar após login:', error);
+          }
+        );
+      },
+      error: (error) => {
+        this.isLoading.set(false);
+        this.errorMessage.set('Usuário ou senha inválidos');
+        console.error('Erro no login:', error);
+      }
+    });
   }
 }

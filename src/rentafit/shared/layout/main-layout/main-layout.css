@@ -55,6 +55,11 @@
   transform: translateY(-2px);
 }
 
+.nav-item.logout-btn:hover {
+  background-color: #ff4444;
+  color: white;
+}
+
 .nav-item-container {
   display: flex;
   flex-direction: column;
