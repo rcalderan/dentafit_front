@@ -63,8 +63,9 @@ export class AuthService {
           createdAt: response.createdAt
         };
         
-        // Persiste o usuário no localStorage
-        localStorage.setItem('currentUser', JSON.stringify(user));
+        // Persiste o usuário no localStorage    
+        this.currentUserSubject.next(user);
+        localStorage.setItem('currentUser', JSON.stringify(user));    
         
         return user;
       })

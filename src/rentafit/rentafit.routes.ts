@@ -15,7 +15,7 @@ export const routes: Routes = [
         children: [
             {
                 path: 'customer/registration',
-                loadComponent: () => import('./domains/customer/features/registration/registration').then(m => m.Registration),
+                loadComponent: () => import('./domains/customer/features/registration/registration.component').then(m => m.RegistrationComponent),
                 canActivate: [roleGuard],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },

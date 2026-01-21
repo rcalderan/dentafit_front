@@ -5,9 +5,16 @@
     <div class="section-card">
         <span class="section-title">Informações Pessoais</span>
         <div class="form-grid">
+            <div>
+                <div (click)="previous()"><</div>
             <div class="input-group col-4">
                 <label>Código</label>
-                <input type="text" placeholder="Auto" formControlName="legacyId">
+                <input type="text" placeholder="Auto" formControlName="legacyId"
+                (keydown)="findByLegacyId($event, form.value.legacyId)">
+            </div>
+            
+                <div (click)="next()">></div>
+
             </div>
             <div class="input-group col-1"
                 style="flex-direction: row; align-items: center; gap: 0.5rem; justify-content: flex-end;">
@@ -24,7 +31,8 @@
             </div> -->
             <div class="input-group col-3">
                 <label>CPF</label>
-                <input type="text" placeholder="000.000.000-00" formControlName="document">
+                <input type="text" placeholder="000.000.000-00" formControlName="document"
+                (keydown)="findByDocument($event, form.value.document)">
             </div>
             <!-- <div class="input-group col-8">
                 <label>Gênero</label>
@@ -51,7 +59,8 @@
                 <div class="form-grid">
                     <div class="input-group col-4">
                         <label>CEP</label>
-                        <input type="text" formControlName="zipCode">
+                        <input type="text" formControlName="zipCode"
+                        (keydown)="findAddressByZipCode($event, form.get('address')?.value.zipCode)">
                     </div>
                     <div class="input-group col-12">
                         <label>Logradouro</label>

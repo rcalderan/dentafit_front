@@ -1,9 +1,9 @@
 
 type UUID = string;
 
-export interface Customer {
-  id: UUID;
-  legacyId: string;
+export interface ICustomer {
+  id?: UUID;
+  legacyId?: number;
   name: string;
   document: string;
   isAuthenticated: boolean;
@@ -12,10 +12,10 @@ export interface Customer {
   complement: string;  
   number: string;
   phones: string[];
-  address: Address;
+  address: IAddress;
 }
 
-export interface Address {
+export interface IAddress {
   zipCode: string;
   street: string;
   neighborhood: string;
@@ -24,26 +24,26 @@ export interface Address {
 }
 
 /**
- * {
-  "name": "João Silva 2",
-  "document": "12345678901",
-  "email": "joao.silva@example.com",
-  "isAuthenticated": false,
-  "notes": "Cliente regular",
-  "address": {
-    "zipCode": "12345-672",
-    "street": "Rua das Flores 2",
-    "neighborhood": "Centro",
-    "city": "São Paulo",
-    "state": "SP"
-  },
-  "number": "123",
-  "complement": "Apto 45",
-  "phones": [
-    "11987654321",
-    "1133334444",
-    "1133334444"
-  ]
+{
+    "id": "d8d98e8b-2788-4917-95a9-53ef056951be",
+    "name": "Ma5465767887ira",
+    "document": "10987654321",
+    "email": "maria.oliveira@example.com",
+    "isAuthenticated": true,
+    "notes": "Cliente novo",
+    "address": {
+        "zipCode": "23456-789",
+        "street": "Avenida Brasil",
+        "neighborhood": "Jardim América",
+        "city": "Rio de Janeiro",
+        "state": "RJ"
+    },
+    "number": "456",
+    "complement": "Casa 12",
+    "phones": [
+        "21987654321",
+        "2133334444"
+    ]
 }
  */
 
