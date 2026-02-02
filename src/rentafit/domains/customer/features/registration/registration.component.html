@@ -1,26 +1,31 @@
-<div class="customer-registration-container" [formGroup]="form">
+<div class="customer-registration-container" [formGroup]="form" [class.read-only]="isReadOnly()">
     <h1>Cadastro de Cliente</h1>
 
     <!-- Informações Pessoais -->
     <div class="section-card">
-        <span class="section-title">Informações Pessoais</span>
+        <div class="section-header">
+            <span class="section-title">Informações Pessoais</span>
+            <div class="header-actions">
+                <button class="header-btn" (click)="clear()" title="Limpar">🧹</button>
+                <button class="header-btn" (click)="close()" title="Fechar">❌</button>
+            </div>
+        </div>
         <div class="form-grid">
-            <div>
-                <div (click)="previous()"><</div>
             <div class="input-group col-4">
                 <label>Código</label>
-                <input type="text" placeholder="Auto" formControlName="legacyId"
-                (keydown)="findByLegacyId($event, form.value.legacyId)">
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="text" [placeholder]="form.value.legacyId!=null ? form.value.legacyId : ''" formControlName="legacyId"
+                        (keydown)="findByLegacyId($event, form.value.legacyId)" style="flex: 1;">
+                    @if (isReadOnly()) {
+                        <button class="header-btn btn-edit-trigger" (click)="enableEditing()" title="Editar">✏️</button>
+                    }
+                </div>
             </div>
-            
-                <div (click)="next()">></div>
-
-            </div>
-            <div class="input-group col-1"
+            <!-- <div class="input-group col-1"
                 style="flex-direction: row; align-items: center; gap: 0.5rem; justify-content: flex-end;">
                 <input type="checkbox" id="auth-check" formControlName="isAuthenticated">
                 <label for="auth-check" style="color: var(--text-color); margin-top: 4px;">isAuthenticated</label>
-            </div>
+            </div> -->
             <div class="input-group col-12">
                 <label>Nome Completo</label>
                 <input type="text" class="uppercase" formControlName="name">
@@ -122,8 +127,16 @@
 
     <!-- Actions -->
     <div class="actions">
-        <button class="btn btn-save" (click)="save()" [disabled]="form.invalid">Salvar</button>
-        <button class="btn btn-update" disabled>Atualiza</button>
-        <button class="btn btn-delete" [disabled]="form.invalid">Excluir</button>
+        <button class="btn btn-save" (click)="save()" [disabled]="form.invalid || isReadOnly()">Salvar</button>
+        <button class="btn btn-delete" [disabled]="form.invalid || isReadOnly()">Excluir</button>
     </div>
+
+    @if (errorMessage()) {
+        <rentafit-modal 
+            title="Atenção" 
+            [message]="errorMessage() ?? ''" 
+            type="error" 
+            (close)="clearError()">
+        </rentafit-modal>
+    }
 </div>

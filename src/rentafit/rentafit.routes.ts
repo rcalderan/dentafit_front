@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { Login } from './domains/auth/features/login/login';
+import { Login } from './domains/auth/features/login/login.component';
 import { MainLayout } from './shared/layout/main-layout/main-layout';
 import { authGuard } from './domains/auth/guards/auth.guard';
 import { roleGuard } from './domains/auth/guards/role.guard';
@@ -30,10 +30,6 @@ export const routes: Routes = [
                 loadComponent: () => import('./domains/product/features/legacy/clothes/clothes').then(m => m.Clothes),
                 canActivate: [roleGuard],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
-            },
-            {
-                path: 'customer/search',
-                loadComponent: () => import('./domains/customer/features/search/search').then(m => m.Search)
             },
             {
                 path: 'product/registration',

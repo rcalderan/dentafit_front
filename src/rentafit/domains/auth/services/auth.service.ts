@@ -117,10 +117,37 @@ export class AuthService {
   }
 
   /**
-   * Verifica se o usuário está autenticado
+   * Verifica se o usuário está autenticado e se o token é válido
    */
   isAuthenticated(): boolean {
-    return !!this.getAccessToken();
+    const token = this.getAccessToken();
+    if (!token) return false;
+
+    try {
+      const payloadBase64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(payloadBase64));
+      const expirationDate = new Date(payload.exp * 1000);
+      const now = new Date();
+
+      // Se o token já expirou
+      if (expirationDate <= now) {
+        return false;
+      }
+
+      // Se o token expira em menos de 5 minutos, tenta renovar (refresh)
+      const fiveMinutesInMs = 5 * 60 * 1000;
+      if (expirationDate.getTime() - now.getTime() < fiveMinutesInMs) {
+        this.refreshToken().subscribe({
+          next: () => console.log('Token renovado proativamente'),
+          error: (err) => console.error('Erro na renovação proativa do token', err)
+        });
+      }
+
+      return true;
+    } catch (e) {
+      console.error('Erro ao decodificar token:', e);
+      return false;
+    }
   }
 
   /**

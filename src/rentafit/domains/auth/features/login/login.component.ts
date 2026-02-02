@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -7,10 +7,10 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'rentafit-login',
   imports: [FormsModule, CommonModule],
-  templateUrl: './login.html',
-  styleUrl: './login.css'
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css'
 })
-export class Login {
+export class Login implements OnInit {
   username = '';
   password = '';
   errorMessage = signal<string | null>(null);
@@ -21,6 +21,13 @@ export class Login {
     private router: Router,
     private route: ActivatedRoute
   ) { }
+
+  ngOnInit(): void {
+    if (this.authService.isAuthenticated()) {
+      const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/finance/dashboard';
+      this.router.navigate([returnUrl]);
+    }
+  }
 
   login() {
     if (!this.username || !this.password) {
