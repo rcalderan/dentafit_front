@@ -58,7 +58,7 @@ export class Login implements OnInit {
       },
       error: (error) => {
         this.isLoading.set(false);
-        this.errorMessage.set('Usuário ou senha inválidos');
+        this.errorMessage.set(error.message || 'Erro ao realizar login');
         console.error('Erro no login:', error);
       }
     });

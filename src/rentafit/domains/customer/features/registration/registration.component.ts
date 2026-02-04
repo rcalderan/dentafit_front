@@ -1,13 +1,26 @@
 import { Component, inject, OnInit, signal, effect, computed, OnDestroy } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { EMPTY, Subject, throwError } from 'rxjs';
-import { switchMap, tap, takeUntil, catchError, mergeMap } from 'rxjs/operators';
+import { switchMap, tap, takeUntil, catchError, mergeMap, finalize } from 'rxjs/operators';
 import { ICustomer } from '../../data/Customer.interface';
 import { CustomerService } from '../../service/customer.service';
 import { AddressService } from '../../service/address.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ErrorMessages } from '../../../../shared/data/error-messages';
+
+export function cpfCnpjValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value?.replace(/[^\d]+/g, '');
+  if (!value) return null;
+
+  if (value.length !== 11 && value.length !== 14) {
+    return { invalidFormat: 'Documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos' };
+  }
+
+  // Validação simplificada para exemplo, ideal seria uma lib ou algoritmos completos
+  return null;
+}
 
 @Component({
   selector: 'rentafit-registration',
@@ -28,44 +41,45 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   private customer: ICustomer;
   form: FormGroup;
   isReadOnly = signal(false);
+  isSearchingAddress = signal(false);
   errorMessage = signal<string[] | string | null>(null);
 
   customerData = computed(() => this.customer);
 
-  // Observable reactivo para busca de endereço
-address$ = this.zipCodeSubject$.pipe(
-  switchMap(zipCode => this.addressService.searchByZipCode(zipCode).pipe(
-    tap(address => {
-      console.log('Endereço encontrado:', address);
-      this.form.patchValue({ address });
-    }),
-    catchError(error => {
-      console.error('Erro ao buscar endereço:', error.message);
-      // Aqui você pode exibir uma mensagem de erro ao usuário
-      // Retorna EMPTY para manter o Subject vivo
-      return EMPTY;
-    })
-  )),
-  takeUntil(this.destroy$)
-);
+
+  address$ = this.zipCodeSubject$.pipe(
+    tap(() => this.isSearchingAddress.set(true)),
+    switchMap(zipCode => this.addressService.searchByZipCode(zipCode).pipe(
+      tap(address => {
+        console.log('Endereço encontrado:', address);
+        this.form.patchValue({ address });
+      }),
+      catchError(error => {
+        this.errorMessage.set(error.message);
+        return EMPTY;
+      }),
+      finalize(() => this.isSearchingAddress.set(false))
+    )),
+    takeUntil(this.destroy$)
+  );
 
   constructor() {
     this.form = this.fb.group({
       id: [{ value: '', disabled: true }],
       legacyId: [''],
       name: ['', [Validators.required, Validators.minLength(3)]],
-      document: ['', Validators.required],
+      document: ['', [Validators.required, cpfCnpjValidator]],
       isAuthenticated: [{ value: false, disabled: true }],
       address: this.fb.group({
-        street: [''],
-        neighborhood: [''],
-        city: [''],
-        state: ['', Validators.maxLength(2)],
-        zipCode: ['']
+        street: ['', Validators.required],
+        neighborhood: ['', Validators.required],
+        city: ['', Validators.required],
+        state: ['', [Validators.required, Validators.maxLength(2), Validators.minLength(2)]],
+        zipCode: ['', [Validators.required, Validators.pattern(/^\d{5}-?\d{3}$/)]]
       }),
       phones: this.fb.array([this.fb.control(''), this.fb.control('')]),
-      email: ['', Validators.email],
-      number: [''],
+      email: ['', [Validators.required, Validators.email]],
+      number: ['', Validators.required],
       complement: [''],
       notes: ['']
     });
@@ -79,14 +93,33 @@ address$ = this.zipCodeSubject$.pipe(
     });
   }
 
-  private loadCustomerForm(customer: ICustomer){
-        this.form.patchValue({ ...customer });
-        this.isReadOnly.set(true);
-        this.form.disable();
+  getControlStatus(controlName: string, groupName?: string): 'VALID' | 'INVALID' | 'PENDING' | 'NONE' {
+    const control = groupName ? this.form.get(groupName)?.get(controlName) : this.form.get(controlName);
+    if (!control || (!control.dirty && !control.touched)) return 'NONE';
+    return control.valid ? 'VALID' : 'INVALID';
+  }
+
+  getControlError(controlName: string, groupName?: string): string | null {
+    const control = groupName ? this.form.get(groupName)?.get(controlName) : this.form.get(controlName);
+    if (!control || !control.errors || (!control.dirty && !control.touched)) return null;
+
+    if (control.errors['required']) return 'Campo obrigatório';
+    if (control.errors['minlength']) return `Mínimo de ${control.errors['minlength'].requiredLength} caracteres`;
+    if (control.errors['email']) return 'E-mail inválido';
+    if (control.errors['pattern']) return 'Formato inválido';
+    if (control.errors['invalidFormat']) return control.errors['invalidFormat'];
+
+    return 'Campo inválido';
+  }
+
+  private loadCustomerForm(customer: ICustomer) {
+    this.form.patchValue({ ...customer });
+    this.isReadOnly.set(true);
+    this.form.disable();
   }
 
   findByLegacyId(event: KeyboardEvent, document: string) {
-    if(event.key !== 'Enter') return;
+    if (event.key !== 'Enter') return;
     this.service.getCustomerByLegacyId(Number(document)).subscribe({
       next: (customer: ICustomer) => {
         console.log('Cliente encontrado:', customer);
@@ -99,12 +132,12 @@ address$ = this.zipCodeSubject$.pipe(
         this.errorMessage.set('Não foi possível encontrar o cliente com este código.');
         this.clear();
       }
-      
+
     });
   }
 
   findAddressByZipCode(event: KeyboardEvent, zipCode: string) {
-    if(event.key !== 'Enter') return;
+    if (event.key !== 'Enter') return;
 
     if (!zipCode || zipCode.trim().length === 0) {
       console.warn('CEP vazio');
@@ -116,7 +149,7 @@ address$ = this.zipCodeSubject$.pipe(
   }
 
   findByDocument(event: KeyboardEvent, document: string) {
-    if(event.key !== 'Enter') return;
+    if (event.key !== 'Enter') return;
     this.service.getCustomerByDocument(document).subscribe({
       next: (customer: ICustomer) => {
         console.log('Cliente encontrado:', customer);
@@ -126,7 +159,7 @@ address$ = this.zipCodeSubject$.pipe(
         console.error('Erro ao buscar cliente:', error);
         this.errorMessage.set('Não foi possível encontrar o cliente com este CPF.');
       }
-      
+
     });
   }
 
@@ -170,22 +203,22 @@ address$ = this.zipCodeSubject$.pipe(
       const customer: ICustomer = v;
       this.service.saveCustomer(customer).subscribe(
         {
-          next: (customer: ICustomer) => {  
+          next: (customer: ICustomer) => {
             console.log('Cliente Salvo:', customer);
             this.loadCustomerForm(customer);
           },
           error: (error) => this.handleError(error)
-      });
+        });
     }
   }
 
   private handleError(error: any) {
-    if(error instanceof HttpErrorResponse) {
-      if( error.status === 400 ){
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 400) {
         this.errorMessage.set(
           error.error
-          ? error.error.errors?.map((err: any) => err.message || err) 
-          : 'Erros de validação ocorreram. Verifique os dados informados.');
+            ? error.error.errors?.map((err: any) => err.message || err)
+            : 'Erros de validação ocorreram. Verifique os dados informados.');
         return;
       }
     }

@@ -28,34 +28,39 @@
             </div> -->
             <div class="input-group col-12">
                 <label>Nome Completo</label>
-                <input type="text" class="uppercase" formControlName="name">
-            </div>
-            <!-- <div class="input-group col-4">
-                <label>Data de Nascimento</label>
-                <input type="date" formControlName="nascimento">
-            </div> -->
-            <div class="input-group col-3">
-                <label>CPF</label>
-                <input type="text" placeholder="000.000.000-00" formControlName="document"
-                (keydown)="findByDocument($event, form.value.document)">
-            </div>
-            <!-- <div class="input-group col-8">
-                <label>Gênero</label>
-                <div class="radio-group">
-                    <label class="radio-option"><input type="radio" value="male" formControlName="sexo"> Masculino</label>
-                    <label class="radio-option"><input type="radio" value="female" formControlName="sexo"> Feminino</label>
-                    <label class="radio-option"><input type="radio" value="other" formControlName="sexo"> Outro</label>
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="name" placeholder="Ex: João Silva">
+                    <span class="valid-icon" [class.show]="getControlStatus('name') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('name') === 'INVALID'">❌</span>
                 </div>
-            </div> 
-            <div class="input-group col-4">
-                <label>RG</label>
-                <input type="text" formControlName="rg">
-            </div> -->
+                @if (getControlError('name')) {
+                    <span class="field-error">{{ getControlError('name') }}</span>
+                }
+            </div>
+            <div class="input-group col-3">
+                <label>Documento (CPF/CNPJ)</label>
+                <div class="input-wrapper">
+                    <input type="text" placeholder="000.000.000-00" formControlName="document"
+                    (keydown)="findByDocument($event, form.value.document)">
+                    <span class="valid-icon" [class.show]="getControlStatus('document') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('document') === 'INVALID'">❌</span>
+                </div>
+                <span class="field-tip">Digite CPF ou CNPJ (apenas números)</span>
+                @if (getControlError('document')) {
+                    <span class="field-error">{{ getControlError('document') }}</span>
+                }
+            </div>
             <div class="input-group col-6">
                 <label>E-mail</label>
-                <input type="email" formControlName="email">
+                <div class="input-wrapper">
+                    <input type="email" formControlName="email" placeholder="cliente@email.com">
+                    <span class="valid-icon" [class.show]="getControlStatus('email') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('email') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('email')) {
+                    <span class="field-error">{{ getControlError('email') }}</span>
+                }
             </div>
-
         </div>
         <!-- Endereço -->
         <div class="section-card" style=" background-color:#afb1c9;">
@@ -64,32 +69,73 @@
                 <div class="form-grid">
                     <div class="input-group col-4">
                         <label>CEP</label>
-                        <input type="text" formControlName="zipCode"
-                        (keydown)="findAddressByZipCode($event, form.get('address')?.value.zipCode)">
+                        <div class="input-wrapper">
+                            <input type="text" formControlName="zipCode" placeholder="00000-000" [disabled]="isSearchingAddress()"
+                            (keydown)="findAddressByZipCode($event, form.get('address')?.value.zipCode)">
+                            <span class="loader-icon" [class.show]="isSearchingAddress()">⏳</span>
+                            <span class="valid-icon" [class.show]="getControlStatus('zipCode', 'address') === 'VALID' && !isSearchingAddress()">✅</span>
+                            <span class="invalid-icon" [class.show]="getControlStatus('zipCode', 'address') === 'INVALID' && !isSearchingAddress()">❌</span>
+                        </div>
+                        @if (getControlError('zipCode', 'address')) {
+                            <span class="field-error">{{ getControlError('zipCode', 'address') }}</span>
+                        }
                     </div>
                     <div class="input-group col-12">
                         <label>Logradouro</label>
-                        <input type="text" class="uppercase" formControlName="street">
+                        <div class="input-wrapper">
+                            <input type="text" class="uppercase" formControlName="street">
+                            <span class="valid-icon" [class.show]="getControlStatus('street', 'address') === 'VALID'">✅</span>
+                            <span class="invalid-icon" [class.show]="getControlStatus('street', 'address') === 'INVALID'">❌</span>
+                        </div>
+                        @if (getControlError('street', 'address')) {
+                            <span class="field-error">{{ getControlError('street', 'address') }}</span>
+                        }
                     </div>
                     <div class="input-group col-6">
                         <label>Bairro</label>
-                        <input type="text" class="uppercase" formControlName="neighborhood">
+                        <div class="input-wrapper">
+                            <input type="text" class="uppercase" formControlName="neighborhood">
+                            <span class="valid-icon" [class.show]="getControlStatus('neighborhood', 'address') === 'VALID'">✅</span>
+                            <span class="invalid-icon" [class.show]="getControlStatus('neighborhood', 'address') === 'INVALID'">❌</span>
+                        </div>
+                        @if (getControlError('neighborhood', 'address')) {
+                            <span class="field-error">{{ getControlError('neighborhood', 'address') }}</span>
+                        }
                     </div>
                     <div class="input-group col-4">
                         <label>Cidade</label>
-                        <input type="text" class="uppercase" formControlName="city">
+                        <div class="input-wrapper">
+                            <input type="text" class="uppercase" formControlName="city">
+                            <span class="valid-icon" [class.show]="getControlStatus('city', 'address') === 'VALID'">✅</span>
+                            <span class="invalid-icon" [class.show]="getControlStatus('city', 'address') === 'INVALID'">❌</span>
+                        </div>
+                        @if (getControlError('city', 'address')) {
+                            <span class="field-error">{{ getControlError('city', 'address') }}</span>
+                        }
                     </div>
                     <div class="input-group col-2">
-                        <label>Estado</label>
-                        <input type="text" class="uppercase" maxlength="2" formControlName="state">
+                        <label>UF</label>
+                        <div class="input-wrapper">
+                            <input type="text" class="uppercase" maxlength="2" formControlName="state" placeholder="SP">
+                            <span class="valid-icon" [class.show]="getControlStatus('state', 'address') === 'VALID'">✅</span>
+                            <span class="invalid-icon" [class.show]="getControlStatus('state', 'address') === 'INVALID'">❌</span>
+                        </div>
+                        @if (getControlError('state', 'address')) {
+                            <span class="field-error">{{ getControlError('state', 'address') }}</span>
+                        }
                     </div>
-
                 </div>
-
             </div>
             <div class="input-group col-3">
                 <label>Número</label>
-                <input type="text" class="uppercase" formControlName="number">
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="number">
+                    <span class="valid-icon" [class.show]="getControlStatus('number') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('number') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('number')) {
+                    <span class="field-error">{{ getControlError('number') }}</span>
+                }
             </div>
 
             <div class="input-group col-3">
@@ -115,13 +161,16 @@
         <div class="form-grid" formArrayName="phones">
             <div class="input-group col-3">
                 <label>Telefone 1</label>
-                <input type="tel" [formControlName]="0">
+                <div class="input-wrapper">
+                    <input type="tel" [formControlName]="0" placeholder="(11) 99999-9999">
+                </div>
             </div>
             <div class="input-group col-3">
                 <label>Telefone 2</label>
-                <input type="tel" [formControlName]="1">
+                <div class="input-wrapper">
+                    <input type="tel" [formControlName]="1" placeholder="(11) 0000-0000">
+                </div>
             </div>
-
         </div>
     </div>
 

@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CryptoService } from './crypto.service';
 import { User, UserRole, LoginRequest, LoginResponse, RefreshTokenRequest } from '../data/user.model';
+import { ErrorMessages, HTTP_ERROR_MAP } from '../../../shared/data/error-messages';
 
 @Injectable({
   providedIn: 'root'
@@ -22,6 +23,12 @@ export class AuthService {
     this.loadUserFromStorage();
   }
 
+  private handleError(error: HttpErrorResponse): Observable<never> {
+    console.error('AuthService error:', error);
+    const errorMessage = HTTP_ERROR_MAP[error.status] || error.error?.message || ErrorMessages.UNKNOWN_ERROR;
+    return throwError(() => new Error(errorMessage));
+  }
+
   /**
    * Realiza o login do usuário
    */
@@ -34,10 +41,7 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, loginRequest).pipe(
       tap(response => this.storeTokens(response)),
       switchMap(() => this.fetchUserProfile()), 
-      catchError(error => {
-        console.error('Erro no login:', error);
-        return throwError(() => new Error('Falha na autenticação'));
-      })
+      catchError(this.handleError.bind(this))
     );
   }
 
@@ -46,10 +50,7 @@ export class AuthService {
    */
   private fetchUserProfile(): Observable<User> {
     return this.http.get<any>(`${this.apiUrl}/me`).pipe(
-      catchError(error => {
-        console.error('Erro ao buscar perfil do usuário:', error);
-        return throwError(() => new Error('Não foi possível obter o perfil do usuário'));
-      }),
+      catchError(this.handleError.bind(this)),
       map(response => {
         const role = this.mapRole(response.roles[0]);
         const user: User = {

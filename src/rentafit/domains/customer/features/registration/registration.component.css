@@ -143,6 +143,61 @@ textarea:focus {
     background-color: var(--card-bg);
 }
 
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding-right: 2.5rem !important;
+}
+
+.valid-icon, .invalid-icon {
+    position: absolute;
+    right: 0.8rem;
+    font-size: 0.9rem;
+    display: none;
+    pointer-events: none;
+}
+
+.valid-icon.show, .invalid-icon.show {
+    display: block;
+}
+
+.loader-icon {
+    position: absolute;
+    right: 0.8rem;
+    font-size: 0.9rem;
+    display: none;
+    pointer-events: none;
+    animation: rotate 1.5s linear infinite;
+}
+
+.loader-icon.show {
+    display: block;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.field-error {
+    color: #f44336;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 0.2rem;
+}
+
+.field-tip {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-style: italic;
+    margin-top: 0.1rem;
+}
+
 /* Modo Visualização (Read Only) */
 .customer-registration-container.read-only input,
 .customer-registration-container.read-only textarea {
@@ -151,6 +206,11 @@ textarea:focus {
     color: #6c757d;
     cursor: default;
     box-shadow: none;
+}
+
+.customer-registration-container.read-only .valid-icon,
+.customer-registration-container.read-only .invalid-icon {
+    display: none !important;
 }
 
 .customer-registration-container.read-only .section-card {

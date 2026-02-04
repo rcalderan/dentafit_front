@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, timeout } from 'rxjs/operators';
 import { IAddress, AddressResponse } from '../data/address.model';
+import { HTTP_ERROR_MAP, ErrorMessages } from '../../../shared/data/error-messages';
 
 /**
  * Serviço responsável por operações relacionadas a endereços
@@ -81,25 +82,12 @@ export class AddressService {
     let errorMessage = 'Erro ao buscar endereço';
 
     if (error instanceof HttpErrorResponse) {
-      switch (error.status) {
-        case 0:
-          errorMessage = 'Erro de conexão. Verifique sua internet.';
-          break;
-        case 400:
-          errorMessage = 'CEP inválido. Verifique o formato.';
-          break;
-        case 404:
-          errorMessage = 'CEP não encontrado.';
-          break;
-        case 408:
-          errorMessage = 'Requisição expirou. Tente novamente.';
-          break;
-        case 500:
-          errorMessage = 'Erro no servidor. Tente mais tarde.';
-          break;
-        default:
-          errorMessage = error.message || 'Erro desconhecido';
-      }
+      errorMessage = HTTP_ERROR_MAP[error.status] || error.message || ErrorMessages.UNKNOWN_ERROR;
+
+      // Especialização para CEP se for 400 ou 404
+      if (error.status === 400) errorMessage = ErrorMessages.ZIP_CODE_INVALID;
+      if (error.status === 404) errorMessage = ErrorMessages.ZIP_CODE_NOT_FOUND;
+
       console.error('Erro HTTP:', {
         status: error.status,
         statusText: error.statusText,
