@@ -1,14 +1,13 @@
 import { Component, inject, OnInit, signal, effect, computed, OnDestroy } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
-import { EMPTY, Subject, throwError } from 'rxjs';
-import { switchMap, tap, takeUntil, catchError, mergeMap, finalize } from 'rxjs/operators';
+import { EMPTY, Subject } from 'rxjs';
+import { switchMap, tap, takeUntil, catchError, finalize } from 'rxjs/operators';
 import { ICustomer } from '../../data/Customer.interface';
 import { CustomerService } from '../../service/customer.service';
 import { AddressService } from '../../service/address.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ErrorMessages } from '../../../../shared/data/error-messages';
 
 export function cpfCnpjValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value?.replace(/[^\d]+/g, '');
@@ -33,6 +32,13 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   private service = inject(CustomerService);
   private addressService = inject(AddressService);
   private router = inject(Router);
+  private readonly maxPhones = 5;
+  private readonly phonePattern = /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/;
+  private readonly phoneValidator = (control: AbstractControl): ValidationErrors | null => {
+    const value = (control.value ?? '').toString().trim();
+    if (!value) return null;
+    return this.phonePattern.test(value) ? null : { invalidPhone: true };
+  };
 
   private destroy$ = new Subject<void>();
   private zipCodeSubject$ = new Subject<string>();
@@ -48,7 +54,10 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
 
   address$ = this.zipCodeSubject$.pipe(
-    tap(() => this.isSearchingAddress.set(true)),
+    tap(() => {
+      this.isSearchingAddress.set(true);
+      this.form.get('address.zipCode')?.disable();
+    }),
     switchMap(zipCode => this.addressService.searchByZipCode(zipCode).pipe(
       tap(address => {
         console.log('Endereço encontrado:', address);
@@ -58,7 +67,13 @@ export class RegistrationComponent implements OnInit, OnDestroy {
         this.errorMessage.set(error.message);
         return EMPTY;
       }),
-      finalize(() => this.isSearchingAddress.set(false))
+      finalize(() => {
+        this.isSearchingAddress.set(false);
+        // Só reabilita se não estiver em modo leitura
+        if (!this.isReadOnly()) {
+          this.form.get('address.zipCode')?.enable();
+        }
+      })
     )),
     takeUntil(this.destroy$)
   );
@@ -77,7 +92,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
         state: ['', [Validators.required, Validators.maxLength(2), Validators.minLength(2)]],
         zipCode: ['', [Validators.required, Validators.pattern(/^\d{5}-?\d{3}$/)]]
       }),
-      phones: this.fb.array([this.fb.control(''), this.fb.control('')]),
+      phones: this.fb.array([this.buildPhoneControl()]),
       email: ['', [Validators.required, Validators.email]],
       number: ['', Validators.required],
       complement: [''],
@@ -112,10 +127,68 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     return 'Campo inválido';
   }
 
+  getPhoneControl(index: number): FormControl {
+    return this.phonesArray.at(index) as FormControl;
+  }
+
+  getPhoneStatus(index: number): 'VALID' | 'INVALID' | 'NONE' {
+    const control = this.getPhoneControl(index);
+    if (!control || (!control.dirty && !control.touched)) return 'NONE';
+    return control.valid ? 'VALID' : 'INVALID';
+  }
+
+  getPhoneError(index: number): string | null {
+    const control = this.getPhoneControl(index);
+    if (!control || !control.errors || (!control.dirty && !control.touched)) return null;
+    if (control.errors['invalidPhone']) return 'Informe o telefone no formato (11) 99999-9999';
+    return 'Telefone inválido';
+  }
+
   private loadCustomerForm(customer: ICustomer) {
+    this.setPhones(customer.phones);
     this.form.patchValue({ ...customer });
     this.isReadOnly.set(true);
     this.form.disable();
+  }
+
+  get phonesArray(): FormArray {
+    return this.form.get('phones') as FormArray;
+  }
+
+  phoneCount(): number {
+    return this.phonesArray.length;
+  }
+
+  canAddPhone(): boolean {
+    return this.phoneCount() < this.maxPhones;
+  }
+
+  canRemovePhone(): boolean {
+    return this.phoneCount() > 1;
+  }
+
+  addPhone(): void {
+    if (this.isReadOnly() || !this.canAddPhone()) return;
+    this.phonesArray.push(this.buildPhoneControl());
+  }
+
+  removePhone(index: number): void {
+    if (this.isReadOnly() || !this.canRemovePhone()) return;
+    this.phonesArray.removeAt(index);
+  }
+
+  private buildPhoneControl(value: string = ''): FormControl {
+    return this.fb.control(value, this.phoneValidator);
+  }
+
+  private setPhones(phones?: string[] | null): void {
+    this.phonesArray.clear();
+    const values = (phones ?? []).map(phone => phone?.trim()).filter(Boolean) as string[];
+    if (values.length === 0) {
+      this.phonesArray.push(this.buildPhoneControl());
+      return;
+    }
+    values.slice(0, this.maxPhones).forEach(value => this.phonesArray.push(this.buildPhoneControl(value)));
   }
 
   findByLegacyId(event: KeyboardEvent, document: string) {
@@ -182,6 +255,8 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       phones: [],
     };
 
+    this.setPhones(this.customer.phones);
+
     // Subscrever ao observable de endereço para capturar erros
     this.address$.subscribe({
       error: (error: Error) => {
@@ -234,12 +309,14 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     this.form.reset();
     this.form.enable();
     this.isReadOnly.set(false);
+    this.setPhones([]);
   }
 
   close() {
     this.form.reset();
     this.form.enable();
     this.isReadOnly.set(false);
+    this.setPhones([]);
     this.router.navigate(['/']);
   }
 

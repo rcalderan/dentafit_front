@@ -70,7 +70,7 @@
                     <div class="input-group col-4">
                         <label>CEP</label>
                         <div class="input-wrapper">
-                            <input type="text" formControlName="zipCode" placeholder="00000-000" [disabled]="isSearchingAddress()"
+                            <input type="text" formControlName="zipCode" placeholder="00000-000"
                             (keydown)="findAddressByZipCode($event, form.get('address')?.value.zipCode)">
                             <span class="loader-icon" [class.show]="isSearchingAddress()">⏳</span>
                             <span class="valid-icon" [class.show]="getControlStatus('zipCode', 'address') === 'VALID' && !isSearchingAddress()">✅</span>
@@ -157,20 +157,30 @@
 
     <!-- Contato -->
     <div class="section-card">
-        <span class="section-title">Contato</span>
+        <div class="section-header">
+            <span class="section-title">Contato</span>
+            <div class="contact-actions">
+                <span class="phone-limit">{{ phoneCount() }}/5</span>
+                <button class="header-btn phone-add-btn" type="button" (click)="addPhone()" [disabled]="isReadOnly() || !canAddPhone()" title="Adicionar telefone">➕</button>
+            </div>
+        </div>
         <div class="form-grid" formArrayName="phones">
-            <div class="input-group col-3">
-                <label>Telefone 1</label>
-                <div class="input-wrapper">
-                    <input type="tel" [formControlName]="0" placeholder="(11) 99999-9999">
+            @for (phone of phonesArray.controls; track phone; let i = $index) {
+                <div class="input-group col-4">
+                    <label>Telefone {{ i + 1 }}</label>
+                    <div class="phone-row">
+                        <div class="input-wrapper">
+                            <input type="tel" [formControlName]="i" placeholder="(11) 99999-9999">
+                            <span class="valid-icon" [class.show]="getPhoneStatus(i) === 'VALID'">✅</span>
+                            <span class="invalid-icon" [class.show]="getPhoneStatus(i) === 'INVALID'">❌</span>
+                        </div>
+                        <button class="header-btn phone-remove-btn" type="button" (click)="removePhone(i)" [disabled]="isReadOnly() || !canRemovePhone()" title="Remover telefone">🗑️</button>
+                    </div>
+                    @if (getPhoneError(i)) {
+                        <span class="field-error">{{ getPhoneError(i) }}</span>
+                    }
                 </div>
-            </div>
-            <div class="input-group col-3">
-                <label>Telefone 2</label>
-                <div class="input-wrapper">
-                    <input type="tel" [formControlName]="1" placeholder="(11) 0000-0000">
-                </div>
-            </div>
+            }
         </div>
     </div>
 

@@ -47,6 +47,17 @@ h1 {
     margin-bottom: 0;
 }
 
+.contact-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.phone-limit {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
 .header-actions {
     display: flex;
     gap: 0.5rem;
@@ -115,6 +126,28 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
+}
+
+.phone-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.phone-row .input-wrapper {
+    flex: 1;
+}
+
+.phone-add-btn,
+.phone-remove-btn {
+    font-size: 1rem;
+    padding: 0.3rem;
+}
+
+.phone-remove-btn:disabled,
+.phone-add-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .input-group label {
