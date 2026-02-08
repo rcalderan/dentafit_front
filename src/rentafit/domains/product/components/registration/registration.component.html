@@ -1,0 +1,131 @@
+<div class="product-registration-container" [formGroup]="form" [class.read-only]="isReadOnly()">
+    <h1>Cadastro de Roupa</h1>
+
+    <div class="section-card">
+        <div class="section-header">
+            <span class="section-title">Informações do Produto</span>
+            <div class="header-actions">
+                <button class="header-btn" type="button" (click)="clear()" title="Limpar">🧹</button>
+                <button class="header-btn" type="button" (click)="close()" title="Fechar">❌</button>
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="input-group col-3">
+                <label>Código</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="text" formControlName="legacyId" placeholder="Auto" style="flex: 1;">
+                    @if (isReadOnly()) {
+                        <button class="header-btn btn-edit-trigger" type="button" (click)="enableEditing()" title="Editar">✏️</button>
+                    }
+                </div>
+            </div>
+            <div class="input-group col-3">
+                <label>Situação</label>
+                <div class="input-wrapper">
+                    <input type="text" formControlName="status" readonly>
+                </div>
+            </div>
+            <div class="input-group col-9">
+                <label>Nome</label>
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="name" placeholder="Ex: Vestido Noiva Renda">
+                    <span class="valid-icon" [class.show]="getControlStatus('name') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('name') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('name')) {
+                    <span class="field-error">{{ getControlError('name') }}</span>
+                }
+            </div>
+            <div class="input-group col-3">
+                <label>Tipo</label>
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="type" placeholder="Ex: Vestido">
+                    <span class="valid-icon" [class.show]="getControlStatus('type') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('type') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('type')) {
+                    <span class="field-error">{{ getControlError('type') }}</span>
+                }
+            </div>
+            <div class="input-group col-2">
+                <label>Tamanho</label>
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="size" placeholder="Ex: 42">
+                    <span class="valid-icon" [class.show]="getControlStatus('size') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('size') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('size')) {
+                    <span class="field-error">{{ getControlError('size') }}</span>
+                }
+            </div>
+            <div class="input-group col-3">
+                <label>Cor dominante</label>
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="color" placeholder="Ex: Branco">
+                    <span class="valid-icon" [class.show]="getControlStatus('color') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('color') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('color')) {
+                    <span class="field-error">{{ getControlError('color') }}</span>
+                }
+            </div>
+            <div class="input-group col-3">
+                <label>Valor de Locação</label>
+                <div class="input-wrapper">
+                    <input type="number" formControlName="value" placeholder="0,00">
+                    <span class="valid-icon" [class.show]="getControlStatus('value') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('value') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('value')) {
+                    <span class="field-error">{{ getControlError('value') }}</span>
+                }
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="input-group col-12">
+                <label>Observações</label>
+                <textarea rows="3" class="uppercase" formControlName="notes"></textarea>
+            </div>
+        </div>
+    </div>
+    
+    <div class="actions">
+        <button class="btn btn-save" type="button" (click)="save()" [disabled]="form.invalid || isReadOnly()">Salvar</button>
+        <button class="btn btn-delete" type="button" [disabled]="form.invalid || isReadOnly()">Excluir</button>
+    </div>
+
+    <div class="section-card">
+        <span class="section-title">Histórico de Locação</span>
+        <div class="history-grid">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Legacy ID</th>
+                        <th>Nome</th>
+                        <th>Data do Aluguel</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (item of rentalHistory(); track item) {
+                        <tr>
+                            <td>{{ item.legacyId }}</td>
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.date }}</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+
+    @if (errorMessage()) {
+        <rentafit-modal
+            title="Atenção"
+            [message]="errorMessage() ?? ''"
+            type="error"
+            (close)="clearError()">
+        </rentafit-modal>
+    }
+</div>

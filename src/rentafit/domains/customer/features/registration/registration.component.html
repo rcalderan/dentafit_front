@@ -1,0 +1,201 @@
+<div class="customer-registration-container" [formGroup]="form" [class.read-only]="isReadOnly()">
+    <h1>Cadastro de Cliente</h1>
+
+    <!-- Informações Pessoais -->
+    <div class="section-card">
+        <div class="section-header">
+            <span class="section-title">Informações Pessoais</span>
+            <div class="header-actions">
+                <button class="header-btn" (click)="clear()" title="Limpar">🧹</button>
+                <button class="header-btn" (click)="close()" title="Fechar">❌</button>
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="input-group col-4">
+                <label>Código</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="text" [placeholder]="form.value.legacyId!=null ? form.value.legacyId : ''" formControlName="legacyId"
+                        (keydown)="findByLegacyId($event, form.value.legacyId)" style="flex: 1;">
+                    @if (isReadOnly()) {
+                        <button class="header-btn btn-edit-trigger" (click)="enableEditing()" title="Editar">✏️</button>
+                    }
+                </div>
+            </div>
+            <!-- <div class="input-group col-1"
+                style="flex-direction: row; align-items: center; gap: 0.5rem; justify-content: flex-end;">
+                <input type="checkbox" id="auth-check" formControlName="isAuthenticated">
+                <label for="auth-check" style="color: var(--text-color); margin-top: 4px;">isAuthenticated</label>
+            </div> -->
+            <div class="input-group col-12">
+                <label>Nome Completo</label>
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="name" placeholder="Ex: João Silva">
+                    <span class="valid-icon" [class.show]="getControlStatus('name') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('name') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('name')) {
+                    <span class="field-error">{{ getControlError('name') }}</span>
+                }
+            </div>
+            <div class="input-group col-3">
+                <label>Documento (CPF/CNPJ)</label>
+                <div class="input-wrapper">
+                    <input type="text" placeholder="000.000.000-00" formControlName="document"
+                    (keydown)="findByDocument($event, form.value.document)">
+                    <span class="valid-icon" [class.show]="getControlStatus('document') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('document') === 'INVALID'">❌</span>
+                </div>
+                <span class="field-tip">Digite CPF ou CNPJ (apenas números)</span>
+                @if (getControlError('document')) {
+                    <span class="field-error">{{ getControlError('document') }}</span>
+                }
+            </div>
+            <div class="input-group col-6">
+                <label>E-mail</label>
+                <div class="input-wrapper">
+                    <input type="email" formControlName="email" placeholder="cliente@email.com">
+                    <span class="valid-icon" [class.show]="getControlStatus('email') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('email') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('email')) {
+                    <span class="field-error">{{ getControlError('email') }}</span>
+                }
+            </div>
+        </div>
+        <!-- Endereço -->
+        <div class="section-card" style=" background-color:#afb1c9;">
+            <div formGroupName="address">
+                <span class="section-title">Endereço</span>
+                <div class="form-grid">
+                    <div class="input-group col-4">
+                        <label>CEP</label>
+                        <div class="input-wrapper">
+                            <input type="text" formControlName="zipCode" placeholder="00000-000"
+                            (keydown)="findAddressByZipCode($event, form.get('address')?.value.zipCode)">
+                            <span class="loader-icon" [class.show]="isSearchingAddress()">⏳</span>
+                            <span class="valid-icon" [class.show]="getControlStatus('zipCode', 'address') === 'VALID' && !isSearchingAddress()">✅</span>
+                            <span class="invalid-icon" [class.show]="getControlStatus('zipCode', 'address') === 'INVALID' && !isSearchingAddress()">❌</span>
+                        </div>
+                        @if (getControlError('zipCode', 'address')) {
+                            <span class="field-error">{{ getControlError('zipCode', 'address') }}</span>
+                        }
+                    </div>
+                    <div class="input-group col-12">
+                        <label>Logradouro</label>
+                        <div class="input-wrapper">
+                            <input type="text" class="uppercase" formControlName="street">
+                            <span class="valid-icon" [class.show]="getControlStatus('street', 'address') === 'VALID'">✅</span>
+                            <span class="invalid-icon" [class.show]="getControlStatus('street', 'address') === 'INVALID'">❌</span>
+                        </div>
+                        @if (getControlError('street', 'address')) {
+                            <span class="field-error">{{ getControlError('street', 'address') }}</span>
+                        }
+                    </div>
+                    <div class="input-group col-6">
+                        <label>Bairro</label>
+                        <div class="input-wrapper">
+                            <input type="text" class="uppercase" formControlName="neighborhood">
+                            <span class="valid-icon" [class.show]="getControlStatus('neighborhood', 'address') === 'VALID'">✅</span>
+                            <span class="invalid-icon" [class.show]="getControlStatus('neighborhood', 'address') === 'INVALID'">❌</span>
+                        </div>
+                        @if (getControlError('neighborhood', 'address')) {
+                            <span class="field-error">{{ getControlError('neighborhood', 'address') }}</span>
+                        }
+                    </div>
+                    <div class="input-group col-4">
+                        <label>Cidade</label>
+                        <div class="input-wrapper">
+                            <input type="text" class="uppercase" formControlName="city">
+                            <span class="valid-icon" [class.show]="getControlStatus('city', 'address') === 'VALID'">✅</span>
+                            <span class="invalid-icon" [class.show]="getControlStatus('city', 'address') === 'INVALID'">❌</span>
+                        </div>
+                        @if (getControlError('city', 'address')) {
+                            <span class="field-error">{{ getControlError('city', 'address') }}</span>
+                        }
+                    </div>
+                    <div class="input-group col-2">
+                        <label>UF</label>
+                        <div class="input-wrapper">
+                            <input type="text" class="uppercase" maxlength="2" formControlName="state" placeholder="SP">
+                            <span class="valid-icon" [class.show]="getControlStatus('state', 'address') === 'VALID'">✅</span>
+                            <span class="invalid-icon" [class.show]="getControlStatus('state', 'address') === 'INVALID'">❌</span>
+                        </div>
+                        @if (getControlError('state', 'address')) {
+                            <span class="field-error">{{ getControlError('state', 'address') }}</span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="input-group col-3">
+                <label>Número</label>
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="number">
+                    <span class="valid-icon" [class.show]="getControlStatus('number') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('number') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('number')) {
+                    <span class="field-error">{{ getControlError('number') }}</span>
+                }
+            </div>
+
+            <div class="input-group col-3">
+                <label>Complemento</label>
+                <input type="text" class="uppercase" formControlName="complement">
+            </div>
+
+        </div>
+
+
+
+
+        <div class="input-group col-12">
+            <label>Observações</label>
+            <textarea rows="3" class="uppercase" formControlName="notes"></textarea>
+        </div>
+    </div>
+
+
+    <!-- Contato -->
+    <div class="section-card">
+        <div class="section-header">
+            <span class="section-title">Contato</span>
+            <div class="contact-actions">
+                <span class="phone-limit">{{ phoneCount() }}/5</span>
+                <button class="header-btn phone-add-btn" type="button" (click)="addPhone()" [disabled]="isReadOnly() || !canAddPhone()" title="Adicionar telefone">➕</button>
+            </div>
+        </div>
+        <div class="form-grid" formArrayName="phones">
+            @for (phone of phonesArray.controls; track phone; let i = $index) {
+                <div class="input-group col-4">
+                    <label>Telefone {{ i + 1 }}</label>
+                    <div class="phone-row">
+                        <div class="input-wrapper">
+                            <input type="tel" [formControlName]="i" placeholder="(11) 99999-9999">
+                            <span class="valid-icon" [class.show]="getPhoneStatus(i) === 'VALID'">✅</span>
+                            <span class="invalid-icon" [class.show]="getPhoneStatus(i) === 'INVALID'">❌</span>
+                        </div>
+                        <button class="header-btn phone-remove-btn" type="button" (click)="removePhone(i)" [disabled]="isReadOnly() || !canRemovePhone()" title="Remover telefone">🗑️</button>
+                    </div>
+                    @if (getPhoneError(i)) {
+                        <span class="field-error">{{ getPhoneError(i) }}</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+        <button class="btn btn-save" (click)="save()" [disabled]="form.invalid || isReadOnly()">Salvar</button>
+        <button class="btn btn-delete" [disabled]="form.invalid || isReadOnly()">Excluir</button>
+    </div>
+
+    @if (errorMessage()) {
+        <rentafit-modal 
+            title="Atenção" 
+            [message]="errorMessage() ?? ''" 
+            type="error" 
+            (close)="clearError()">
+        </rentafit-modal>
+    }
+</div>

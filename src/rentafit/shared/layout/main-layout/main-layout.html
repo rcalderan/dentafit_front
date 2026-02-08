@@ -6,10 +6,13 @@
 
     <aside class="sidebar" [class.hidden]="!isSidebarVisible()">
         <nav class="nav-menu">
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER])) {
             <a routerLink="/finance/dashboard" routerLinkActive="active" class="nav-item" title="Finance">
                 <i class="icon">🏠</i>
             </a>
+            }
             
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
             <div class="nav-item-container" [class.open]="isCustomerSubmenuOpen()">
                 <button class="nav-item" (click)="toggleCustomerSubmenu()" title="Customers">
                     <i class="icon">👤</i>
@@ -28,7 +31,9 @@
                 </div>
                 }
             </div>
+            }
 
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
             <div class="nav-item-container" [class.open]="isRentalSubmenuOpen()">
                 <button class="nav-item" (click)="toggleRentalSubmenu()" title="Rental">
                     <i class="icon">📋</i>
@@ -44,7 +49,9 @@
                 </div>
                 }
             </div>
+            }
             
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
             <div class="nav-item-container" [class.open]="isProductSubmenuOpen()">
                 <button class="nav-item" (click)="toggleProductSubmenu()" title="Products">
                     <i class="icon">👗</i>
@@ -60,7 +67,9 @@
                 </div>
                 }
             </div>
+            }
 
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER])) {
             <div class="nav-item-container" [class.open]="isReportsSubmenuOpen()">
                 <button class="nav-item" (click)="toggleReportsSubmenu()" title="Reports">
                     <i class="icon">📈</i>
@@ -76,13 +85,21 @@
                 </div>
                 }
             </div>
+            }
 
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER])) {
             <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item" title="Admin">
                 <i class="icon">⚙️</i>
             </a>
+            }
+
+            <button class="nav-item logout-btn" (click)="logout()" title="Logout">
+                <i class="icon">🚪</i>
+            </button>
         </nav>
     </aside>
 
+    @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
     <div class="floating-action">
         <button class="btn-new-contract" routerLink="/rental/new">
             <span class="plus-icon">+</span>
@@ -93,6 +110,7 @@
             <span class="btn-text">Novo Contrato (Legacy)</span>
         </button>
     </div>
+    }
 
     <main class="main-content">
         <header class="top-bar">

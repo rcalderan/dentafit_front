@@ -1,0 +1,37 @@
+<div class="login-container">
+    <div class="login-card">
+        <h2>Welcome Back to CostumeCloud</h2>
+        
+        @if (errorMessage()) {
+        <div class="error-message">
+            {{ errorMessage() }}
+        </div>
+        }
+
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input 
+                type="text" 
+                id="username" 
+                [(ngModel)]="username"
+                placeholder="Enter username (admin)"
+                [disabled]="isLoading()"
+                (keyup.enter)="login()">
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input 
+                type="password" 
+                id="password" 
+                [(ngModel)]="password"
+                placeholder="Enter password"
+                [disabled]="isLoading()"
+                (keyup.enter)="login()">
+        </div>
+        <button 
+            (click)="login()" 
+            [disabled]="isLoading()">
+            {{ isLoading() ? 'Autenticando...' : 'Sign In' }}
+        </button>
+    </div>
+</div>
