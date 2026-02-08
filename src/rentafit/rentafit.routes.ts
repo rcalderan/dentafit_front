@@ -27,23 +27,23 @@ export const routes: Routes = [
             },
             {
                 path: 'customer/clothes',
-                loadComponent: () => import('./domains/product/features/legacy/clothes/clothes').then(m => m.Clothes),
+                loadComponent: () => import('./domains/product/components/clothes/clothes').then(m => m.Clothes),
                 canActivate: [roleGuard],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },
             {
                 path: 'product/registration',
-                loadComponent: () => import('./domains/product/features/registration/registration').then(m => m.Registration),
+                loadComponent: () => import('./domains/product/components/registration/registration.component').then(m => m.Registration),
                 canActivate: [roleGuard],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },
             {
                 path: 'product/search',
-                loadComponent: () => import('./domains/product/features/search/search').then(m => m.Search)
+                loadComponent: () => import('./domains/product/components/search/search').then(m => m.Search)
             },
             {
                 path: 'product/stock',
-                loadComponent: () => import('./domains/product/features/stock/stock').then(m => m.Stock),
+                loadComponent: () => import('./domains/product/components/stock/stock').then(m => m.Stock),
                 canActivate: [roleGuard],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },
