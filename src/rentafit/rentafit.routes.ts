@@ -33,7 +33,13 @@ export const routes: Routes = [
             },
             {
                 path: 'product/registration',
-                loadComponent: () => import('./domains/product/components/registration/registration.component').then(m => m.Registration),
+                loadComponent: () => import('./domains/product/components/rent-registration/rent-registration.component').then(m => m.Registration),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
+            },
+            {
+                path: 'product/retail-registration',
+                loadComponent: () => import('./domains/product/components/retail-registration/retail-registration.component').then(m => m.RetailRegistration),
                 canActivate: [roleGuard],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },
