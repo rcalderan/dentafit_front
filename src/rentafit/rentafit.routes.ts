@@ -26,14 +26,14 @@ export const routes: Routes = [
                 data: { roles: [UserRole.ADMIN] }
             },
             {
-                path: 'customer/clothes',
-                loadComponent: () => import('./domains/product/components/clothes/clothes').then(m => m.Clothes),
+                path: 'product/registration',
+                loadComponent: () => import('./domains/product/components/rent-registration/rent-registration.component').then(m => m.Registration),
                 canActivate: [roleGuard],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },
             {
-                path: 'product/registration',
-                loadComponent: () => import('./domains/product/components/registration/registration.component').then(m => m.Registration),
+                path: 'product/retail-registration',
+                loadComponent: () => import('./domains/product/components/retail-registration/retail-registration.component').then(m => m.RetailRegistration),
                 canActivate: [roleGuard],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },

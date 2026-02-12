@@ -11,7 +11,7 @@
                 <i class="icon">🏠</i>
             </a>
             }
-            
+
             @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
             <div class="nav-item-container" [class.open]="isCustomerSubmenuOpen()">
                 <button class="nav-item" (click)="toggleCustomerSubmenu()" title="Customers">
@@ -19,13 +19,16 @@
                 </button>
                 @if (isCustomerSubmenuOpen()) {
                 <div class="submenu">
-                    <a routerLink="/customer/registration" routerLinkActive="active" class="submenu-item" title="New Customer">
+                    <a routerLink="/customer/registration" routerLinkActive="active" class="submenu-item"
+                        title="New Customer">
                         <i class="icon">✨</i>
                     </a>
-                    <a routerLink="/customer/legacy" routerLinkActive="active" class="submenu-item" title="Legacy Customer">
+                    <a routerLink="/customer/legacy" routerLinkActive="active" class="submenu-item"
+                        title="Legacy Customer">
                         <i class="icon">🏛️</i>
                     </a>
-                    <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item" title="Devolucao Legacy">
+                    <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item"
+                        title="Devolucao Legacy">
                         <i class="icon">🔄</i>
                     </a>
                 </div>
@@ -40,17 +43,19 @@
                 </button>
                 @if (isRentalSubmenuOpen()) {
                 <div class="submenu">
-                    <a routerLink="/rental/management" routerLinkActive="active" class="submenu-item" title="Management">
+                    <a routerLink="/rental/management" routerLinkActive="active" class="submenu-item"
+                        title="Management">
                         <i class="icon">📊</i>
                     </a>
-                    <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item" title="Devolucao">
+                    <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item"
+                        title="Devolucao">
                         <i class="icon">🔄</i>
                     </a>
                 </div>
                 }
             </div>
             }
-            
+
             @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
             <div class="nav-item-container" [class.open]="isProductSubmenuOpen()">
                 <button class="nav-item" (click)="toggleProductSubmenu()" title="Products">
@@ -58,11 +63,13 @@
                 </button>
                 @if (isProductSubmenuOpen()) {
                 <div class="submenu">
-                    <a routerLink="/product/registration" routerLinkActive="active" class="submenu-item" title="New Product">
+                    <a routerLink="/product/registration" routerLinkActive="active" class="submenu-item"
+                        title="Cadastro Aluguel">
                         <i class="icon">✨</i>
                     </a>
-                    <a routerLink="/customer/clothes" routerLinkActive="active" class="submenu-item" title="Legacy Clothes">
-                        <i class="icon">🏛️</i>
+                    <a routerLink="/product/retail-registration" routerLinkActive="active" class="submenu-item"
+                        title="Cadastro Varejo">
+                        <i class="icon">🏷️</i>
                     </a>
                 </div>
                 }
@@ -76,10 +83,12 @@
                 </button>
                 @if (isReportsSubmenuOpen()) {
                 <div class="submenu">
-                    <a routerLink="/finance/relatorio-locacao-legacy" routerLinkActive="active" class="submenu-item" title="Relatorio Locação">
+                    <a routerLink="/finance/relatorio-locacao-legacy" routerLinkActive="active" class="submenu-item"
+                        title="Relatorio Locação">
                         <i class="icon">📋</i>
                     </a>
-                    <a routerLink="/finance/relatorio-devolucao-legacy" routerLinkActive="active" class="submenu-item" title="Relatorio Devolução">
+                    <a routerLink="/finance/relatorio-devolucao-legacy" routerLinkActive="active" class="submenu-item"
+                        title="Relatorio Devolução">
                         <i class="icon">🔄</i>
                     </a>
                 </div>
