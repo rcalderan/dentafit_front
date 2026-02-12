@@ -74,7 +74,10 @@
           "builder": "@angular/build:unit-test",
           "options": {
             "tsConfig": "tsconfig.spec.json",
-            "runnerConfig": true
+            "runnerConfig": true,
+            "watch": false,
+            "coverage": true,
+            "coverageReporters": ["text", "html", "lcov"]
           }
         }
       }

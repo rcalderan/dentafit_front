@@ -18,6 +18,8 @@ describe('RentafitComponent', () => {
     const fixture = TestBed.createComponent(RentafitComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, RentAFit');
+    const heading = compiled.querySelector('h1');
+    expect(heading).not.toBeNull();
+    expect(heading?.textContent ?? '').toContain('Hello, RentAFit');
   });
 });
