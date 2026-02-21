@@ -90,3 +90,25 @@ jobs:
         AWS_REGION: ${{ secrets.AWS_S3_REGION }}
         SOURCE_DIR: 'dist/RentAFit/browser'
 
+  notify:
+    needs: [build, deploy-aws]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - name: Notify on Success (Build + Deploy)
+      if: success() && needs.deploy-aws.result == 'success' || needs.deploy-aws.result == 'skipped'
+      run: |
+        echo "✅ Pipeline completed successfully!"
+        echo "Branch: ${{ github.ref }}"
+        echo "Commit: ${{ github.sha }}"
+        DEPLOY_STATUS="${{ needs.deploy-aws.result == 'success' && '✅ Deployed to AWS' || '⏭️  PR - Deploy skipped' }}"
+        echo "$DEPLOY_STATUS"
+
+    - name: Notify on Failure
+      if: failure()
+      run: |
+        echo "❌ Pipeline failed!"
+        echo "Branch: ${{ github.ref }}"
+        echo "Commit: ${{ github.sha }}"
+        FAILED_JOB="${{ needs.build.result == 'failure' && 'Build' || 'Deploy' }}"
+        echo "Failed job: $FAILED_JOB"
