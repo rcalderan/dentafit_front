@@ -102,5 +102,6 @@ export const routes: Routes = [
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER] }
             }
         ]
-    }
+    },
+    { path: '**', redirectTo: 'auth/login' }
 ];
