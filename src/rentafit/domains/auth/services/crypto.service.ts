@@ -1,16 +1,18 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { JSEncrypt } from 'jsencrypt';
 import bcrypt from "bcryptjs";
+import { APP_CONFIG } from '../../../shared/data/app-config.token';
 
 
 @Injectable({
   providedIn: 'root'
 })
 export class CryptoService {
-  private apiUrl = '/api/auth';
+  private readonly config = inject(APP_CONFIG);
+  private readonly apiUrl = `${this.config.apiBaseUrl}/api/auth`;
   private publicKey: string | null = null;
   private jsEncrypt: JSEncrypt = new JSEncrypt();
 

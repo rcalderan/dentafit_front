@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
+import { APP_CONFIG } from '../../../shared/data/app-config.token';
 import { HttpClient, HttpEventType } from '@angular/common/http';
 import { map, catchError, of } from 'rxjs';
 
@@ -6,6 +7,7 @@ import { map, catchError, of } from 'rxjs';
   providedIn: 'root'
 })
 export class NfseService {
+  private readonly config = inject(APP_CONFIG);
   uploadProgress = signal<number>(0);
   isUploading = signal<boolean>(false);
 
@@ -20,7 +22,7 @@ export class NfseService {
     this.uploadProgress.set(0);
 
     // Placeholder: In a real app, you'd GET the signed URL first
-    const mockSignedUrl = `https://your-bucket.s3.amazonaws.com/backups/${file.name}`;
+    const mockSignedUrl = `${this.config.s3BucketUrl}/backups/${file.name}`;
 
     return this.http.put(mockSignedUrl, file, {
       reportProgress: true,

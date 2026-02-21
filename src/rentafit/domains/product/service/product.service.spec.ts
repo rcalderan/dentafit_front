@@ -5,6 +5,7 @@ import { vi } from 'vitest';
 import { ProductService } from './product.service';
 import { ErrorMessages } from '../../../shared/data/error-messages';
 import { IRentalItem, IRetailItem } from '../data/Product.interface';
+import { APP_CONFIG } from '../../../shared/data/app-config.token';
 
 describe('ProductService', () => {
   let service: ProductService;
@@ -43,7 +44,10 @@ describe('ProductService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule]
+      imports: [HttpClientTestingModule],
+      providers: [
+        { provide: APP_CONFIG, useValue: { apiBaseUrl: '', s3BucketUrl: '' } }
+      ]
     });
     service = TestBed.inject(ProductService);
     httpMock = TestBed.inject(HttpTestingController);

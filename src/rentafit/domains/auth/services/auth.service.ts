@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
@@ -6,12 +6,14 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CryptoService } from './crypto.service';
 import { User, UserRole, LoginRequest, LoginResponse, RefreshTokenRequest } from '../data/user.model';
 import { ErrorMessages, HTTP_ERROR_MAP } from '../../../shared/data/error-messages';
+import { APP_CONFIG } from '../../../shared/data/app-config.token';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = '/api/auth';
+  private readonly config = inject(APP_CONFIG);
+  private readonly apiUrl = `${this.config.apiBaseUrl}/api/auth`;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 

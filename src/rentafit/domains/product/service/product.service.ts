@@ -1,16 +1,18 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { ErrorMessages, HTTP_ERROR_MAP } from '../../../shared/data/error-messages';
 import { IProduct, IRentalItem, IRetailItem } from '../data/Product.interface';
+import { APP_CONFIG } from '../../../shared/data/app-config.token';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
-  private readonly rentalApiUrl = '/api/v1/products/rental';
-  private readonly retailApiUrl = '/api/v1/products/retail';
+  private readonly config = inject(APP_CONFIG);
+  private readonly rentalApiUrl = `${this.config.apiBaseUrl}/api/v1/products/rental`;
+  private readonly retailApiUrl = `${this.config.apiBaseUrl}/api/v1/products/retail`;
 
   constructor(private readonly httpClient: HttpClient) { }
 

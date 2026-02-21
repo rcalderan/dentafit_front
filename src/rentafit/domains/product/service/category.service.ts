@@ -1,15 +1,17 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ErrorMessages, HTTP_ERROR_MAP } from '../../../shared/data/error-messages';
 import { CategoryProductType, ICategory } from '../data/Product.interface';
+import { APP_CONFIG } from '../../../shared/data/app-config.token';
 
 @Injectable({
     providedIn: 'root'
 })
 export class CategoryService {
-    private readonly apiUrl = '/api/v1/categories';
+    private readonly config = inject(APP_CONFIG);
+    private readonly apiUrl = `${this.config.apiBaseUrl}/api/v1/categories`;
 
     constructor(private readonly httpClient: HttpClient) { }
 
