@@ -34,7 +34,7 @@ jobs:
     - name: Build project
       env:
         API_BASE_URL: ${{ secrets.API_BASE_URL }}
-        S3_BUCKET_URL: ${{ secrets.S3_BUCKET_URL }}
+        AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
       run: npm run build:prod
 
     - name: Configure AWS credentials
