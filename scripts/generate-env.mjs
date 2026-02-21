@@ -67,7 +67,7 @@ const content = `// AUTO-GENERATED — do not edit manually.
 // Run: node scripts/generate-env.mjs
 export const environment = {
   apiBaseUrl: '${merged.API_BASE_URL}',
-  s3BucketUrl: '${merged.S3_BUCKET_URL}',
+  s3BucketUrl: '${merged.AWS_S3_BUCKET}',
 };
 `;
 
