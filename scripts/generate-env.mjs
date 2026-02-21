@@ -16,7 +16,7 @@ const rootDir = resolve(__dirname, '..');
 const envFile = resolve(rootDir, '.env');
 const outputFile = resolve(rootDir, 'src/environments/environment.prod.ts');
 
-const REQUIRED_VARS = ['API_BASE_URL', 'S3_BUCKET_URL'];
+const REQUIRED_VARS = ['API_BASE_URL', 'AWS_S3_BUCKET_URL'];
 
 /** Minimal .env parser — no external dependencies needed. */
 function parseEnvFile(content) {
@@ -33,21 +33,30 @@ function parseEnvFile(content) {
   return vars;
 }
 
-// Merge: .env file values are overridden by actual process.env vars (CI-friendly)
+// 1. Start from .env file (local dev), if present
 let fileVars = {};
 if (existsSync(envFile)) {
   fileVars = parseEnvFile(readFileSync(envFile, 'utf-8'));
-} else {
-  console.warn('⚠️   .env file not found — falling back to process.env variables.');
+  console.log('📄  Loaded .env file.');
 }
 
+// 2. process.env always wins over .env (CI secrets injected via workflow env: block)
 const merged = { ...fileVars };
 for (const key of REQUIRED_VARS) {
-  if (process.env[key]) merged[key] = process.env[key];
+  const val = process.env[key];
+  if (val !== undefined && val !== '') {
+    merged[key] = val;
+  }
+}
+
+// Debug: show what was resolved (values masked for security)
+for (const key of REQUIRED_VARS) {
+  const val = merged[key];
+  console.log(`    ${key}: ${val ? `${val.slice(0, 12)}...` : '(not set)'}`);
 }
 
 // Validate all required vars are present
-const missing = REQUIRED_VARS.filter((k) => !merged[k]);
+const missing = REQUIRED_VARS.filter((k) => !merged[k] || merged[k].trim() === '');
 if (missing.length > 0) {
   console.error('❌  Missing required environment variables:', missing.join(', '));
   console.error('    Create a .env file based on .env.template or set them in CI.');
@@ -58,11 +67,11 @@ const content = `// AUTO-GENERATED — do not edit manually.
 // Run: node scripts/generate-env.mjs
 export const environment = {
   apiBaseUrl: '${merged.API_BASE_URL}',
-  s3BucketUrl: '${merged.S3_BUCKET_URL}',
+  s3BucketUrl: '${merged.AWS_S3_BUCKET_URL}',
 };
 `;
 
 writeFileSync(outputFile, content, 'utf-8');
 console.log('✅  src/environments/environment.prod.ts generated successfully.');
 console.log(`    API_BASE_URL  → ${merged.API_BASE_URL}`);
-console.log(`    S3_BUCKET_URL → ${merged.S3_BUCKET_URL}`);
+console.log(`    S3_BUCKET_URL → ${merged.AWS_S3_BUCKET_URL}`);
