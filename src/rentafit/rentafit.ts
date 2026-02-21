@@ -8,5 +8,4 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './rentafit.css'
 })
 export class RentafitComponent {
-  protected readonly title = signal('RentAFit');
 }
