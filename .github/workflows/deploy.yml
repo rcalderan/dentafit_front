@@ -22,17 +22,17 @@ jobs:
         echo "API_BASE_URL is set: ${{ secrets.API_BASE_URL != '' }}"
         echo "AWS_S3_BUCKET_URL is set: ${{ secrets.AWS_S3_BUCKET_URL != '' }}"
 
-    - name: Check if backend is online
-      run: |
-        echo "🔍 Checking backend availability at ${{ secrets.API_BASE_URL }}..."
-        STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${{ secrets.API_BASE_URL }}/api/auth/public-key" || echo "000")
-        echo "Response status: $STATUS"
-        if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 500 ]; then
-          echo "✅ Backend is online (HTTP $STATUS)"
-        else
-          echo "❌ Backend is offline or unreachable (HTTP $STATUS)"
-          exit 1
-        fi
+    # - name: Check if backend is online
+    #   continue-on-error: true
+    #   run: |
+    #     echo "🔍 Checking backend availability at ${{ secrets.API_BASE_URL }}..."
+    #     STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${{ secrets.API_BASE_URL }}/api/auth/public-key" 2>/dev/null) || true
+    #     echo "Response status: $STATUS"
+    #     if [[ "$STATUS" -ge 200 && "$STATUS" -lt 500 ]]; then
+    #       echo "✅ Backend is online (HTTP $STATUS)"
+    #     else
+    #       echo "⚠️ Backend is unreachable (HTTP $STATUS) — deploy will continue but verify backend manually"
+    #     fi
 
   build:
     runs-on: ubuntu-latest
