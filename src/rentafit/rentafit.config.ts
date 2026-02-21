@@ -3,6 +3,8 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './rentafit.routes';
 import { authInterceptor } from './domains/auth/interceptors/auth.interceptor';
+import { environment } from '../environments/environment';
+import { APP_CONFIG } from './shared/data/app-config.token';
 
 export const rentafitConfig: ApplicationConfig = {
   providers: [
@@ -11,6 +13,7 @@ export const rentafitConfig: ApplicationConfig = {
     provideRouter(routes),
     provideHttpClient(
       withInterceptors([authInterceptor])
-    )
+    ),
+    { provide: APP_CONFIG, useValue: environment },
   ]
 };

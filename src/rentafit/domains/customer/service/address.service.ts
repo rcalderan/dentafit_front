@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map, timeout } from 'rxjs/operators';
 import { IAddress, AddressResponse } from '../data/address.model';
 import { HTTP_ERROR_MAP, ErrorMessages } from '../../../shared/data/error-messages';
+import { APP_CONFIG } from '../../../shared/data/app-config.token';
 
 /**
  * Serviço responsável por operações relacionadas a endereços
@@ -13,7 +14,8 @@ import { HTTP_ERROR_MAP, ErrorMessages } from '../../../shared/data/error-messag
   providedIn: 'root'
 })
 export class AddressService {
-  private readonly apiUrl = '/api/v1/addresses';
+  private readonly config = inject(APP_CONFIG);
+  private readonly apiUrl = `${this.config.apiBaseUrl}/api/v1/addresses`;
   private readonly requestTimeout = 30000; // 30 segundos
 
   constructor(private http: HttpClient) {}

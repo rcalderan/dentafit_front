@@ -4,6 +4,7 @@ import { CustomerService } from './customer.service';
 import { ICustomer } from '../data/Customer.interface';
 import { ErrorMessages } from '../../../shared/data/error-messages';
 import { lastValueFrom } from 'rxjs';
+import { APP_CONFIG } from '../../../shared/data/app-config.token';
 
 describe('CustomerService', () => {
   let service: CustomerService;
@@ -32,7 +33,10 @@ describe('CustomerService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule]
+      imports: [HttpClientTestingModule],
+      providers: [
+        { provide: APP_CONFIG, useValue: { apiBaseUrl: '', s3BucketUrl: '' } }
+      ]
     });
     service = TestBed.inject(CustomerService);
     httpMock = TestBed.inject(HttpTestingController);
