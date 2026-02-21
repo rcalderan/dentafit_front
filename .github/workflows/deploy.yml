@@ -7,9 +7,26 @@ on:
     branches: [ develop ]
 
 jobs:
-  build-and-test:
+  validation:
     runs-on: ubuntu-latest
     environment: develop
+    name: Validation
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check if secrets are available
+      run: |
+        echo "ID is set: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}"
+        echo "Region is set: ${{ secrets.AWS_S3_REGION != '' }}"
+        echo "API_BASE_URL is set: ${{ secrets.API_BASE_URL != '' }}"
+        echo "AWS_S3_BUCKET_URL is set: ${{ secrets.AWS_S3_BUCKET_URL != '' }}"
+
+  build:
+    runs-on: ubuntu-latest
+    environment: develop
+    needs: validation
+    name: Build
 
     steps:
     - uses: actions/checkout@v4
@@ -19,11 +36,6 @@ jobs:
       with:
         node-version: 22.x
         cache: 'npm'
-
-    - name: Check if secrets are available
-      run: |
-        echo "ID is set: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}"
-        echo "Region is set: ${{ secrets.AWS_S3_REGION != '' }}"
 
     - name: Install dependencies
       run: npm ci
@@ -36,6 +48,29 @@ jobs:
         API_BASE_URL: ${{ secrets.API_BASE_URL }}
         AWS_S3_BUCKET_URL: ${{ secrets.AWS_S3_BUCKET_URL }}
       run: npm run build:prod
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist-build
+        path: dist/RentAFit/browser
+        retention-days: 1
+
+  deploy-aws:
+    runs-on: ubuntu-latest
+    environment: develop
+    needs: build
+    if: github.event_name == 'push'
+    name: Deploy AWS
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: dist-build
+        path: dist/RentAFit/browser
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
