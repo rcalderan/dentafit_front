@@ -23,14 +23,14 @@
                         title="New Customer">
                         <i class="icon">✨</i>
                     </a>
-                    <a routerLink="/customer/legacy" routerLinkActive="active" class="submenu-item"
+                    <!-- <a routerLink="/customer/legacy" routerLinkActive="active" class="submenu-item"
                         title="Legacy Customer">
                         <i class="icon">🏛️</i>
                     </a>
                     <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item"
                         title="Devolucao Legacy">
                         <i class="icon">🔄</i>
-                    </a>
+                    </a> -->
                 </div>
                 }
             </div>
@@ -47,10 +47,10 @@
                         title="Management">
                         <i class="icon">📊</i>
                     </a>
-                    <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item"
+                    <!-- <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item"
                         title="Devolucao">
                         <i class="icon">🔄</i>
-                    </a>
+                    </a> -->
                 </div>
                 }
             </div>
@@ -76,7 +76,7 @@
             </div>
             }
 
-            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER])) {
+            <!-- @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER])) {
             <div class="nav-item-container" [class.open]="isReportsSubmenuOpen()">
                 <button class="nav-item" (click)="toggleReportsSubmenu()" title="Reports">
                     <i class="icon">📈</i>
@@ -94,7 +94,7 @@
                 </div>
                 }
             </div>
-            }
+            } -->
 
             @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER])) {
             <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item" title="Admin">
@@ -108,7 +108,7 @@
         </nav>
     </aside>
 
-    @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
+    <!-- @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
     <div class="floating-action">
         <button class="btn-new-contract" routerLink="/rental/new">
             <span class="plus-icon">+</span>
@@ -119,7 +119,7 @@
             <span class="btn-text">Novo Contrato (Legacy)</span>
         </button>
     </div>
-    }
+    } -->
 
     <main class="main-content">
         <header class="top-bar">
