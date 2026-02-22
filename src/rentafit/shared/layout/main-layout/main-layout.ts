@@ -53,8 +53,8 @@ export class MainLayout {
   protected toggleSidebar(): void {
     this.isSidebarVisible.update(visible => !visible);
   }
-
-  private closeAllSubmenus(): void {
+  
+  public closeAllSubmenus(): void {
     this.isCustomerSubmenuOpen.set(false);
     this.isProductSubmenuOpen.set(false);
     this.isRentalSubmenuOpen.set(false);

@@ -7,7 +7,7 @@
     <aside class="sidebar" [class.hidden]="!isSidebarVisible()">
         <nav class="nav-menu">
             @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER])) {
-            <a routerLink="/finance/dashboard" routerLinkActive="active" class="nav-item" title="Finance">
+            <a routerLink="/finance/dashboard" routerLinkActive="active" class="nav-item" title="Finance" (click)="closeAllSubmenus()">
                 <i class="icon">🏠</i>
             </a>
             }
@@ -21,7 +21,7 @@
                 <div class="submenu">
                     <a routerLink="/customer/registration" routerLinkActive="active" class="submenu-item"
                         title="New Customer">
-                        <i class="icon">✨</i>
+                        <span>New Customer</span>
                     </a>
                     <!-- <a routerLink="/customer/legacy" routerLinkActive="active" class="submenu-item"
                         title="Legacy Customer">
@@ -45,7 +45,7 @@
                 <div class="submenu">
                     <a routerLink="/rental/management" routerLinkActive="active" class="submenu-item"
                         title="Management">
-                        <i class="icon">📊</i>
+                        <span>Management</span>
                     </a>
                     <!-- <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item"
                         title="Devolucao">
@@ -65,11 +65,11 @@
                 <div class="submenu">
                     <a routerLink="/product/registration" routerLinkActive="active" class="submenu-item"
                         title="Cadastro Aluguel">
-                        <i class="icon">✨</i>
+                        <span>Cadastro Aluguel</span>
                     </a>
                     <a routerLink="/product/retail-registration" routerLinkActive="active" class="submenu-item"
                         title="Cadastro Varejo">
-                        <i class="icon">🏷️</i>
+                        <span>Cadastro Varejo</span>
                     </a>
                 </div>
                 }
@@ -97,7 +97,7 @@
             } -->
 
             @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER])) {
-            <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item" title="Admin">
+            <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item" title="Admin" (click)="closeAllSubmenus()">
                 <i class="icon">⚙️</i>
             </a>
             }

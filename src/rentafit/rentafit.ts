@@ -1,5 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { Title } from '@angular/platform-browser';
+import { APP_CONFIG } from './shared/data/app-config.token';
 
 @Component({
   selector: 'rentafit-root',
@@ -7,5 +9,12 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './rentafit.html',
   styleUrl: './rentafit.css'
 })
-export class RentafitComponent {
+export class RentafitComponent implements OnInit {
+  private readonly config = inject(APP_CONFIG);
+  private readonly titleService = inject(Title);
+  title = signal(this.config.appName);
+
+  ngOnInit(): void {
+    this.titleService.setTitle(this.config.appName);
+  }
 }
