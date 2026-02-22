@@ -31,13 +31,13 @@
             <div [class]="!isFormEmpty() ? 'input-group col-8' : 'input-group col-9'">
                 <label>Categoria</label>
                 <div class="input-wrapper">
-                    <select formControlName="categoryId">
-                        <option value="" disabled>Selecione...</option>
-                        @for (cat of categories(); track cat.id) {
-                        <option [value]="cat.id">{{ cat.displayName || cat.name }}</option>
-                        }
-                    </select>
+                    <input type="text" class="uppercase" formControlName="categoryName" placeholder="Ex: Vestido de Noiva" readonly>
+                    <button class="category-search-btn" type="button" (click)="openCategoryModal()"
+                        title="Buscar Categoria">🔍</button>
                 </div>
+                @if (getControlError('categoryName')) {
+                <span class="field-error">{{ getControlError('categoryName') }}</span>
+                }
             </div>
 
             @if (!isFormEmpty()) {
@@ -194,5 +194,11 @@
     @if (errorMessage()) {
     <rentafit-modal title="Atenção" [message]="errorMessage() ?? ''" type="error" (close)="clearError()">
     </rentafit-modal>
+    }
+
+    @if (isCategoryModalOpen()) {
+    <rentafit-category-modal productType="RENTAL" (closed)="closeCategoryModal()"
+        (categorySelected)="onCategorySelected($event)">
+    </rentafit-category-modal>
     }
 </div>

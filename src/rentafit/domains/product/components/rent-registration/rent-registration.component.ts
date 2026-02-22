@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
-import { CategoryService } from '../../service/category.service';
+import { CategoryModalComponent } from '../categories/category-modal.component';
 import {
   IRentalItem,
   IRentalHistoryItem,
@@ -19,20 +19,19 @@ import { HttpErrorResponse } from '@angular/common/http';
 @Component({
   selector: 'rentafit-registration',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, ModalComponent, CategoryModalComponent],
   templateUrl: './rent-registration.component.html',
   styleUrl: './rent-registration.component.css',
 })
 export class Registration implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private service = inject(ProductService);
-  private categoryService = inject(CategoryService);
   private router = inject(Router);
   private destroy$ = new Subject<void>();
 
   form: FormGroup;
   isReadOnly = signal(false);
-  categories = signal<ICategory[]>([]);
+  isCategoryModalOpen = signal(false);
   errorMessage = signal<string[] | string | null>(null);
 
   conditionOptions: { value: ProductCondition; label: string }[] = [
@@ -58,8 +57,7 @@ export class Registration implements OnInit, OnDestroy {
       name: ['', [Validators.required, Validators.minLength(3)]],
       condition: ['', Validators.required],
       description: [''],
-      categoryId: ['', Validators.required], // Usando ID para combobox, mas vamos manter categoryName para compatibilidade se necessário, mas o correto é ID
-      categoryName: [''], // Mantendo oculto ou atualizando sync
+      categoryName: ['', Validators.required],
       brand: [''],
       size: ['', Validators.required],
       color: ['', Validators.required],
@@ -70,15 +68,6 @@ export class Registration implements OnInit, OnDestroy {
       notes: ['']
     });
 
-    // Sincroniza categoryId com categoryName quando selecionado
-    this.form.get('categoryId')?.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(id => {
-        const selected = this.categories().find(c => c.id === id);
-        if (selected) {
-          this.form.patchValue({ categoryName: selected.displayName || selected.name }, { emitEvent: false });
-        }
-      });
   }
 
   ngOnInit(): void {
@@ -90,8 +79,6 @@ export class Registration implements OnInit, OnDestroy {
       createdAt: '', updatedAt: ''
     };
     this.form.patchValue(initialData);
-
-    this.loadCategories();
   }
 
   ngOnDestroy(): void {
@@ -99,13 +86,17 @@ export class Registration implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  loadCategories(): void {
-    this.categoryService.getByType('RENTAL')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (data) => this.categories.set(data),
-        error: (err) => console.error('Erro ao carregar categorias', err)
-      });
+  openCategoryModal(): void {
+    this.isCategoryModalOpen.set(true);
+  }
+
+  closeCategoryModal(): void {
+    this.isCategoryModalOpen.set(false);
+  }
+
+  onCategorySelected(category: ICategory): void {
+    this.form.patchValue({ categoryName: category.displayName || category.name });
+    this.isCategoryModalOpen.set(false);
   }
 
   searchByLegacyId(): void {
@@ -117,12 +108,6 @@ export class Registration implements OnInit, OnDestroy {
       .subscribe({
         next: (product) => {
           this.form.patchValue(product);
-          // Atualiza o select de categoria baseado no nome se o ID não veio (adaptação)
-          if (product.categoryName && !product.categoryId) {
-            const cat = this.categories().find(c => (c.displayName || c.name) === product.categoryName);
-            if (cat) this.form.patchValue({ categoryId: cat.id });
-          }
-
           this.isReadOnly.set(true);
           this.form.get('legacyId')?.disable();
           this.form.disable();
@@ -166,9 +151,9 @@ export class Registration implements OnInit, OnDestroy {
   isFormEmpty(): boolean {
     const legacyId = (this.form.get('legacyId')?.value || '').toString().trim();
     const name = (this.form.get('name')?.value || '').toString().trim();
-    const categoryId = (this.form.get('categoryId')?.value || '').toString().trim();
+    const categoryName = (this.form.get('categoryName')?.value || '').toString().trim();
 
-    return !legacyId && !name && !categoryId;
+    return !legacyId && !name && !categoryName;
   }
 
   save(): void {
