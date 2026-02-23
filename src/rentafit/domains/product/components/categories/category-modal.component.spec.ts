@@ -306,6 +306,8 @@ describe('CategoryModalComponent', () => {
     component.categorySelected.subscribe(selectedSpy);
     component.closed.subscribe(closedSpy);
 
+    // showInactive must be true so the inactive item appears
+    component.showInactive.set(true);
     component.categories.set([
       {
         id: 'cat-1',
@@ -382,5 +384,101 @@ describe('CategoryModalComponent', () => {
     const successMessage = fixture.nativeElement.querySelector('.message-success');
     expect(errorMessage).not.toBeNull();
     expect(successMessage).not.toBeNull();
+  });
+
+  // ── showInactive ────────────────────────────────────────────────────────────
+
+  it('hides inactive categories by default', () => {
+    categoryService.getByType.mockReturnValue(of([]));
+    const fixture = TestBed.createComponent(CategoryModalComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.categories.set([
+      { id: 'cat-1', name: 'Ativo', productType: 'RENTAL', active: true },
+      { id: 'cat-2', name: 'Inativo', productType: 'RENTAL', active: false }
+    ]);
+
+    expect(component.visibleCategories.length).toBe(1);
+    expect(component.visibleCategories[0].name).toBe('Ativo');
+  });
+
+  it('shows all categories when showInactive is true', () => {
+    categoryService.getByType.mockReturnValue(of([]));
+    const fixture = TestBed.createComponent(CategoryModalComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.categories.set([
+      { id: 'cat-1', name: 'Ativo', productType: 'RENTAL', active: true },
+      { id: 'cat-2', name: 'Inativo', productType: 'RENTAL', active: false }
+    ]);
+    component.showInactive.set(true);
+
+    expect(component.visibleCategories.length).toBe(2);
+  });
+
+  it('checkbox toggles showInactive', () => {
+    categoryService.getByType.mockReturnValue(of([]));
+    const fixture = TestBed.createComponent(CategoryModalComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.showInactive()).toBe(false);
+    const checkbox = fixture.nativeElement.querySelector('.toggle-inactive input');
+    checkbox?.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    expect(component.showInactive()).toBe(true);
+  });
+
+  // ── hoveredCategory ─────────────────────────────────────────────────────────
+
+  it('sets hoveredCategory on mouseenter and clears on mouseleave', () => {
+    categoryService.getByType.mockReturnValue(of([]));
+    const fixture = TestBed.createComponent(CategoryModalComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const category = { id: 'cat-1', name: 'Vestidos', description: 'Desc', productType: 'RENTAL' as const, active: true };
+    component.categories.set([category]);
+    component.isLoading.set(false);
+    component.isFormVisible.set(false);
+    fixture.detectChanges();
+
+    const item = fixture.nativeElement.querySelector('.category-item');
+    item?.dispatchEvent(new MouseEvent('mouseenter'));
+    expect(component.hoveredCategory()).toEqual(category);
+
+    item?.dispatchEvent(new MouseEvent('mouseleave'));
+    expect(component.hoveredCategory()).toBeNull();
+  });
+
+  it('renders description in footer on hover', () => {
+    categoryService.getByType.mockReturnValue(of([]));
+    const fixture = TestBed.createComponent(CategoryModalComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.hoveredCategory.set({
+      id: 'cat-1', name: 'Vestidos', description: 'Descricao da categoria',
+      productType: 'RENTAL', active: true
+    });
+    fixture.detectChanges();
+
+    const footerDesc = fixture.nativeElement.querySelector('.footer-detail-desc');
+    expect(footerDesc?.textContent).toContain('Descricao da categoria');
+  });
+
+  it('renders hint in footer when no category is hovered', () => {
+    categoryService.getByType.mockReturnValue(of([]));
+    const fixture = TestBed.createComponent(CategoryModalComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.hoveredCategory.set(null);
+    fixture.detectChanges();
+
+    const hint = fixture.nativeElement.querySelector('.footer-hint');
+    expect(hint).not.toBeNull();
   });
 });

@@ -33,6 +33,14 @@ export class CategoryModalComponent implements OnInit, OnDestroy {
     editingCategory = signal<ICategory | null>(null);
     errorMessage = signal<string | null>(null);
     successMessage = signal<string | null>(null);
+    showInactive = signal(false);
+    hoveredCategory = signal<ICategory | null>(null);
+
+    get visibleCategories(): ICategory[] {
+        return this.showInactive()
+            ? this.categories()
+            : this.categories().filter(c => c.active !== false);
+    }
 
     form: FormGroup;
 
