@@ -1,8 +1,9 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 
 @Component({
   selector: 'rentafit-login',
@@ -11,6 +12,10 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './login.component.css'
 })
 export class Login implements OnInit {
+  
+  private readonly config = inject(APP_CONFIG);
+  title = signal(this.config.appName);
+  
   username = '';
   password = '';
   errorMessage = signal<string | null>(null);

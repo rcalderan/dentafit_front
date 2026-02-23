@@ -16,7 +16,7 @@ const rootDir = resolve(__dirname, '..');
 const envFile = resolve(rootDir, '.env');
 const outputFile = resolve(rootDir, 'src/environments/environment.prod.ts');
 
-const REQUIRED_VARS = ['API_BASE_URL', 'AWS_S3_BUCKET_URL'];
+const REQUIRED_VARS = ['APP_NAME', 'API_BASE_URL', 'AWS_S3_BUCKET_URL'];
 
 /** Minimal .env parser — no external dependencies needed. */
 function parseEnvFile(content) {
@@ -66,6 +66,7 @@ if (missing.length > 0) {
 const content = `// AUTO-GENERATED — do not edit manually.
 // Run: node scripts/generate-env.mjs
 export const environment = {
+  appName: '${merged.APP_NAME}',
   apiBaseUrl: '${merged.API_BASE_URL}',
   s3BucketUrl: '${merged.AWS_S3_BUCKET_URL}',
 };
@@ -73,5 +74,6 @@ export const environment = {
 
 writeFileSync(outputFile, content, 'utf-8');
 console.log('✅  src/environments/environment.prod.ts generated successfully.');
+console.log(`    APP_NAME      → ${merged.APP_NAME}`);
 console.log(`    API_BASE_URL  → ${merged.API_BASE_URL}`);
 console.log(`    S3_BUCKET_URL → ${merged.AWS_S3_BUCKET_URL}`);

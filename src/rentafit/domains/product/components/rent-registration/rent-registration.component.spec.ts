@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+﻿import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
@@ -10,13 +10,12 @@ import { IRentalItem, ICategory } from '../../data/Product.interface';
 
 describe('Registration', () => {
   let productService: { saveRentalItem: ReturnType<typeof vi.fn>; getRentalItemByLegacyId: ReturnType<typeof vi.fn> };
-  let categoryService: { getByType: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
 
   const buildValidForm = (component: Registration) => {
     component.form.patchValue({
       name: 'Terno Azul',
-      categoryId: 'cat-1',
+      categoryName: 'Vestidos',
       condition: 'NEW',
       size: 'M',
       color: 'Azul',
@@ -31,109 +30,136 @@ describe('Registration', () => {
       saveRentalItem: vi.fn(),
       getRentalItemByLegacyId: vi.fn()
     };
-    categoryService = {
-      getByType: vi.fn()
-    };
-    router = {
-      navigate: vi.fn()
-    };
+    router = { navigate: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [Registration],
       providers: [
         { provide: ProductService, useValue: productService },
-        { provide: CategoryService, useValue: categoryService },
+        { provide: CategoryService, useValue: { getByType: vi.fn().mockReturnValue(of([])) } },
         { provide: Router, useValue: router }
       ]
     }).compileComponents();
   });
 
   it('creates the component', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const fixture = TestBed.createComponent(Registration);
-    const component = fixture.componentInstance;
     fixture.detectChanges();
-    expect(component).toBeTruthy();
+    expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('loads categories on init', () => {
-    const categories: ICategory[] = [
-      { id: 'cat-1', name: 'Vestidos', productType: 'RENTAL', active: true }
-    ];
-    categoryService.getByType.mockReturnValue(of(categories));
+  //  Category modal 
+
+  it('opens and closes the category modal', () => {
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
 
-    expect(categoryService.getByType).toHaveBeenCalledWith('RENTAL');
-    expect(component.categories()).toEqual(categories);
+    expect(component.isCategoryModalOpen()).toBe(false);
+    component.openCategoryModal();
+    expect(component.isCategoryModalOpen()).toBe(true);
+    component.closeCategoryModal();
+    expect(component.isCategoryModalOpen()).toBe(false);
   });
+
+  it('sets categoryName and closes modal on category selected', () => {
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.openCategoryModal();
+    const category: ICategory = { id: 'cat-1', name: 'vestidos', displayName: 'Vestidos', productType: 'RENTAL', active: true };
+    component.onCategorySelected(category);
+
+    expect(component.form.get('categoryName')?.value).toBe('Vestidos');
+    expect(component.isCategoryModalOpen()).toBe(false);
+  });
+
+  it('uses name as fallback when displayName is absent', () => {
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.onCategorySelected({ id: 'cat-2', name: 'acessorios', productType: 'RENTAL', active: true });
+    expect(component.form.get('categoryName')?.value).toBe('acessorios');
+  });
+
+  it('renders category modal in the DOM when open', () => {
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.isCategoryModalOpen.set(true);
+    fixture.detectChanges();
+
+    const modal = fixture.nativeElement.querySelector('rentafit-category-modal');
+    expect(modal).not.toBeNull();
+  });
+
+  //  Legacy ID search 
 
   it('does not search by legacy id when field is empty', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
 
     component.form.get('legacyId')?.setValue('');
     component.searchByLegacyId();
-
     expect(productService.getRentalItemByLegacyId).not.toHaveBeenCalled();
   });
 
-  it('searches by legacy id and maps category name to id', () => {
-    categoryService.getByType.mockReturnValue(of([]));
+  it('searches by legacy id, patches the form and marks as read-only', () => {
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
 
-    component.categories.set([
-      { id: 'cat-1', name: 'Vestidos', displayName: 'Vestidos', productType: 'RENTAL', active: true }
-    ]);
-
     const product: IRentalItem = {
-      legacyId: 'L-1001',
-      name: 'Vestido',
-      status: 'AVAILABLE',
-      value: 10,
-      categoryName: 'Vestidos',
-      size: 'M',
-      color: 'Azul',
-      brand: '',
-      description: '',
-      notes: '',
-      condition: 'NEW'
+      legacyId: 'L-1001', name: 'Vestido', status: 'AVAILABLE',
+      value: 10, categoryName: 'Vestidos', size: 'M', color: 'Azul',
+      brand: '', description: '', notes: '', condition: 'NEW'
     };
 
     productService.getRentalItemByLegacyId.mockReturnValue(of(product));
     component.form.get('legacyId')?.setValue('L-1001');
-
     component.searchByLegacyId();
 
     expect(productService.getRentalItemByLegacyId).toHaveBeenCalledWith('L-1001');
-    expect(component.form.get('categoryId')?.value).toBe('cat-1');
+    expect(component.form.get('categoryName')?.value).toBe('Vestidos');
     expect(component.isReadOnly()).toBe(true);
-    expect(component.form.get('legacyId')?.disabled).toBe(true);
     expect(component.form.get('name')?.disabled).toBe(true);
   });
 
   it('ignores 404 errors when searching by legacy id', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
 
-    const error = new HttpErrorResponse({ status: 404 });
-    productService.getRentalItemByLegacyId.mockReturnValue(throwError(() => error));
+    productService.getRentalItemByLegacyId.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 404 }))
+    );
     component.form.get('legacyId')?.setValue('L-404');
-
     component.searchByLegacyId();
 
     expect(component.errorMessage()).toBeNull();
   });
 
+  it('stores error message on non-404 search error', () => {
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    productService.getRentalItemByLegacyId.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 500 }))
+    );
+    component.form.get('legacyId')?.setValue('L-500');
+    component.searchByLegacyId();
+
+    expect(component.errorMessage()).not.toBeNull();
+  });
+
+  //  Form helpers 
+
   it('returns proper control status and error', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
@@ -154,7 +180,6 @@ describe('Registration', () => {
   });
 
   it('returns status class based on status value', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
@@ -162,53 +187,46 @@ describe('Registration', () => {
     component.form.get('status')?.setValue('AVAILABLE');
     expect(component.getStatusClass()).toBe('green');
 
+    component.form.get('status')?.setValue('RENTED');
+    expect(component.getStatusClass()).toBe('green');
+
     component.form.get('status')?.setValue('DAMAGED');
     expect(component.getStatusClass()).toBe('red');
   });
 
   it('detects when the form is empty', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
 
-    component.form.patchValue({ legacyId: '', name: '', categoryId: '' });
+    component.form.patchValue({ legacyId: '', name: '', categoryName: '' });
     expect(component.isFormEmpty()).toBe(true);
 
     component.form.patchValue({ name: 'Alguma coisa' });
     expect(component.isFormEmpty()).toBe(false);
+
+    component.form.patchValue({ name: '', categoryName: 'Vestidos' });
+    expect(component.isFormEmpty()).toBe(false);
   });
 
+  //  Save 
+
   it('does not save when form is invalid', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
 
     component.form.get('name')?.setValue('');
     component.save();
-
     expect(productService.saveRentalItem).not.toHaveBeenCalled();
   });
 
   it('saves and locks the form when valid', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const saved: IRentalItem = {
-      id: 'p-1',
-      legacyId: 'L-1001',
-      name: 'Vestido',
-      status: 'AVAILABLE',
-      value: 120,
-      categoryId: 'cat-1',
-      categoryName: 'Vestidos',
-      size: 'M',
-      color: 'Azul',
-      brand: '',
-      description: '',
-      notes: '',
-      condition: 'NEW'
+      id: 'p-1', legacyId: 'L-1001', name: 'Terno Azul', status: 'AVAILABLE',
+      value: 120, categoryName: 'Vestidos', size: 'M', color: 'Azul',
+      brand: '', description: '', notes: '', condition: 'NEW'
     };
-
     productService.saveRentalItem.mockReturnValue(of(saved));
 
     const fixture = TestBed.createComponent(Registration);
@@ -225,7 +243,6 @@ describe('Registration', () => {
   });
 
   it('stores validation errors from 400 responses', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const error = new HttpErrorResponse({
       status: 400,
       error: { errors: [{ message: 'Invalid payload' }] }
@@ -242,8 +259,24 @@ describe('Registration', () => {
     expect(component.errorMessage()).toEqual(['Invalid payload']);
   });
 
+  it('stores fallback message on non-400 save error', () => {
+    productService.saveRentalItem.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 500 }))
+    );
+
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    buildValidForm(component);
+    component.save();
+
+    expect(component.errorMessage()).not.toBeNull();
+  });
+
+  //  Clear / enable editing / close 
+
   it('clears and resets the form', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
@@ -261,7 +294,6 @@ describe('Registration', () => {
   });
 
   it('enables editing while keeping system fields disabled', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
@@ -275,23 +307,32 @@ describe('Registration', () => {
   });
 
   it('navigates home when closing', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
 
     component.close();
-
     expect(router.navigate).toHaveBeenCalledWith(['/']);
   });
 
-  it('renders search icon and edit button based on read-only state', () => {
-    categoryService.getByType.mockReturnValue(of([]));
+  it('clears the error message', () => {
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
 
-    let searchIcon = fixture.nativeElement.querySelector('.search-icon');
+    component.errorMessage.set('Algum erro');
+    component.clearError();
+    expect(component.errorMessage()).toBeNull();
+  });
+
+  //  DOM 
+
+  it('renders search icon and edit button based on read-only state', () => {
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const searchIcon = fixture.nativeElement.querySelector('.search-icon');
     expect(searchIcon).not.toBeNull();
 
     component.isReadOnly.set(true);
@@ -302,12 +343,11 @@ describe('Registration', () => {
   });
 
   it('shows status badge when form has values', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
 
-    component.form.patchValue({ name: 'Produto', categoryId: 'cat-1' });
+    component.form.patchValue({ name: 'Produto', categoryName: 'Vestidos' });
     component.form.get('status')?.setValue('AVAILABLE');
     fixture.detectChanges();
 
@@ -317,7 +357,6 @@ describe('Registration', () => {
   });
 
   it('shows validation messages and icons', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();
@@ -333,12 +372,12 @@ describe('Registration', () => {
     valueControl?.markAsTouched();
     fixture.detectChanges();
 
-    let fieldErrors = fixture.nativeElement.querySelectorAll('.field-error');
-    let invalidIcons = fixture.nativeElement.querySelectorAll('.invalid-icon.show');
+    const fieldErrors = fixture.nativeElement.querySelectorAll('.field-error');
+    const invalidIcons = fixture.nativeElement.querySelectorAll('.invalid-icon.show');
     expect(fieldErrors.length).toBeGreaterThan(0);
     expect(invalidIcons.length).toBeGreaterThan(0);
 
-    nameControl?.setValue('Produto');
+    nameControl?.setValue('Produto XPTO');
     valueControl?.setValue(100);
     nameControl?.markAsDirty();
     nameControl?.markAsTouched();
@@ -351,7 +390,6 @@ describe('Registration', () => {
   });
 
   it('renders modal when there is an error message', () => {
-    categoryService.getByType.mockReturnValue(of([]));
     const fixture = TestBed.createComponent(Registration);
     const component = fixture.componentInstance;
     fixture.detectChanges();

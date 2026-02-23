@@ -24,6 +24,10 @@
             @if (!isFormVisible()) {
             <div class="list-header">
                 <span class="list-title">Categorias</span>
+                <label class="toggle-inactive">
+                    <input type="checkbox" [checked]="showInactive()" (change)="showInactive.set(!showInactive())">
+                    Exibir inativas
+                </label>
                 <button class="btn btn-add" type="button" (click)="showNewForm()">
                     <span>+ Nova</span>
                 </button>
@@ -40,8 +44,10 @@
             </div>
             } @else {
             <div class="category-list">
-                @for (category of categories(); track category.id) {
-                <div class="category-item" [class.inactive]="!category.active">
+                @for (category of visibleCategories; track category.id) {
+                <div class="category-item" [class.inactive]="!category.active"
+                    (mouseenter)="hoveredCategory.set(category)"
+                    (mouseleave)="hoveredCategory.set(null)">
                     <div class="category-info" (click)="selectCategory(category)">
                         <span class="category-name">{{ category.displayName || category.name }}</span>
                         <span class="category-meta">
@@ -119,7 +125,13 @@
 
         <!-- Footer -->
         <div class="modal-footer">
-            <button class="btn btn-close" type="button" (click)="closeModal()">Fechar</button>
+            @if (hoveredCategory()) {
+            <div class="footer-detail">
+                <span class="footer-detail-desc">{{ hoveredCategory()!.description || 'Sem descrição.' }}</span>
+            </div>
+            } @else {
+            <span class="footer-hint">Passe o mouse sobre uma categoria para ver detalhes</span>
+            }
         </div>
     </div>
 </div>
