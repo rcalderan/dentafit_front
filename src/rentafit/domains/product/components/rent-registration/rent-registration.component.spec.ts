@@ -26,6 +26,7 @@ describe('Registration', () => {
   };
 
   beforeEach(async () => {
+    Element.prototype.scrollIntoView = () => {};
     productService = {
       saveRentalItem: vi.fn(),
       getRentalItemByLegacyId: vi.fn()
@@ -272,6 +273,58 @@ describe('Registration', () => {
     component.save();
 
     expect(component.errorMessage()).not.toBeNull();
+  });
+
+  //  Scroll para o primeiro campo inválido 
+
+  it('marca todos os controles como touched ao salvar com formulário inválido', () => {
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => {});
+    component.save();
+
+    Object.values(component.form.controls).forEach(ctrl => {
+      expect(ctrl.touched).toBe(true);
+    });
+  });
+
+  it('rola e foca o primeiro campo inválido ao salvar formulário inválido', () => {
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const scrollSpy = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => {});
+    const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus').mockImplementation(() => {});
+
+    component.save();
+
+    expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
+    expect(focusSpy).toHaveBeenCalled();
+    expect(productService.saveRentalItem).not.toHaveBeenCalled();
+  });
+
+  it('não rola quando o formulário é válido', () => {
+    const saved: IRentalItem = {
+      id: 'p-1', legacyId: 'L-1001', name: 'Terno Azul', status: 'AVAILABLE',
+      value: 120, categoryName: 'Vestidos', size: 'M', color: 'Azul',
+      brand: '', description: '', notes: '', condition: 'NEW'
+    };
+    productService.saveRentalItem.mockReturnValue(of(saved));
+
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    buildValidForm(component);
+    fixture.detectChanges();
+
+    const scrollSpy = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => {});
+    component.save();
+
+    expect(scrollSpy).not.toHaveBeenCalled();
+    expect(productService.saveRentalItem).toHaveBeenCalled();
   });
 
   //  Clear / enable editing / close 

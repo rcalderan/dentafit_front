@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, effect, computed, OnDestroy } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, signal, effect, computed, OnDestroy } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { EMPTY, Subject } from 'rxjs';
@@ -42,6 +42,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private zipCodeSubject$ = new Subject<string>();
+  private el = inject(ElementRef);
 
   //currentIndex = signal(0);
   private customer: ICustomer;
@@ -272,18 +273,31 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   }
 
   save() {
-    if (this.form.valid) {
-      const v = this.form.getRawValue();
+    this.form.markAllAsTouched();
+    if (this.form.invalid) {
+      this.scrollToFirstInvalid();
+      return;
+    }
 
-      const customer: ICustomer = v;
-      this.service.saveCustomer(customer).subscribe(
-        {
-          next: (customer: ICustomer) => {
-            console.log('Cliente Salvo:', customer);
-            this.loadCustomerForm(customer);
-          },
-          error: (error) => this.handleError(error)
-        });
+    const v = this.form.getRawValue();
+    const customer: ICustomer = v;
+    this.service.saveCustomer(customer).subscribe(
+      {
+        next: (customer: ICustomer) => {
+          console.log('Cliente Salvo:', customer);
+          this.loadCustomerForm(customer);
+        },
+        error: (error) => this.handleError(error)
+      });
+  }
+
+  private scrollToFirstInvalid(): void {
+    const el: HTMLElement | null = this.el.nativeElement.querySelector(
+      'input.ng-invalid, textarea.ng-invalid, select.ng-invalid'
+    );
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.focus();
     }
   }
 

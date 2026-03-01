@@ -188,7 +188,7 @@
 
     <!-- Actions -->
     <div class="actions">
-        <button class="btn btn-save" (click)="save()" [disabled]="form.invalid || isReadOnly()">Salvar Produto</button>
+        <button class="btn btn-save" (click)="save()" [disabled]="isReadOnly()">Salvar Produto</button>
     </div>
 
     @if (errorMessage()) {

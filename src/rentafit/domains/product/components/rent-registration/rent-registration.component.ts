@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, ElementRef, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -28,6 +28,7 @@ export class Registration implements OnInit, OnDestroy {
   private service = inject(ProductService);
   private router = inject(Router);
   private destroy$ = new Subject<void>();
+  private el = inject(ElementRef);
 
   form: FormGroup;
   isReadOnly = signal(false);
@@ -157,7 +158,11 @@ export class Registration implements OnInit, OnDestroy {
   }
 
   save(): void {
-    if (this.form.invalid) return;
+    this.form.markAllAsTouched();
+    if (this.form.invalid) {
+      this.scrollToFirstInvalid();
+      return;
+    }
 
     const rentalItem: IRentalItem = this.form.getRawValue();
     this.service.saveRentalItem(rentalItem).pipe(takeUntil(this.destroy$)).subscribe({
@@ -211,6 +216,16 @@ export class Registration implements OnInit, OnDestroy {
 
   clearError(): void {
     this.errorMessage.set(null);
+  }
+
+  private scrollToFirstInvalid(): void {
+    const el: HTMLElement | null = this.el.nativeElement.querySelector(
+      'input.ng-invalid, textarea.ng-invalid, select.ng-invalid'
+    );
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.focus();
+    }
   }
 
   private handleError(error: any): void {
