@@ -1,0 +1,154 @@
+<div class="new-rental-container">
+    <h1>Nova Locação</h1>
+
+    <div class="page-grid">
+
+        <!-- Top-left: Customer + Dates -->
+        <div class="section-card top-card">
+
+            <div class="customer-search-row">
+                <span class="section-label">Cliente</span>
+                <div class="search-input">
+                    @if (!customerFound) {
+                        <input
+                            type="text"
+                            [(ngModel)]="customerSearchQuery"
+                            placeholder="CPF, CNPJ ou código legado..."
+                            class="uppercase"
+                            (keyup.enter)="searchCustomer()">
+                    }
+                    @if (customerFound) {
+                        <button class="icon-btn icon-btn-clear" (click)="clearCustomer()">✕</button>
+                    } @else {
+                        <button class="icon-btn" (click)="searchCustomer()">🔍</button>
+                    }
+                </div>
+            </div>
+
+            @if (customerFound) {
+                <div class="customer-found-row">
+                    <strong>{{ viewModel.clienteNome }}</strong>
+                    <span class="text-muted">CPF: {{ viewModel.clienteCodigo }}</span>
+                </div>
+            }
+
+            <div class="dates-row">
+                <div class="input-group">
+                    <label>Retirada</label>
+                    <input type="date">
+                </div>
+                <div class="input-group">
+                    <label>Uso</label>
+                    <input type="date">
+                </div>
+                <div class="input-group">
+                    <label>Devolução</label>
+                    <input type="date">
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom-left: Rental Items -->
+        <div class="section-card products-section">
+            <span class="section-title">Itens da Locação</span>
+            <div class="input-group">
+                <label>Adicionar Produto (Código)</label>
+                <div class="search-input">
+                    <input type="text" placeholder="Código..." class="uppercase">
+                    <button class="icon-btn">➕</button>
+                </div>
+            </div>
+
+            <div class="items-list">
+                <div class="item-row">
+                    <div class="item-desc">
+                        <span class="item-name">SMOKING PRETO CLASSIC</span>
+                        <span class="item-meta">TAM: 42 | COR: PRETO</span>
+                    </div>
+                    <span class="item-price">R$ 250,00</span>
+                    <button class="remove-btn">✕</button>
+                </div>
+            </div>
+
+            <div class="totals-section">
+                <div class="total-row">
+                    <span>Subtotal</span>
+                    <span>R$ 250,00</span>
+                </div>
+                <div class="total-row discount">
+                    <span>Desconto</span>
+                    <input type="text" value="0,00" class="mini-input">
+                </div>
+                <div class="total-row final">
+                    <span>Total</span>
+                    <span>R$ 250,00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right (spans 2 rows): Payments -->
+        <div class="section-card payments-section">
+            <span class="section-title">Pagamentos</span>
+
+            <div class="payments-list">
+                <div class="payment-row">
+                    <div class="payment-info">
+                        <span class="payment-method">PIX</span>
+                        <span class="payment-date">08/03/2026</span>
+                    </div>
+                    <span class="payment-amount">R$ 150,00</span>
+                    <span class="payment-badge paid">Pago</span>
+                </div>
+                <div class="payment-row">
+                    <div class="payment-info">
+                        <span class="payment-method">CARTÃO DE CRÉDITO</span>
+                        <span class="payment-date">15/03/2026</span>
+                    </div>
+                    <span class="payment-amount">R$ 100,00</span>
+                    <span class="payment-badge pending">Pendente</span>
+                </div>
+            </div>
+
+            <div class="add-payment">
+                <div class="add-payment-fields">
+                    <div class="input-group">
+                        <label>Forma de Pagamento</label>
+                        <select>
+                            <option>PIX</option>
+                            <option>Dinheiro</option>
+                            <option>Cartão de Crédito</option>
+                            <option>Cartão de Débito</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Valor</label>
+                        <input type="text" placeholder="0,00">
+                    </div>
+                    <button class="btn btn-add-payment">+ Adicionar</button>
+                </div>
+            </div>
+
+            <div class="payments-summary">
+                <div class="total-row">
+                    <span>Total do Contrato</span>
+                    <span>R$ 250,00</span>
+                </div>
+                <div class="total-row">
+                    <span>Total Pago</span>
+                    <span class="paid-color">R$ 150,00</span>
+                </div>
+                <div class="total-row final">
+                    <span>Saldo Restante</span>
+                    <span>R$ 100,00</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="actions">
+        <button class="btn btn-save">Finalizar Locação</button>
+        <button class="btn btn-update">Salvar Proposta</button>
+    </div>
+</div>

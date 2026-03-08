@@ -49,7 +49,7 @@ export const routes: Routes = [
             },
             {
                 path: 'rental/new',
-                loadComponent: () => import('./domains/rental/features/new-rental/new-rental').then(m => m.NewRental),
+                loadComponent: () => import('./domains/rental/features/new-rental/new-rental.component').then(m => m.NewRental),
                 canActivate: [roleGuard],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },
