@@ -103,6 +103,34 @@ h1 {
     color: var(--text-muted);
 }
 
+.customer-inline-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.1rem;
+    padding: 0 0.25rem;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.customer-inline-info strong {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.customer-inline-info .customer-doc {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
 .dates-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -196,6 +224,7 @@ select {
     border-radius: var(--input-radius);
     margin-bottom: 0.75rem;
     gap: 1rem;
+    cursor: pointer;
 }
 
 .item-desc {
@@ -282,6 +311,7 @@ select {
     padding: 0.75rem 1rem;
     background-color: var(--bg-color);
     border-radius: var(--input-radius);
+    cursor: pointer;
 }
 
 .payment-info {
@@ -307,40 +337,6 @@ select {
     font-size: 0.9rem;
     color: var(--text-color);
     white-space: nowrap;
-}
-
-.payment-badge {
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-}
-
-.payment-badge.paid {
-    background-color: color-mix(in srgb, var(--success-color, #22c55e) 15%, transparent);
-    color: var(--success-color, #22c55e);
-}
-
-.payment-badge.pending {
-    background-color: color-mix(in srgb, var(--warning-color, #f59e0b) 15%, transparent);
-    color: var(--warning-color, #f59e0b);
-}
-
-.add-payment {
-    margin-bottom: 1.25rem;
-}
-
-.add-payment-fields {
-    display: flex;
-    gap: 0.75rem;
-    align-items: flex-end;
-}
-
-.add-payment-fields .input-group {
-    flex: 1;
 }
 
 .btn-add-payment {
@@ -371,6 +367,11 @@ select {
 
 .paid-color {
     color: var(--success-color, #22c55e);
+    font-weight: 600;
+}
+
+.pending-color {
+    color: var(--warning-color, #f59e0b);
     font-weight: 600;
 }
 
@@ -405,6 +406,327 @@ select {
 
 .uppercase {
     text-transform: uppercase;
+}
+
+/* ==================== Stepper ==================== */
+.stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    max-width: 1200px;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--input-bg);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.step span {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.step.active .step-circle {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.step.active span {
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.step.done .step-circle {
+    background-color: var(--success-color, #22c55e);
+    color: white;
+}
+
+.step-line {
+    flex: 1;
+    height: 2px;
+    background-color: var(--input-bg);
+    margin: 0 0.4rem;
+    margin-bottom: 1.2rem;
+    transition: background-color 0.3s;
+}
+
+.step-line.done {
+    background-color: var(--success-color, #22c55e);
+}
+
+/* ==================== Section header (title + action btn) ==================== */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.1rem;
+}
+
+.btn-icon-labeled {
+    background-color: var(--input-bg);
+    color: var(--primary-color);
+    border: none;
+    border-radius: var(--input-radius);
+    padding: 0.45rem 0.9rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    white-space: nowrap;
+}
+
+.btn-icon-labeled:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* ==================== Empty state ==================== */
+.empty-state {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 1.25rem 0;
+    font-style: italic;
+}
+
+/* ==================== Item meta tags ==================== */
+.item-metas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.25rem;
+}
+
+.item-meta-tag {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    background-color: var(--bg-color);
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    line-height: 1.5;
+}
+
+.item-meta-tag.acessorio {
+    color: var(--primary-color);
+    background-color: color-mix(in srgb, var(--primary-color) 10%, transparent);
+}
+
+/* ==================== Payment row extras ==================== */
+.payment-parcela {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    min-width: 24px;
+    text-align: center;
+}
+
+.payment-row.is-paid {
+    opacity: 0.65;
+}
+
+.payment-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.payment-badge.paid {
+    background-color: color-mix(in srgb, var(--success-color, #22c55e) 15%, transparent);
+    color: var(--success-color, #22c55e);
+}
+
+.payment-badge.pending {
+    background-color: color-mix(in srgb, var(--warning-color, #f59e0b) 15%, transparent);
+    color: var(--warning-color, #f59e0b);
+}
+
+/* ==================== Action buttons ==================== */
+.btn-sign {
+    background-color: var(--input-bg);
+    color: var(--text-color);
+}
+
+.btn-sign:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-duplicate {
+    background-color: var(--input-bg);
+    color: var(--primary-color);
+}
+
+.contract-closed-label {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--success-color, #22c55e);
+    padding: 0.9rem 1.5rem;
+    border: 2px solid var(--success-color, #22c55e);
+    border-radius: var(--input-radius);
+}
+
+/* ==================== Modal ==================== */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 100;
+}
+
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 101;
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    width: 90%;
+    max-width: 520px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.modal-payment {
+    max-width: 420px;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--input-bg);
+}
+
+.modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    transition: color 0.2s;
+}
+
+.modal-close:hover {
+    color: var(--danger-color);
+}
+
+.modal-body {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-y: auto;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--input-bg);
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.modal-error {
+    background-color: color-mix(in srgb, var(--danger-color, #ef4444) 12%, transparent);
+    color: var(--danger-color, #ef4444);
+    padding: 0.6rem 0.9rem;
+    border-radius: var(--input-radius);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.modal-product-card {
+    background-color: var(--bg-color);
+    border-radius: var(--input-radius);
+    padding: 1rem;
+}
+
+.modal-item-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 0.25rem;
+}
+
+.modal-item-meta {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.modal-extras {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.extra-tag-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.extra-add-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 0.25rem;
+}
+
+.extra-type-select {
+    width: auto;
+    flex-shrink: 0;
+    padding: 0.65rem 0.75rem;
+}
+
+.extra-add-row input {
+    flex: 1;
+}
+
+.payment-modal-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.9rem;
 }
 
 /* ==================== Responsividade ==================== */

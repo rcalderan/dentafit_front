@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
 
 // ==================== Enums ====================
 
@@ -100,7 +99,7 @@ export interface IProductCatalog {
 
 @Component({
   selector: 'rentafit-new-rental',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule],
   templateUrl: './new-rental.component.html',
   styleUrls: ['./new-rental.component.css'],
 })
@@ -112,6 +111,12 @@ export class NewRental implements OnInit {
   PaymentMethod = PaymentMethod;
   paymentMethodLabels = PAYMENT_METHOD_LABELS;
   paymentMethodKeys = Object.values(PaymentMethod).filter(v => typeof v === 'number') as PaymentMethod[];
+  paymentStatusLabels: Record<PaymentStatus, string> = {
+    [PaymentStatus.PENDING]: 'Pendente',
+    [PaymentStatus.PAID]: 'Pago',
+    [PaymentStatus.CANCELLED]: 'Cancelado',
+  };
+  paymentStatusKeys = Object.values(PaymentStatus).filter(v => typeof v === 'number') as PaymentStatus[];
 
   // ── Customer ──
   customerFound = false;
@@ -156,7 +161,11 @@ export class NewRental implements OnInit {
   paymentModalForma: PaymentMethod = PaymentMethod.PIX;
   paymentModalValor = 0;
   paymentModalData = '';
+  paymentModalStatus: PaymentStatus = PaymentStatus.PENDING;
   paymentModalError = '';
+
+  editingItemIndex: number | null = null;
+  editingPaymentIndex: number | null = null;
 
   // ── Brazilian national holidays (static 2025-2027) ──
   private readonly HOLIDAYS = new Set<string>([
@@ -301,6 +310,7 @@ export class NewRental implements OnInit {
 
   openItemModal(): void {
     if (!this.isEditable()) return;
+    this.editingItemIndex = null;
     this.itemModalCode = '';
     this.itemModalName = '';
     this.itemModalMeta = '';
@@ -308,6 +318,22 @@ export class NewRental implements OnInit {
     this.itemModalExtras = [];
     this.itemModalNewExtraDesc = '';
     this.itemModalFoundProduct = null;
+    this.itemModalError = '';
+    this.showItemModal = true;
+  }
+
+  openEditItemModal(index: number): void {
+    const item = this.contract.itens[index];
+    if (!item) return;
+    this.editingItemIndex = index;
+    this.itemModalCode = item.codigo;
+    this.itemModalName = item.descricao;
+    this.itemModalValor = item.valor;
+    this.itemModalMeta = '';
+    this.itemModalExtras = [...item.sub];
+    this.itemModalFoundProduct = { nome: item.descricao } as any;
+    this.itemModalNewExtraDesc = '';
+    this.itemModalNewExtraType = 'observacao';
     this.itemModalError = '';
     this.showItemModal = true;
   }
@@ -349,16 +375,24 @@ export class NewRental implements OnInit {
   }
 
   confirmAddItem(): void {
-    if (!this.itemModalFoundProduct) return;
+    if (this.editingItemIndex === null && !this.itemModalFoundProduct) return;
+    if (!this.isEditable()) return;
     const item: IRentalContractItem = {
       codigo: this.itemModalCode,
       descricao: this.itemModalName,
       valor: this.itemModalValor,
       entregue: false,
       atendente: 0,
-      sub: [...this.itemModalExtras],
+      sub: [
+        ...(this.itemModalMeta ? [{ tipo: 'observacao' as const, descricao: this.itemModalMeta }] : []),
+        ...this.itemModalExtras,
+      ],
     };
-    this.contract.itens.push(item);
+    if (this.editingItemIndex !== null) {
+      this.contract.itens[this.editingItemIndex] = item;
+    } else {
+      this.contract.itens.push(item);
+    }
     this.recalculate();
     this.closeItemModal();
   }
@@ -383,11 +417,45 @@ export class NewRental implements OnInit {
     return Math.max(0, this.total - this.totalPaid);
   }
 
+  /** Total of all planned parcelas (regardless of payment status) */
+  get totalPlanned(): number {
+    return this.contract.pagamentos.reduce((s, p) => s + p.valor, 0);
+  }
+
+  /** Amount not yet covered by any parcela */
+  get unplannedAmount(): number {
+    return Math.max(0, this.total - this.totalPlanned);
+  }
+
   openPaymentModal(): void {
     if (!this.canAddPayment) return;
-    this.paymentModalForma = PaymentMethod.PIX;
-    this.paymentModalValor = this.remainingAmount;
-    this.paymentModalData = this.contract.usa || this.toDateString(new Date());
+    this.editingPaymentIndex = null;
+    const prev = this.contract.pagamentos.at(-1);
+    this.paymentModalForma = prev ? prev.forma : PaymentMethod.PIX;
+    this.paymentModalValor = this.unplannedAmount;
+    if (prev) {
+      const d = new Date(prev.data + 'T12:00:00');
+      d.setMonth(d.getMonth() + 1);
+      const nextMonthStr = this.toDateString(d);
+      const retiradaDate = this.contract.retirada;
+      this.paymentModalData = retiradaDate && nextMonthStr > retiradaDate
+        ? retiradaDate
+        : nextMonthStr;
+    } else {
+      this.paymentModalData = this.toDateString(new Date());
+    }
+    this.paymentModalError = '';
+    this.showPaymentModal = true;
+  }
+
+  openEditPaymentModal(index: number): void {
+    const p = this.contract.pagamentos[index];
+    if (!p) return;
+    this.editingPaymentIndex = index;
+    this.paymentModalForma = p.forma;
+    this.paymentModalValor = p.valor;
+    this.paymentModalData = p.data;
+    this.paymentModalStatus = p.status;
     this.paymentModalError = '';
     this.showPaymentModal = true;
   }
@@ -396,36 +464,96 @@ export class NewRental implements OnInit {
     this.showPaymentModal = false;
   }
 
+  submitPaymentModal(): void {
+    if (this.editingPaymentIndex !== null) {
+      this.confirmAddPayment();
+    } else {
+      this.dividePayment();
+    }
+  }
+
   confirmAddPayment(): void {
+    // Only used in edit mode now
+    this.paymentModalError = '';
+    const isEditing = this.editingPaymentIndex !== null;
+    if (!isEditing) return;
+    const currentVal = this.contract.pagamentos[this.editingPaymentIndex!].valor;
+    const maxAllowed = this.unplannedAmount + currentVal;
+
+    if (this.paymentModalValor <= 0) {
+      this.paymentModalError = 'Valor deve ser maior que zero.';
+      return;
+    }
+    if (this.paymentModalValor > maxAllowed + 0.001) {
+      this.paymentModalError = `Valor supera o saldo de R$ ${maxAllowed.toFixed(2).replace('.', ',')}.`;
+      return;
+    }
+    if (this.contract.usa && this.paymentModalData > this.contract.usa) {
+      this.paymentModalError = 'Data não pode ser posterior à data de uso.';
+      return;
+    }
+
+    const payment: IRentalPayment = {
+      parcela: this.contract.pagamentos[this.editingPaymentIndex!].parcela,
+      data: this.paymentModalData,
+      forma: this.paymentModalForma,
+      valor: this.paymentModalValor,
+      vezes: 1,
+      funcionario: 0,
+      status: this.paymentModalStatus,
+    };
+    this.contract.pagamentos[this.editingPaymentIndex!] = payment;
+    this.recalculate();
+    this.closePaymentModal();
+  }
+
+  dividePayment(): void {
     this.paymentModalError = '';
 
     if (this.paymentModalValor <= 0) {
       this.paymentModalError = 'Valor deve ser maior que zero.';
       return;
     }
-    if (this.paymentModalValor > this.remainingAmount + 0.001) {
-      this.paymentModalError = `Valor supera o saldo restante de R$ ${this.remainingAmount.toFixed(2).replace('.', ',')}.`;
+
+    let remaining = this.unplannedAmount;
+    if (remaining <= 0.001) {
+      this.paymentModalError = 'Não há saldo a planejar.';
       return;
     }
-    if (this.contract.pagamentos.length >= 24) {
-      this.paymentModalError = 'Limite de 24 parcelas atingido.';
-      return;
-    }
-    if (this.contract.usa && this.paymentModalData > this.contract.usa) {
-      this.paymentModalError = 'Data da parcela não pode ser posterior à data de uso.';
+    if (this.paymentModalValor > remaining + 0.001) {
+      this.paymentModalError = `Valor supera o saldo restante de R$ ${remaining.toFixed(2).replace('.', ',')}.`;
       return;
     }
 
-    const payment: IRentalPayment = {
-      parcela: this.nextParcela,
-      data: this.paymentModalData,
-      forma: this.paymentModalForma,
-      valor: this.paymentModalValor,
-      vezes: 1,
-      funcionario: 0,
-      status: PaymentStatus.PENDING,
-    };
-    this.contract.pagamentos.push(payment);
+    const retiradaDate = this.contract.retirada;
+    let currentDate = this.paymentModalData; // usa a data pré-calculada do modal
+
+    while (remaining > 0.001) {
+      if (this.contract.pagamentos.length >= 24) {
+        this.paymentModalError = 'Limite de 24 parcelas atingido.';
+        break;
+      }
+      const valor = parseFloat(Math.min(this.paymentModalValor, remaining).toFixed(2));
+      this.contract.pagamentos.push({
+        parcela: this.contract.pagamentos.length + 1,
+        data: currentDate,
+        forma: this.paymentModalForma,
+        valor,
+        vezes: 1,
+        funcionario: 0,
+        status: PaymentStatus.PENDING,
+      });
+      remaining = parseFloat((remaining - this.paymentModalValor).toFixed(2));
+
+      // Avança um mês; se ultrapassar a retirada, usa a data de retirada
+      const d = new Date(currentDate + 'T12:00:00');
+      d.setMonth(d.getMonth() + 1);
+      const nextMonthStr = this.toDateString(d);
+      currentDate = retiradaDate && nextMonthStr > retiradaDate
+        ? retiradaDate
+        : nextMonthStr;
+    }
+
     this.recalculate();
     this.closePaymentModal();
   }
@@ -433,7 +561,6 @@ export class NewRental implements OnInit {
   removePayment(index: number): void {
     if (this.contract.situacao === ContractStatus.FINALIZED) return;
     this.contract.pagamentos.splice(index, 1);
-    // Re-number
     this.contract.pagamentos.forEach((p, i) => p.parcela = i + 1);
     this.recalculate();
   }
