@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
+import { HolidayService } from '../../../../shared/services/holiday.service';
 
 // ==================== Enums ====================
 
@@ -167,24 +169,23 @@ export class NewRental implements OnInit {
   editingItemIndex: number | null = null;
   editingPaymentIndex: number | null = null;
 
-  // ── Brazilian national holidays (static 2025-2027) ──
-  private readonly HOLIDAYS = new Set<string>([
-    // 2025
-    '2025-01-01','2025-04-18','2025-04-21','2025-05-01',
-    '2025-06-19','2025-09-07','2025-10-12','2025-11-02',
-    '2025-11-15','2025-11-20','2025-12-25',
-    // 2026
-    '2026-01-01','2026-04-03','2026-04-21','2026-05-01',
-    '2026-06-04','2026-09-07','2026-10-12','2026-11-02',
-    '2026-11-15','2026-11-20','2026-12-25',
-    // 2027
-    '2027-01-01','2027-03-26','2027-04-21','2027-05-01',
-    '2027-05-27','2027-09-07','2027-10-12','2027-11-02',
-    '2027-11-15','2027-11-20','2027-12-25',
-  ]);
+  private readonly holidayService = inject(HolidayService);
+
+  // ── Holidays: populated async from HolidayService on init ──
+  private holidays = new Set<string>();
 
   ngOnInit(): void {
-    this.autoFillDates();
+    const currentYear = new Date().getFullYear();
+    const years = [currentYear - 1, currentYear, currentYear + 1];
+    forkJoin(years.map(y => this.holidayService.getHolidays(y))).subscribe({
+      next: sets => {
+        sets.forEach(set => set.forEach(d => this.holidays.add(d)));
+        this.autoFillDates();
+      },
+      // Silent failure: emergency cache already applied inside the service;
+      // autoFillDates still runs so the form isn't stuck.
+      error: () => this.autoFillDates(),
+    });
   }
 
   // ==================== Helpers ====================
@@ -199,7 +200,7 @@ export class NewRental implements OnInit {
   }
 
   isHoliday(d: Date): boolean {
-    return this.HOLIDAYS.has(this.toDateString(d));
+    return this.holidays.has(this.toDateString(d));
   }
 
   isWeekend(d: Date): boolean {
