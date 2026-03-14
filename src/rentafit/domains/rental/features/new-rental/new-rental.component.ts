@@ -2,100 +2,17 @@ import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { HolidayService } from '../../../../shared/services/holiday.service';
+import { ContractStatus } from '../../data/contract-status.enum';
+import { IItemMeta } from '../../data/item-meta.interface';
+import { PaymentMethod, PAYMENT_METHOD_LABELS } from '../../data/payment-method.enum';
+import { PaymentStatus } from '../../data/payment-status.enum';
+import { IProductCatalog } from '../../data/product-catalog.interface';
+import { IRentalContractItem } from '../../data/rental-contract-item.interface';
+import { INewRentalContract } from '../../data/rental-contract.interface';
+import { IRentalPayment } from '../../data/rental-payment.interface';
 
-// ==================== Enums ====================
-
-export enum ContractStatus {
-  DRAFT = 0,      // Proposta
-  SIGNED = 1,     // Assinado
-  FINALIZED = 2,  // Contrato fechado
-}
-
-export enum PaymentStatus {
-  PENDING = 0,
-  PAID = 1,
-  CANCELLED = 2,
-}
-
-export enum PaymentMethod {
-  CASH = 0,
-  PIX = 1,
-  CREDIT_CARD = 2,
-  DEBIT_CARD = 3,
-  BANK_TRANSFER = 4,
-}
-
-export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  [PaymentMethod.CASH]: 'Dinheiro',
-  [PaymentMethod.PIX]: 'PIX',
-  [PaymentMethod.CREDIT_CARD]: 'Cartão de Crédito',
-  [PaymentMethod.DEBIT_CARD]: 'Cartão de Débito',
-  [PaymentMethod.BANK_TRANSFER]: 'Transferência',
-};
-
-// ==================== Interfaces ====================
-
-export interface IRentalContractItem {
-  codigo: string;
-  descricao: string;
-  valor: number;
-  entregue: boolean;
-  atendente: number;
-  sub: IItemMeta[];
-}
-
-export interface IItemMeta {
-  tipo: 'acessorio' | 'observacao';
-  descricao: string;
-}
-
-export interface IRentalPayment {
-  parcela: number;
-  data: string;
-  forma: PaymentMethod;
-  valor: number;
-  vezes: number;
-  funcionario: number;
-  status: PaymentStatus;
-}
-
-export interface INewRentalContract {
-  _id?: number;
-  tipo: number;
-  cliente: number;
-  clienteNome?: string;
-  clienteCpf?: string;
-  retirada: string;
-  usa: string;
-  devolucao: string;
-  devolveu?: string;
-  hoje: string;
-  criado_por: number;
-  baixa_por?: number;
-  baixa: boolean;
-  situacao: ContractStatus;
-  comunicado: string;
-  itens: IRentalContractItem[];
-  pagamentos: IRentalPayment[];
-}
-
-export interface IProductCatalog {
-  _id: number;
-  nome: string;
-  locado: boolean;
-  obs: string;
-  valor: number;
-  tamanho: string;
-  nloc: number;
-  no_estoque: boolean;
-  cor: string;
-  base: number;
-  ajuste: number;
-  data: string;
-  preco_id: number;
-  status: number;
-  tipo: number;
-}
+export { ContractStatus, PaymentMethod, PaymentStatus };
+export type { IItemMeta, INewRentalContract, IProductCatalog, IRentalContractItem, IRentalPayment };
 
 // ==================== Component ====================
 
