@@ -5,6 +5,6 @@ export interface IRentalContractItem {
   descricao: string;
   valor: number;
   entregue: boolean;
-  atendente: number;
+  attendantEmployeeId: string;
   sub: IItemMeta[];
 }

@@ -801,3 +801,37 @@ select {
         font-size: 1.1rem;
     }
 }
+
+/* ─── Server feedback ─────────────────────────────────────────────── */
+.server-error {
+    background-color: color-mix(in srgb, var(--danger-color, #ef4444) 12%, transparent);
+    color: var(--danger-color, #ef4444);
+    padding: 0.6rem 0.9rem;
+    border-radius: var(--input-radius, 4px);
+    font-size: 0.875rem;
+    font-weight: 500;
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+.server-warnings {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+.server-warning {
+    background-color: color-mix(in srgb, #f59e0b 12%, transparent);
+    color: #b45309;
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--input-radius, 4px);
+    font-size: 0.85rem;
+}
+
+.field-error {
+    color: var(--danger-color, #ef4444);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+}

@@ -33,6 +33,7 @@ export class RetailRegistration implements OnInit, OnDestroy {
             id: [{ value: '', disabled: true }],
             sku: [''],
             name: ['', [Validators.required, Validators.minLength(3)]],
+            categoryId: [''],
             categoryName: ['', Validators.required],
             size: ['', Validators.required],
             color: ['', Validators.required],
@@ -55,6 +56,7 @@ export class RetailRegistration implements OnInit, OnDestroy {
     ngOnInit(): void {
         const product: IRetailItem = {
             name: '',
+            categoryId: '',
             categoryName: '',
             size: '',
             color: '',
@@ -142,7 +144,10 @@ export class RetailRegistration implements OnInit, OnDestroy {
     }
 
     onCategorySelected(category: ICategory): void {
-        this.form.patchValue({ categoryName: category.displayName || category.name });
+        this.form.patchValue({
+            categoryId: category.id ?? '',
+            categoryName: category.displayName || category.name,
+        });
         this.isCategoryModalOpen.set(false);
     }
 

@@ -58,6 +58,7 @@ export class Registration implements OnInit, OnDestroy {
       name: ['', [Validators.required, Validators.minLength(3)]],
       condition: ['', Validators.required],
       description: [''],
+      categoryId: [''],
       categoryName: ['', Validators.required],
       brand: [''],
       size: ['', Validators.required],
@@ -74,7 +75,7 @@ export class Registration implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Inicializa campos vazios para evitar undefined
     const initialData: Partial<IRentalItem> = {
-      name: '', categoryName: '', size: '', color: '', brand: '',
+      name: '', categoryId: '', categoryName: '', size: '', color: '', brand: '',
       value: 0, description: '', status: 'AVAILABLE', notes: '',
       condition: 'NEW', lastRentalDate: null, rentalCount: 0,
       createdAt: '', updatedAt: ''
@@ -96,7 +97,10 @@ export class Registration implements OnInit, OnDestroy {
   }
 
   onCategorySelected(category: ICategory): void {
-    this.form.patchValue({ categoryName: category.displayName || category.name });
+    this.form.patchValue({
+      categoryId: category.id ?? '',
+      categoryName: category.displayName || category.name,
+    });
     this.isCategoryModalOpen.set(false);
   }
 
@@ -177,7 +181,7 @@ export class Registration implements OnInit, OnDestroy {
 
   clear(): void {
     const initialData: Partial<IRentalItem> = {
-      name: '', categoryName: '', size: '', color: '', brand: '',
+      name: '', categoryId: '', categoryName: '', size: '', color: '', brand: '',
       value: 0, description: '', status: 'AVAILABLE', notes: '',
       condition: 'NEW', lastRentalDate: null, rentalCount: 0,
       createdAt: undefined, updatedAt: undefined, legacyId: ''

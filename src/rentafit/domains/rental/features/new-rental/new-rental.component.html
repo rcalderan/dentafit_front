@@ -39,7 +39,7 @@
                             [(ngModel)]="customerSearchQuery"
                             placeholder="CPF, CNPJ ou código legado..."
                             class="uppercase"
-                            [disabled]="!isEditable()"
+                            [disabled]="!isEditable() || customerLoading"
                             (keyup.enter)="searchCustomer()">
                     } @else {
                         <div class="customer-inline-info">
@@ -50,9 +50,14 @@
                     @if (customerFound) {
                         <button class="icon-btn icon-btn-clear" (click)="clearCustomer()" [disabled]="!isEditable()">✕</button>
                     } @else {
-                        <button class="icon-btn" (click)="searchCustomer()">🔍</button>
+                        <button class="icon-btn" (click)="searchCustomer()" [disabled]="customerLoading">
+                            {{ customerLoading ? '⏳' : '🔍' }}
+                        </button>
                     }
                 </div>
+                @if (customerError) {
+                    <div class="field-error">{{ customerError }}</div>
+                }
             </div>
 
             <div class="dates-row">
@@ -174,20 +179,46 @@
 
     <!-- ── Actions ── -->
     <div class="actions">
+        @if (serverError) {
+            <div class="server-error">⚠️ {{ serverError }}</div>
+        }
+        @if (serverWarnings.length > 0) {
+            <div class="server-warnings">
+                @for (w of serverWarnings; track w) {
+                    <div class="server-warning">⚠️ {{ w }}</div>
+                }
+            </div>
+        }
         @if (contract.situacao !== ContractStatus.FINALIZED) {
-            <button class="btn btn-update" (click)="salvarProposta()">💾 Salvar Proposta</button>
+            <button class="btn btn-update" (click)="salvarProposta()" [disabled]="isSaving">
+                {{ isSaving ? '⏳ Salvando…' : '💾 Salvar Proposta' }}
+            </button>
             <button class="btn btn-sign" (click)="assinarContrato()"
-                    [disabled]="contract.situacao === ContractStatus.SIGNED">
+                    [disabled]="isSaving || contract.situacao === ContractStatus.SIGNED">
                 ✍️ Cliente Assinou
             </button>
-            <button class="btn btn-save" (click)="finalizarLocacao()">🔒 Finalizar Locação</button>
+            <button class="btn btn-save" (click)="finalizarLocacao()" [disabled]="isSaving">
+                🔒 Finalizar Locação
+            </button>
         } @else {
             <span class="contract-closed-label">Contrato Fechado</span>
-            <button class="btn btn-duplicate" (click)="duplicateContract()">📋 Gerar Nova Proposta Igual</button>
+            <button class="btn btn-duplicate" (click)="duplicateContract()" [disabled]="isSaving">
+                {{ isSaving ? '⏳ Duplicando…' : '📋 Gerar Nova Proposta Igual' }}
+            </button>
         }
     </div>
 
 </div>
+
+<!-- ══════════════ Employee Verify Modal ══════════════ -->
+@if (showEmployeeVerify) {
+    <rentafit-employee-verify
+        [title]="employeeVerifyTitle"
+        [requirePin]="employeeVerifyRequirePin"
+        (confirmed)="onEmployeeConfirmed($event)"
+        (cancelled)="onEmployeeCancelled()">
+    </rentafit-employee-verify>
+}
 
 <!-- ══════════════ Modal: Adicionar Item ══════════════ -->
 @if (showItemModal) {
@@ -203,8 +234,11 @@
                 <label>Código do Produto</label>
                 <div class="search-input">
                     <input type="text" [(ngModel)]="itemModalCode" class="uppercase"
-                           placeholder="Código legado..." (keyup.enter)="searchItemByCode()">
-                    <button class="icon-btn" (click)="searchItemByCode()">🔍</button>
+                           placeholder="Código legado..." (keyup.enter)="searchItemByCode()"
+                           [disabled]="itemSearchLoading">
+                    <button class="icon-btn" (click)="searchItemByCode()" [disabled]="itemSearchLoading">
+                        {{ itemSearchLoading ? '⏳' : '🔍' }}
+                    </button>
                 </div>
             </div>
 

@@ -1,0 +1,46 @@
+<div class="ev-overlay" (click)="cancel()">
+  <div class="ev-modal" (click)="$event.stopPropagation()">
+    <h3 class="ev-title">{{ title }}</h3>
+
+    <div class="ev-field">
+      <label for="ev-initials">Iniciais do Funcionário</label>
+      <input
+        id="ev-initials"
+        type="text"
+        [(ngModel)]="initials"
+        placeholder="Ex.: MS"
+        maxlength="10"
+        [disabled]="isLoading"
+        (keydown.enter)="confirm()"
+      />
+    </div>
+
+    @if (requirePin) {
+      <div class="ev-field">
+        <label for="ev-pin">PIN</label>
+        <input
+          id="ev-pin"
+          type="password"
+          [(ngModel)]="pin"
+          placeholder="••••"
+          maxlength="8"
+          [disabled]="isLoading"
+          (keydown.enter)="confirm()"
+        />
+      </div>
+    }
+
+    @if (error) {
+      <p class="ev-error">{{ error }}</p>
+    }
+
+    <div class="ev-actions">
+      <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="isLoading">
+        Cancelar
+      </button>
+      <button type="button" class="btn-primary" (click)="confirm()" [disabled]="isLoading">
+        @if (isLoading) { Verificando… } @else { Confirmar }
+      </button>
+    </div>
+  </div>
+</div>

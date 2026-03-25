@@ -1,15 +1,32 @@
+import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { CustomerService } from '../../../customer/service/customer.service';
+import { ProductService } from '../../../product/service/product.service';
 import { HolidayService } from '../../../../shared/services/holiday.service';
 import { ContractStatus } from '../../data/contract-status.enum';
 import { IItemMeta } from '../../data/item-meta.interface';
 import { PaymentMethod, PAYMENT_METHOD_LABELS } from '../../data/payment-method.enum';
 import { PaymentStatus } from '../../data/payment-status.enum';
 import { IProductCatalog } from '../../data/product-catalog.interface';
+import {
+  IItemMetaRequest,
+  IRentalContractCreateRequest,
+  IRentalContractItemRequest,
+  IRentalPaymentRequest,
+} from '../../data/rental-contract-request.interface';
+import { IRentalContractResponse } from '../../data/rental-contract-response.interface';
 import { IRentalContractItem } from '../../data/rental-contract-item.interface';
 import { INewRentalContract } from '../../data/rental-contract.interface';
 import { IRentalPayment } from '../../data/rental-payment.interface';
+import { ContractStatusApi, PaymentMethodApi, PaymentStatusApi } from '../../data/rental-api.types';
+import {
+  EmployeeConfirmedEvent,
+  EmployeeVerifyComponent,
+} from '../employee-verify/employee-verify.component';
+import { RentalContractService } from '../../service/rental-contract.service';
 
 export { ContractStatus, PaymentMethod, PaymentStatus };
 export type { IItemMeta, INewRentalContract, IProductCatalog, IRentalContractItem, IRentalPayment };
@@ -18,7 +35,7 @@ export type { IItemMeta, INewRentalContract, IProductCatalog, IRentalContractIte
 
 @Component({
   selector: 'rentafit-new-rental',
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule, EmployeeVerifyComponent],
   templateUrl: './new-rental.component.html',
   styleUrls: ['./new-rental.component.css'],
 })
@@ -37,9 +54,59 @@ export class NewRental implements OnInit {
   };
   paymentStatusKeys = Object.values(PaymentStatus).filter(v => typeof v === 'number') as PaymentStatus[];
 
+  // ── Services ──
+  private readonly holidayService = inject(HolidayService);
+  private readonly customerService = inject(CustomerService);
+  private readonly productService = inject(ProductService);
+  private readonly rentalContractService = inject(RentalContractService);
+
+  // ── Enum → API string maps (used by buildPaymentRequest & buildCreateRequest) ──
+  private readonly METHOD_MAP: Record<PaymentMethod, PaymentMethodApi> = {
+    [PaymentMethod.CASH]: 'CASH',
+    [PaymentMethod.PIX]: 'PIX',
+    [PaymentMethod.CREDIT_CARD]: 'CREDIT_CARD',
+    [PaymentMethod.DEBIT_CARD]: 'DEBIT_CARD',
+    [PaymentMethod.BANK_TRANSFER]: 'BANK_TRANSFER',
+  };
+
+  private readonly STATUS_MAP: Record<PaymentStatus, PaymentStatusApi> = {
+    [PaymentStatus.PENDING]: 'PENDING',
+    [PaymentStatus.PAID]: 'PAID',
+    [PaymentStatus.CANCELLED]: 'CANCELLED',
+  };
+
+  // ── Backend contract state ──
+  /** UUID of the contract saved on the backend; null until first save. */
+  contractId: string | null = null;
+  isSaving = false;
+  serverError = '';
+  serverWarnings: string[] = [];
+
+  // ── Employee verification modal ──
+  showEmployeeVerify = false;
+  /** Which action is pending employee confirmation. */
+  employeeVerifyAction: 'sign' | 'finalize' | 'save' | 'addItem' | null = null;
+
+  get employeeVerifyTitle(): string {
+    switch (this.employeeVerifyAction) {
+      case 'sign':     return 'Identificar Atendente — Assinatura';
+      case 'finalize': return 'Identificar Atendente — Finalização';
+      case 'save':     return 'Validar Atendente — Salvar Proposta';
+      case 'addItem':  return 'Identificar Atendente — Adicionar Item';
+      default:         return 'Identificar Atendente';
+    }
+  }
+
+  get employeeVerifyRequirePin(): boolean {
+    return this.employeeVerifyAction === 'save';
+  }
+
   // ── Customer ──
   customerFound = false;
   customerSearchQuery = '';
+  customerUuid: string | null = null;
+  customerLoading = false;
+  customerError = '';
 
   // ── Contract ──
   contract: INewRentalContract = {
@@ -68,12 +135,19 @@ export class NewRental implements OnInit {
   itemModalCode = '';
   itemModalName = '';
   itemModalMeta = '';   // e.g. "TAM: 42 | COR: PRETO"
-  itemModalValor = 0;
+  itemModalValor = 0;  
+  itemModalEmployee = '';
   itemModalExtras: IItemMeta[] = [];
   itemModalNewExtraType: 'acessorio' | 'observacao' = 'observacao';
   itemModalNewExtraDesc = '';
   itemModalFoundProduct: IProductCatalog | null = null;
+  /** UUID of the rental item found by ProductService. */
+  itemModalFoundProductUuid: string | null = null;
   itemModalError = '';
+  itemSearchLoading = false;
+
+  /** Maps item legacyCode → rental item UUID from the backend. */
+  private itemRentalIds = new Map<string, string>();
 
   // ── Payment modal ──
   showPaymentModal = false;
@@ -85,8 +159,6 @@ export class NewRental implements OnInit {
 
   editingItemIndex: number | null = null;
   editingPaymentIndex: number | null = null;
-
-  private readonly holidayService = inject(HolidayService);
 
   // ── Holidays: populated async from HolidayService on init ──
   private holidays = new Set<string>();
@@ -209,16 +281,35 @@ export class NewRental implements OnInit {
   searchCustomer(): void {
     const query = this.customerSearchQuery.trim();
     if (!query) return;
-    // TODO: integrate with CustomerService
-    this.contract.clienteNome = 'RICHARD CALDERAN';
-    this.contract.clienteCpf = '000.000.000-00';
-    this.contract.cliente = 1;
-    this.customerFound = true;
+
+    this.customerLoading = true;
+    this.customerError = '';
+
+    const isNumeric = /^\d+$/.test(query) && query.length <= 9; // legacy IDs are short numbers
+    const obs = isNumeric
+      ? this.customerService.getCustomerByLegacyId(+query)
+      : this.customerService.getCustomerByDocument(query);
+
+    obs.pipe(finalize(() => (this.customerLoading = false))).subscribe({
+      next: (customer) => {
+        this.customerUuid = customer.id ?? null;
+        this.contract.clienteNome = customer.name;
+        this.contract.clienteCpf = customer.document;
+        this.contract.cliente = customer.legacyId ?? 0;
+        this.customerFound = true;
+        this.customerError = '';
+      },
+      error: (err: Error) => {
+        this.customerError = err.message || 'Cliente não encontrado.';
+      },
+    });
   }
 
   clearCustomer(): void {
     this.customerFound = false;
     this.customerSearchQuery = '';
+    this.customerUuid = null;
+    this.customerError = '';
     this.contract.clienteNome = '';
     this.contract.clienteCpf = '';
     this.contract.cliente = 0;
@@ -228,14 +319,22 @@ export class NewRental implements OnInit {
 
   openItemModal(): void {
     if (!this.isEditable()) return;
+    // Require employee identification before adding any new item
+    this.employeeVerifyAction = 'addItem';
+    this.showEmployeeVerify = true;
+  }
+
+  private openItemModalExecute(): void {
     this.editingItemIndex = null;
     this.itemModalCode = '';
     this.itemModalName = '';
     this.itemModalMeta = '';
     this.itemModalValor = 0;
+    this.itemModalEmployee = '';
     this.itemModalExtras = [];
     this.itemModalNewExtraDesc = '';
     this.itemModalFoundProduct = null;
+    this.itemModalFoundProductUuid = null;
     this.itemModalError = '';
     this.showItemModal = true;
   }
@@ -248,6 +347,7 @@ export class NewRental implements OnInit {
     this.itemModalName = item.descricao;
     this.itemModalValor = item.valor;
     this.itemModalMeta = '';
+    this.itemModalEmployee = '';
     this.itemModalExtras = [...item.sub];
     this.itemModalFoundProduct = { nome: item.descricao } as any;
     this.itemModalNewExtraDesc = '';
@@ -261,22 +361,50 @@ export class NewRental implements OnInit {
   }
 
   searchItemByCode(): void {
-    if (!this.itemModalCode.trim()) return;
+    const code = this.itemModalCode.trim();
+    if (!code) return;
+
+    this.itemSearchLoading = true;
     this.itemModalError = '';
-    // TODO: integrate with ProductService.findByLegacyId()
-    if (this.itemModalCode.trim() !== '') {
-      this.itemModalFoundProduct = {
-        _id: 1, nome: 'SMOKING PRETO CLASSIC', locado: false,
-        obs: '', valor: 250, tamanho: '42', nloc: 0,
-        no_estoque: true, cor: 'PRETO', base: 250, ajuste: 0,
-        data: '', preco_id: 1, status: 1, tipo: 1,
-      };
-      this.itemModalName = this.itemModalFoundProduct.nome;
-      this.itemModalMeta = `TAM: ${this.itemModalFoundProduct.tamanho} | COR: ${this.itemModalFoundProduct.cor}`;
-      this.itemModalValor = this.itemModalFoundProduct.valor;
-    } else {
-      this.itemModalError = 'Produto não encontrado.';
-    }
+    this.itemModalFoundProduct = null;
+    this.itemModalFoundProductUuid = null;
+
+    this.productService
+      .getRentalItemByLegacyId(code)
+      .pipe(finalize(() => (this.itemSearchLoading = false)))
+      .subscribe({
+        next: (item) => {
+          this.itemModalFoundProductUuid = item.id ?? null;
+          this.itemModalFoundProduct = {
+            _id: parseInt(item.legacyId ?? '0', 10),
+            nome: item.name,
+            locado: false,
+            obs: item.notes ?? '',
+            valor: item.value,
+            tamanho: item.size ?? '',
+            nloc: 0,
+            no_estoque: true,
+            cor: item.color ?? '',
+            base: item.value,
+            ajuste: 0,
+            data: '',
+            preco_id: 0,
+            status: 1,
+            tipo: 1,
+          };
+          this.itemModalName = item.name;
+          this.itemModalMeta = [
+            item.size ? `TAM: ${item.size}` : null,
+            item.color ? `COR: ${item.color}` : null,
+          ]
+            .filter(Boolean)
+            .join(' | ');
+          this.itemModalValor = item.value;
+        },
+        error: (err: Error) => {
+          this.itemModalError = err.message || 'Produto não encontrado.';
+        },
+      });
   }
 
   addItemModalExtra(): void {
@@ -300,7 +428,7 @@ export class NewRental implements OnInit {
       descricao: this.itemModalName,
       valor: this.itemModalValor,
       entregue: false,
-      atendente: 0,
+      attendantEmployeeId: this.itemModalEmployee,
       sub: [
         ...(this.itemModalMeta ? [{ tipo: 'observacao' as const, descricao: this.itemModalMeta }] : []),
         ...this.itemModalExtras,
@@ -310,6 +438,9 @@ export class NewRental implements OnInit {
       this.contract.itens[this.editingItemIndex] = item;
     } else {
       this.contract.itens.push(item);
+      if (this.itemModalFoundProductUuid) {
+        this.itemRentalIds.set(this.itemModalCode, this.itemModalFoundProductUuid);
+      }
     }
     this.recalculate();
     this.closeItemModal();
@@ -317,7 +448,8 @@ export class NewRental implements OnInit {
 
   removeItem(index: number): void {
     if (!this.isEditable()) return;
-    this.contract.itens.splice(index, 1);
+    const removed = this.contract.itens.splice(index, 1)[0];
+    if (removed) this.itemRentalIds.delete(removed.codigo);
     this.recalculate();
   }
 
@@ -416,8 +548,8 @@ export class NewRental implements OnInit {
       data: this.paymentModalData,
       forma: this.paymentModalForma,
       valor: this.paymentModalValor,
+      processedByEmployeeId: this.itemModalEmployee,
       vezes: 1,
-      funcionario: 0,
       status: this.paymentModalStatus,
     };
     this.contract.pagamentos[this.editingPaymentIndex!] = payment;
@@ -458,7 +590,7 @@ export class NewRental implements OnInit {
         forma: this.paymentModalForma,
         valor,
         vezes: 1,
-        funcionario: 0,
+        processedByEmployeeId: "",
         status: PaymentStatus.PENDING,
       });
       remaining = parseFloat((remaining - this.paymentModalValor).toFixed(2));
@@ -512,38 +644,227 @@ export class NewRental implements OnInit {
 
   salvarProposta(): void {
     if (this.contract.situacao === ContractStatus.FINALIZED) return;
-    // TODO: integrate with ContractService.save()
-    console.log('Salvando proposta:', this.contract);
+    if (!this.customerUuid) {
+      this.serverError = 'Selecione um cliente antes de salvar.';
+      return;
+    }
+    if (this.contract.pagamentos.length === 0) {
+      this.serverError = 'Adicione pelo menos uma parcela de pagamento antes de salvar.';
+      return;
+    }
+    if (this.contract.itens.length === 0) {
+      this.serverError = 'Adicione pelo menos um item antes de salvar.';
+      return;
+    }
+    // Require employee identification + PIN before persisting
+    this.employeeVerifyAction = 'save';
+    this.showEmployeeVerify = true;
+  }
+
+  private executeSave(employeeId: string): void {
+    const request = this.buildCreateRequest(employeeId);
+    this.isSaving = true;
+    this.serverError = '';
+    this.serverWarnings = [];
+
+    const saveContract$ = this.contractId
+      ? this.rentalContractService.update(this.contractId, request)
+      : this.rentalContractService.create(request);
+
+    saveContract$
+      .pipe(finalize(() => (this.isSaving = false)))
+      .subscribe({
+        next: (response) => this.mapResponseToContract(response),
+        error: (err: unknown) => {
+          this.serverError = err instanceof Error ? err.message : 'Erro ao salvar proposta.';
+        },
+      });
   }
 
   assinarContrato(): void {
     if (this.contract.situacao !== ContractStatus.DRAFT) return;
-    if (!this.contract.cliente) { alert('Selecione um cliente antes de assinar.'); return; }
-    if (this.contract.itens.length === 0) { alert('Adicione pelo menos um item.'); return; }
-    this.contract.situacao = ContractStatus.SIGNED;
-    // TODO: open signature flow
-    console.log('Contrato assinado:', this.contract);
+    if (!this.contract.cliente) {
+      this.serverError = 'Selecione um cliente antes de assinar.';
+      return;
+    }
+    if (this.contract.itens.length === 0) {
+      this.serverError = 'Adicione pelo menos um item.';
+      return;
+    }
+    if (!this.contractId) {
+      this.serverError = 'Salve a proposta antes de assinar.';
+      return;
+    }
+    this.employeeVerifyAction = 'sign';
+    this.showEmployeeVerify = true;
   }
 
   finalizarLocacao(): void {
     if (this.contract.situacao === ContractStatus.FINALIZED) return;
-    if (!this.contract.cliente) { alert('Selecione um cliente.'); return; }
-    if (this.contract.itens.length === 0) { alert('Adicione pelo menos um item.'); return; }
-    this.contract.situacao = ContractStatus.FINALIZED;
-    console.log('Locação finalizada:', this.contract);
+    if (!this.contract.cliente) {
+      this.serverError = 'Selecione um cliente.';
+      return;
+    }
+    if (this.contract.itens.length === 0) {
+      this.serverError = 'Adicione pelo menos um item.';
+      return;
+    }
+    if (!this.contractId) {
+      this.serverError = 'Salve a proposta antes de finalizar.';
+      return;
+    }
+    this.employeeVerifyAction = 'finalize';
+    this.showEmployeeVerify = true;
   }
 
-  duplicateContract(): INewRentalContract {
-    const clone: INewRentalContract = {
-      ...this.contract,
-      _id: undefined,
-      situacao: ContractStatus.DRAFT,
-      baixa: false,
-      pagamentos: [],
-      hoje: this.toDateString(new Date()),
+  onEmployeeConfirmed(event: EmployeeConfirmedEvent): void {
+    this.showEmployeeVerify = false;
+    const action = this.employeeVerifyAction;
+    this.employeeVerifyAction = null;
+
+    if (action === 'save') {
+      this.executeSave(event.employeeId);
+      return;
+    }
+
+    if (action === 'addItem') {
+      this.openItemModalExecute();
+      this.itemModalEmployee = event.employeeId;
+      return;
+    }
+
+    if (!this.contractId) return;
+
+    this.isSaving = true;
+    this.serverError = '';
+    this.serverWarnings = [];
+
+    const obs =
+      action === 'sign'
+        ? this.rentalContractService.sign(this.contractId)
+        : this.rentalContractService.finalize(this.contractId);
+
+    obs.pipe(finalize(() => (this.isSaving = false))).subscribe({
+      next: (response) => {
+        this.mapResponseToContract(response);
+        if (response.warnings?.length) {
+          this.serverWarnings = response.warnings;
+        }
+        console.log(`Contract ${action} confirmed by employee ${event.employeeName}`);
+      },
+      error: (err: Error) => {
+        this.serverError = err.message || `Erro ao ${action === 'sign' ? 'assinar' : 'finalizar'} contrato.`;
+      },
+    });
+  }
+
+  onEmployeeCancelled(): void {
+    this.showEmployeeVerify = false;
+    this.employeeVerifyAction = null;
+  }
+
+  duplicateContract(): void {
+    if (!this.contractId) {
+      // Offline duplicate (no backend contract yet)
+      this.contract = {
+        ...this.contract,
+        _id: undefined,
+        situacao: ContractStatus.DRAFT,
+        baixa: false,
+        pagamentos: [],
+        hoje: this.toDateString(new Date()),
+      };
+      this.contractId = null;
+      this.serverError = '';
+      this.serverWarnings = [];
+      this.recalculate();
+      return;
+    }
+
+    this.isSaving = true;
+    this.serverError = '';
+    this.rentalContractService
+      .duplicate(this.contractId)
+      .pipe(finalize(() => (this.isSaving = false)))
+      .subscribe({
+        next: (response) => {
+          this.contractId = response.id;
+          this.contract.situacao = ContractStatus.DRAFT;
+          this.contract.baixa = false;
+          this.contract.pagamentos = [];
+          this.serverWarnings = [];
+          this.recalculate();
+        },
+        error: (err: Error) => {
+          this.serverError = err.message || 'Erro ao duplicar contrato.';
+        },
+      });
+  }
+
+  // ==================== API mapping helpers ====================
+
+  private buildCreateRequest(createdByEmployeeId: string): IRentalContractCreateRequest {
+    const META_MAP: Record<'acessorio' | 'observacao', 'ACESSORIO' | 'OBSERVACAO'> = {
+      acessorio: 'ACESSORIO',
+      observacao: 'OBSERVACAO',
     };
-    console.log('Nova proposta gerada a partir do contrato:', clone);
-    return clone;
+
+    const items: IRentalContractItemRequest[] = this.contract.itens.map((item) => ({
+      rentalItemId: this.itemRentalIds.get(item.codigo) ?? null,
+      attendantEmployeeId: item.attendantEmployeeId,
+      legacyProductCode: item.codigo,
+      description: item.descricao,
+      value: item.valor,
+      metadata: item.sub.map<IItemMetaRequest>((m) => ({
+        type: META_MAP[m.tipo],
+        description: m.descricao,
+      })),
+    }));
+
+    return {
+      customerId: this.customerUuid!,
+      contractType: this.contract.tipo,
+      createdByEmployeeId,
+      pickupDate: this.contract.retirada,
+      eventDate: this.contract.usa,
+      returnDate: this.contract.devolucao,
+      notes: this.contract.comunicado || undefined,
+      items,
+      payments: this.contract.pagamentos.map((p) => this.buildPaymentRequest(p, createdByEmployeeId)),
+    };
+  }
+
+  private mapResponseToContract(response: IRentalContractResponse): void {
+    this.contractId = response.id;
+
+    const STATUS_FROM_API: Record<string, ContractStatus> = {
+      DRAFT: ContractStatus.DRAFT,
+      SIGNED: ContractStatus.SIGNED,
+      FINALIZED: ContractStatus.FINALIZED,
+    };
+    this.contract.situacao = STATUS_FROM_API[response.status] ?? this.contract.situacao;
+    this.total = response.totalValue;
+    this.totalPaid = response.paidValue;
+
+    // Sync backend payment IDs back to local model
+    response.payments?.forEach((rp) => {
+      const local = this.contract.pagamentos.find(
+        (p) => p.parcela === rp.installmentNumber && !p.id,
+      );
+      if (local) local.id = rp.id;
+    });
+  }
+
+  private buildPaymentRequest(p: IRentalPayment, processedByEmployeeId: string): IRentalPaymentRequest {
+    return {
+      installmentNumber: p.parcela,
+      paymentDate: p.data,
+      paymentMethod: this.METHOD_MAP[p.forma],
+      value: p.valor,
+      installments: p.vezes,
+      status: this.STATUS_MAP[p.status],
+      processedByEmployeeId: p.status === PaymentStatus.PAID ? (processedByEmployeeId ?? "") : undefined,
+    };
   }
 
   formatCurrency(val: number): string {
