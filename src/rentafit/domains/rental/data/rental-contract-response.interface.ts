@@ -39,7 +39,7 @@ export interface IRentalPaymentResponse {
 
 export interface IRentalContractResponse {
   id: string;
-  legacyId?: number;
+  legacyId?: string;
   status: ContractStatusApi;
   statusDescription: string;
   isReturned: boolean;

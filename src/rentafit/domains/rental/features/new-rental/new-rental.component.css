@@ -146,6 +146,20 @@ h1 {
     gap: 0.5rem;
 }
 
+.contract-load-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    width: 100%;
+    max-width: 1200px;
+}
+
+.field-error {
+    font-size: 0.82rem;
+    color: var(--danger-color, #ef4444);
+    font-weight: 600;
+}
+
 .search-input input {
     flex: 1;
     background-color: var(--input-bg);
@@ -415,6 +429,30 @@ select {
     gap: 0;
     width: 100%;
     max-width: 1200px;
+}
+
+.stepper-header {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.stepper-header .stepper {
+    max-width: none;
+}
+
+.btn-clear-proposal {
+    padding: 0.7rem 1rem;
+    white-space: nowrap;
+    background-color: var(--danger-color, #ef4444);
+    color: #fff;
+}
+
+.btn-clear-proposal:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .step {

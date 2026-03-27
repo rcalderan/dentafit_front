@@ -1,29 +1,51 @@
 <div class="new-rental-container">
-
-    <!-- ── Stepper ── -->
-    <div class="stepper">
-        <div class="step" [class.active]="stepperStep >= 1" [class.done]="stepperStep > 1">
-            <div class="step-circle">1</div>
-            <span>Proposta</span>
+    <h1>Locação</h1>
+    @if (!contractLoaded) {
+        <div class="contract-load-row section-card">
+            <span class="section-label">Carregar Contrato</span>
+            <div class="search-input">
+                <input
+                    type="text"
+                    [(ngModel)]="contractLookupLegacyId"
+                    placeholder="Informe o legacyId do contrato..."
+                    [disabled]="contractLookupLoading"
+                    (keyup.enter)="loadContractByLegacyId()">
+                <button class="icon-btn" (click)="loadContractByLegacyId()" [disabled]="contractLookupLoading">
+                    {{ contractLookupLoading ? '⏳' : '🔍' }}
+                </button>
+            </div>
+            @if (contractLookupError) {
+                <div class="field-error">{{ contractLookupError }}</div>
+            }
         </div>
-        <div class="step-line" [class.done]="stepperStep > 1"></div>
-        <div class="step" [class.active]="stepperStep >= 2" [class.done]="stepperStep > 2">
-            <div class="step-circle">2</div>
-            <span>Salvo</span>
+    } @else {
+        <div class="stepper-header">
+            <div class="stepper">
+            <div class="step" [class.active]="stepperStep >= 0" [class.done]="stepperStep >= 1">
+                <div class="step-circle">1</div>
+                <span>Rascunho</span>
+            </div>
+            <div class="step-line" [class.done]="stepperStep >= 1"></div>
+            <div class="step" [class.active]="stepperStep >= 1" [class.done]="stepperStep > 2">
+                <div class="step-circle">2</div>
+                <span>Salvo</span>
+            </div>
+            <div class="step-line" [class.done]="stepperStep > 2"></div>
+            <div class="step" [class.active]="stepperStep >= 3" [class.done]="stepperStep > 3">
+                <div class="step-circle">✓</div>
+                <span>Assinado</span>
+            </div>
+            <div class="step-line" [class.done]="stepperStep > 3"></div>
+            <div class="step" [class.active]="stepperStep >= 4">
+                <div class="step-circle">🔒</div>
+                <span>Finalizado</span>
+            </div>
+            </div>
+            <button class="btn btn-clear-proposal" (click)="clearProposal()" [disabled]="isSaving || contractLookupLoading">
+                🧹 Limpar Proposta
+            </button>
         </div>
-        <div class="step-line" [class.done]="stepperStep > 2"></div>
-        <div class="step" [class.active]="stepperStep >= 3" [class.done]="stepperStep > 3">
-            <div class="step-circle">✓</div>
-            <span>Assinado</span>
-        </div>
-        <div class="step-line" [class.done]="stepperStep > 3"></div>
-        <div class="step" [class.active]="stepperStep >= 4">
-            <div class="step-circle">🔒</div>
-            <span>Finalizado</span>
-        </div>
-    </div>
-
-    <h1>Nova Locação</h1>
+    }
 
     <div class="page-grid">
 
@@ -40,6 +62,7 @@
                             placeholder="CPF, CNPJ ou código legado..."
                             class="uppercase"
                             [disabled]="!isEditable() || customerLoading"
+                            (ngModelChange)="activateStepperMode()"
                             (keyup.enter)="searchCustomer()">
                     } @else {
                         <div class="customer-inline-info">
@@ -65,18 +88,21 @@
                     <label>Retirada</label>
                     <input type="date" [(ngModel)]="contract.retirada"
                            [disabled]="!isEditable()"
+                              (ngModelChange)="activateStepperMode()"
                            (change)="onRetiradaChange()">
                 </div>
                 <div class="input-group">
                     <label>Uso</label>
                     <input type="date" [(ngModel)]="contract.usa"
                            [disabled]="!isEditable()"
+                              (ngModelChange)="activateStepperMode()"
                            (change)="onUsoDateChange()">
                 </div>
                 <div class="input-group">
                     <label>Devolução</label>
                     <input type="date" [(ngModel)]="contract.devolucao"
                            [disabled]="!isEditable()"
+                              (ngModelChange)="activateStepperMode()"
                            (change)="onDevolucaoChange()">
                 </div>
             </div>
@@ -178,10 +204,10 @@
     </div>
 
     <!-- ── Actions ── -->
+    @if (serverError) {
+        <div class="server-error">⚠️ {{ serverError }}</div>
+    }
     <div class="actions">
-        @if (serverError) {
-            <div class="server-error">⚠️ {{ serverError }}</div>
-        }
         @if (serverWarnings.length > 0) {
             <div class="server-warnings">
                 @for (w of serverWarnings; track w) {

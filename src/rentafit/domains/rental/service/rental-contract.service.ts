@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { APP_CONFIG } from '../../../shared/data/app-config.token';
 import { ErrorMessages, HTTP_ERROR_MAP } from '../../../shared/data/error-messages';
 import {
@@ -47,7 +47,9 @@ export class RentalContractService {
 
     return this.http
       .get<IPageResponse<IRentalContractResponse>>(this.apiUrl, { params: httpParams })
-      .pipe(catchError(this.handleError.bind(this)));
+      .pipe(catchError(this.handleError.bind(this)), map((response) => {
+        return response;
+      }));
   }
 
   getById(id: string): Observable<IRentalContractResponse> {
@@ -55,6 +57,24 @@ export class RentalContractService {
       .get<IRentalContractResponse>(`${this.apiUrl}/${id}`)
       .pipe(catchError(this.handleError.bind(this)));
   }
+
+  getByLegacyId(legacyId: string): Observable<IRentalContractResponse> {
+    return this.http
+      .get<IRentalContractResponse>(`${this.apiUrl}/legacyId/${legacyId}`)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  // getByLegacyId(legacyId: string): Observable<IRentalContractResponse> {
+  //   return this.list({ page: 0, size: 500, sort: 'createdAt,desc' }).pipe(
+  //     map((page) => {
+  //       const contract = page.content.find((c) => c.legacyId === legacyId);
+  //       if (!contract) {
+  //         throw new Error(`Contrato codigo ${legacyId} não encontrado.`);
+  //       }
+  //       return contract;
+  //     }),
+  //   );
+  // }
 
   getByCustomer(
     customerId: string,

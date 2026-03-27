@@ -5,7 +5,7 @@ import { IRentalPayment } from './rental-payment.interface';
 export interface INewRentalContract {
   _id?: number;
   tipo: number;
-  cliente: number;
+  cliente: string;
   clienteNome?: string;
   clienteCpf?: string;
   retirada: string;
@@ -13,8 +13,8 @@ export interface INewRentalContract {
   devolucao: string;
   devolveu?: string;
   hoje: string;
-  criado_por: number;
-  baixa_por?: number;
+  criado_por: string;
+  baixa_por?: string;
   baixa: boolean;
   situacao: ContractStatus;
   comunicado: string;

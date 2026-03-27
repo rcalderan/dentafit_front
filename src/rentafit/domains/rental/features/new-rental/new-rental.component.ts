@@ -78,6 +78,10 @@ export class NewRental implements OnInit {
   // ── Backend contract state ──
   /** UUID of the contract saved on the backend; null until first save. */
   contractId: string | null = null;
+  contractLoaded = false;
+  contractLookupLegacyId = '';
+  contractLookupLoading = false;
+  contractLookupError = '';
   isSaving = false;
   serverError = '';
   serverWarnings: string[] = [];
@@ -109,20 +113,7 @@ export class NewRental implements OnInit {
   customerError = '';
 
   // ── Contract ──
-  contract: INewRentalContract = {
-    tipo: 1,
-    cliente: 0,
-    retirada: '',
-    usa: '',
-    devolucao: '',
-    hoje: this.toDateString(new Date()),
-    criado_por: 0,
-    baixa: false,
-    situacao: ContractStatus.DRAFT,
-    comunicado: '',
-    itens: [],
-    pagamentos: [],
-  };
+  contract: INewRentalContract = this.createEmptyContract();
 
   // ── Totals ──
   subtotal = 0;
@@ -249,6 +240,7 @@ export class NewRental implements OnInit {
   }
 
   onUsoDateChange(): void {
+    this.activateStepperMode();
     if (!this.contract.usa) return;
     const uso = this.parseDate(this.contract.usa);
 
@@ -263,6 +255,7 @@ export class NewRental implements OnInit {
   }
 
   onRetiradaChange(): void {
+    this.activateStepperMode();
     if (!this.contract.retirada) return;
     const d = this.parseDate(this.contract.retirada);
     const adjusted = this.nextBusinessDayFrom(d);
@@ -270,6 +263,7 @@ export class NewRental implements OnInit {
   }
 
   onDevolucaoChange(): void {
+    this.activateStepperMode();
     if (!this.contract.devolucao) return;
     const d = this.parseDate(this.contract.devolucao);
     const adjusted = this.nextBusinessDayFrom(d);
@@ -277,6 +271,28 @@ export class NewRental implements OnInit {
   }
 
   // ==================== Customer ====================
+
+  loadContractByLegacyId(): void {
+    const legacyId = this.contractLookupLegacyId.trim();
+
+    this.contractLookupLoading = true;
+    this.contractLookupError = '';
+    this.serverError = '';
+    this.serverWarnings = [];
+
+    this.rentalContractService
+      .getByLegacyId(legacyId)
+      .pipe(finalize(() => (this.contractLookupLoading = false)))
+      .subscribe({
+        next: (response) => {
+          this.mapResponseToContract(response);
+          this.contractLoaded = true;
+        },
+        error: (err: unknown) => {
+          this.contractLookupError = err instanceof Error ? err.message : 'Contrato não encontrado.';
+        },
+      });
+  }
 
   searchCustomer(): void {
     const query = this.customerSearchQuery.trim();
@@ -295,7 +311,7 @@ export class NewRental implements OnInit {
         this.customerUuid = customer.id ?? null;
         this.contract.clienteNome = customer.name;
         this.contract.clienteCpf = customer.document;
-        this.contract.cliente = customer.legacyId ?? 0;
+        this.contract.cliente = customer.legacyId ?? '';
         this.customerFound = true;
         this.customerError = '';
       },
@@ -306,13 +322,14 @@ export class NewRental implements OnInit {
   }
 
   clearCustomer(): void {
+    this.activateStepperMode();
     this.customerFound = false;
     this.customerSearchQuery = '';
     this.customerUuid = null;
     this.customerError = '';
     this.contract.clienteNome = '';
     this.contract.clienteCpf = '';
-    this.contract.cliente = 0;
+    this.contract.cliente = '';
   }
 
   // ==================== Item modal ====================
@@ -442,12 +459,14 @@ export class NewRental implements OnInit {
         this.itemRentalIds.set(this.itemModalCode, this.itemModalFoundProductUuid);
       }
     }
+    this.activateStepperMode();
     this.recalculate();
     this.closeItemModal();
   }
 
   removeItem(index: number): void {
     if (!this.isEditable()) return;
+    this.activateStepperMode();
     const removed = this.contract.itens.splice(index, 1)[0];
     if (removed) this.itemRentalIds.delete(removed.codigo);
     this.recalculate();
@@ -552,6 +571,7 @@ export class NewRental implements OnInit {
       vezes: 1,
       status: this.paymentModalStatus,
     };
+    this.activateStepperMode();
     this.contract.pagamentos[this.editingPaymentIndex!] = payment;
     this.recalculate();
     this.closePaymentModal();
@@ -565,6 +585,7 @@ export class NewRental implements OnInit {
       return;
     }
 
+    this.activateStepperMode();
     let remaining = this.unplannedAmount;
     if (remaining <= 0.001) {
       this.paymentModalError = 'Não há saldo a planejar.';
@@ -610,6 +631,7 @@ export class NewRental implements OnInit {
 
   removePayment(index: number): void {
     if (this.contract.situacao === ContractStatus.FINALIZED) return;
+    this.activateStepperMode();
     this.contract.pagamentos.splice(index, 1);
     this.contract.pagamentos.forEach((p, i) => p.parcela = i + 1);
     this.recalculate();
@@ -618,6 +640,7 @@ export class NewRental implements OnInit {
   togglePaymentStatus(index: number): void {
     const p = this.contract.pagamentos[index];
     if (!p) return;
+    this.activateStepperMode();
     p.status = p.status === PaymentStatus.PAID ? PaymentStatus.PENDING : PaymentStatus.PAID;
     this.recalculate();
   }
@@ -674,7 +697,10 @@ export class NewRental implements OnInit {
     saveContract$
       .pipe(finalize(() => (this.isSaving = false)))
       .subscribe({
-        next: (response) => this.mapResponseToContract(response),
+        next: (response) => {
+          this.contract.situacao = ContractStatus.DRAFT;
+          return this.mapResponseToContract(response);
+        },
         error: (err: unknown) => {
           this.serverError = err instanceof Error ? err.message : 'Erro ao salvar proposta.';
         },
@@ -695,8 +721,9 @@ export class NewRental implements OnInit {
       this.serverError = 'Salve a proposta antes de assinar.';
       return;
     }
-    this.employeeVerifyAction = 'sign';
+    this.employeeVerifyAction = 'sign';    
     this.showEmployeeVerify = true;
+    this.contract.situacao = ContractStatus.SIGNED;
   }
 
   finalizarLocacao(): void {
@@ -714,7 +741,8 @@ export class NewRental implements OnInit {
       return;
     }
     this.employeeVerifyAction = 'finalize';
-    this.showEmployeeVerify = true;
+    this.showEmployeeVerify = true;    
+    this.contract.situacao = ContractStatus.FINALIZED;
   }
 
   onEmployeeConfirmed(event: EmployeeConfirmedEvent): void {
@@ -801,6 +829,39 @@ export class NewRental implements OnInit {
       });
   }
 
+  activateStepperMode(): void {
+    if (!this.contractLoaded) {
+      this.contractLoaded = true;
+      this.contractLookupError = '';
+    }
+  }
+
+  clearProposal(): void {
+    this.contractId = null;
+    this.contractLoaded = false;
+    this.contractLookupLegacyId = '';
+    this.contractLookupLoading = false;
+    this.contractLookupError = '';
+
+    this.customerFound = false;
+    this.customerSearchQuery = '';
+    this.customerUuid = null;
+    this.customerLoading = false;
+    this.customerError = '';
+
+    this.contract = this.createEmptyContract();
+    this.autoFillDates();
+    this.itemRentalIds.clear();
+
+    this.total = 0;
+    this.totalPaid = 0;
+    this.subtotal = 0;
+    this.discount = 0;
+
+    this.serverError = '';
+    this.serverWarnings = [];
+  }
+
   // ==================== API mapping helpers ====================
 
   private buildCreateRequest(createdByEmployeeId: string): IRentalContractCreateRequest {
@@ -836,23 +897,96 @@ export class NewRental implements OnInit {
 
   private mapResponseToContract(response: IRentalContractResponse): void {
     this.contractId = response.id;
+    this.contractLoaded = true;
 
-    const STATUS_FROM_API: Record<string, ContractStatus> = {
-      DRAFT: ContractStatus.DRAFT,
-      SIGNED: ContractStatus.SIGNED,
-      FINALIZED: ContractStatus.FINALIZED,
+    const STATUS_FROM_API: Record<ContractStatusApi, ContractStatus> = {
+      0: ContractStatus.DRAFT,
+      1: ContractStatus.SIGNED,
+      2: ContractStatus.FINALIZED,
     };
-    this.contract.situacao = STATUS_FROM_API[response.status] ?? this.contract.situacao;
+
+    const METHOD_FROM_API: Record<PaymentMethodApi, PaymentMethod> = {
+      CASH: PaymentMethod.CASH,
+      PIX: PaymentMethod.PIX,
+      CREDIT_CARD: PaymentMethod.CREDIT_CARD,
+      DEBIT_CARD: PaymentMethod.DEBIT_CARD,
+      BANK_TRANSFER: PaymentMethod.BANK_TRANSFER,
+    };
+
+    const PAYMENT_STATUS_FROM_API: Record<PaymentStatusApi, PaymentStatus> = {
+      PENDING: PaymentStatus.PENDING,
+      PAID: PaymentStatus.PAID,
+      CANCELLED: PaymentStatus.CANCELLED,
+    };
+
+    this.customerUuid = response.customerId;
+    this.customerFound = true;
+    this.customerSearchQuery = response.customerDocument;
+    this.customerError = '';
+
+    this.contract = {
+      ...this.contract,
+      tipo: response.contractType,
+      cliente: response.customerId ?? this.contract.cliente,
+      clienteNome: response.customerName,
+      clienteCpf: response.customerDocument,
+      retirada: response.pickupDate,
+      usa: response.eventDate,
+      devolucao: response.returnDate,
+      devolveu: response.actualReturnDate,
+      baixa: !!response.isReturned,
+      situacao: STATUS_FROM_API[response.status] ?? this.contract.situacao,
+      comunicado: response.notes ?? '',
+      itens: response.items.map((item) => ({
+        codigo: item.legacyProductCode,
+        descricao: item.description,
+        valor: item.value,
+        entregue: item.isDelivered,
+        attendantEmployeeId: item.attendantEmployeeId ?? '',
+        sub: item.metadata.map((meta) => ({
+          tipo: meta.type === 'ACESSORIO' ? 'acessorio' : 'observacao',
+          descricao: meta.description,
+        })),
+      })),
+      pagamentos: (response.payments ?? []).map((p) => ({
+        id: p.id,
+        parcela: p.installmentNumber,
+        data: p.paymentDate,
+        forma: METHOD_FROM_API[p.paymentMethod],
+        valor: p.value,
+        vezes: p.installments,
+        status: PAYMENT_STATUS_FROM_API[p.status] ?? PaymentStatus.PENDING,
+        processedByEmployeeId: p.processedByEmployeeId,
+      })),
+    };
+
+    this.itemRentalIds.clear();
+    response.items.forEach((item) => {
+      if (item.rentalItemId) {
+        this.itemRentalIds.set(item.legacyProductCode, item.rentalItemId);
+      }
+    });
+
     this.total = response.totalValue;
     this.totalPaid = response.paidValue;
+    this.recalculate();
+  }
 
-    // Sync backend payment IDs back to local model
-    response.payments?.forEach((rp) => {
-      const local = this.contract.pagamentos.find(
-        (p) => p.parcela === rp.installmentNumber && !p.id,
-      );
-      if (local) local.id = rp.id;
-    });
+  private createEmptyContract(): INewRentalContract {
+    return {
+      tipo: 1,
+      cliente: '',
+      retirada: '',
+      usa: '',
+      devolucao: '',
+      hoje: this.toDateString(new Date()),
+      criado_por: '',
+      baixa: false,
+      situacao: ContractStatus.DRAFT,
+      comunicado: '',
+      itens: [],
+      pagamentos: [],
+    };
   }
 
   private buildPaymentRequest(p: IRentalPayment, processedByEmployeeId: string): IRentalPaymentRequest {
