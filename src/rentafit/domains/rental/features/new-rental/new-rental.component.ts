@@ -562,8 +562,10 @@ export class NewRental implements OnInit {
       return;
     }
 
+    const existing = this.contract.pagamentos[this.editingPaymentIndex!];
     const payment: IRentalPayment = {
-      parcela: this.contract.pagamentos[this.editingPaymentIndex!].parcela,
+      id: existing.id,
+      parcela: existing.parcela,
       data: this.paymentModalData,
       forma: this.paymentModalForma,
       valor: this.paymentModalValor,
@@ -575,6 +577,19 @@ export class NewRental implements OnInit {
     this.contract.pagamentos[this.editingPaymentIndex!] = payment;
     this.recalculate();
     this.closePaymentModal();
+
+    if (this.contractId && payment.id) {
+      this.isSaving = true;
+      this.serverError = '';
+      const request = this.buildPaymentRequest(payment, this.itemModalEmployee ?? '');
+      this.rentalContractService.updatePayment(this.contractId, payment.id, request)
+        .pipe(finalize(() => (this.isSaving = false)))
+        .subscribe({
+          error: (err: Error) => {
+            this.serverError = err.message || 'Erro ao atualizar parcela.';
+          },
+        });
+    }
   }
 
   dividePayment(): void {
@@ -663,8 +678,8 @@ export class NewRental implements OnInit {
 
   get stepperStep(): number {
     switch (this.contract.situacao) {
-      case ContractStatus.DRAFT:      return 2; // steps 1+2 done, step 3 active
-      case ContractStatus.SIGNED:     return 3; // steps 1+2+3 done, step 4 active
+      case ContractStatus.DRAFT:      return 1; // step 1 done, step 2 active
+      case ContractStatus.SIGNED:     return 2; // steps 1+2 done, step 3 active
       case ContractStatus.FINALIZED:  return 4; // all done
       default:                        return 0; // INITIAL: only step 1 active
     }

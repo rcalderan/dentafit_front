@@ -31,14 +31,14 @@
                 <span>Salvo</span>
             </div>
             <div class="step-line" [class.done]="stepperStep > 1"></div>
-            <div class="step" [class.active]="stepperStep >= 2" [class.done]="stepperStep > 2">
+            <div class="step" [class.active]="stepperStep >= 2" [class.done]="stepperStep >= 2">
                 <div class="step-circle">✓</div>
-                <span>Assinado</span>
+                <span>{{ stepperStep >= 2 ? 'Assinado' : 'Assinar' }}</span>
             </div>
-            <div class="step-line" [class.done]="stepperStep > 2"></div>
+            <div class="step-line" [class.done]="stepperStep >= 2"></div>
             <div class="step" [class.active]="stepperStep >= 3" [class.done]="stepperStep > 3">
                 <div class="step-circle">🔒</div>
-                <span>Finalizado</span>
+                <span>{{ stepperStep > 3 ? 'Finalizado' : 'Finalizar' }}</span>
             </div>
             </div>
             <button class="btn btn-clear-proposal" (click)="clearProposal()" [disabled]="isSaving || contractLookupLoading">
