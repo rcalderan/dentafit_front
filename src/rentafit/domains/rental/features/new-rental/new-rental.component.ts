@@ -662,7 +662,12 @@ export class NewRental implements OnInit {
   }
 
   get stepperStep(): number {
-    return this.contract.situacao + 1; // 1=Draft, 2=Signed, 3=Finalized
+    switch (this.contract.situacao) {
+      case ContractStatus.DRAFT:      return 2; // steps 1+2 done, step 3 active
+      case ContractStatus.SIGNED:     return 3; // steps 1+2+3 done, step 4 active
+      case ContractStatus.FINALIZED:  return 4; // all done
+      default:                        return 0; // INITIAL: only step 1 active
+    }
   }
 
   salvarProposta(): void {
@@ -723,7 +728,6 @@ export class NewRental implements OnInit {
     }
     this.employeeVerifyAction = 'sign';    
     this.showEmployeeVerify = true;
-    this.contract.situacao = ContractStatus.SIGNED;
   }
 
   finalizarLocacao(): void {
@@ -741,8 +745,7 @@ export class NewRental implements OnInit {
       return;
     }
     this.employeeVerifyAction = 'finalize';
-    this.showEmployeeVerify = true;    
-    this.contract.situacao = ContractStatus.FINALIZED;
+    this.showEmployeeVerify = true;
   }
 
   onEmployeeConfirmed(event: EmployeeConfirmedEvent): void {
@@ -982,7 +985,7 @@ export class NewRental implements OnInit {
       hoje: this.toDateString(new Date()),
       criado_por: '',
       baixa: false,
-      situacao: ContractStatus.DRAFT,
+      situacao: ContractStatus.INITIAL,
       comunicado: '',
       itens: [],
       pagamentos: [],

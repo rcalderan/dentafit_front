@@ -21,22 +21,22 @@
     } @else {
         <div class="stepper-header">
             <div class="stepper">
-            <div class="step" [class.active]="stepperStep >= 0" [class.done]="stepperStep >= 1">
+            <div class="step" [class.active]="stepperStep >= 0" [class.done]="stepperStep > 0">
                 <div class="step-circle">1</div>
                 <span>Rascunho</span>
             </div>
-            <div class="step-line" [class.done]="stepperStep >= 1"></div>
-            <div class="step" [class.active]="stepperStep >= 1" [class.done]="stepperStep > 2">
+            <div class="step-line" [class.done]="stepperStep > 0"></div>
+            <div class="step" [class.active]="stepperStep >= 1" [class.done]="stepperStep > 1">
                 <div class="step-circle">2</div>
                 <span>Salvo</span>
             </div>
-            <div class="step-line" [class.done]="stepperStep > 2"></div>
-            <div class="step" [class.active]="stepperStep >= 3" [class.done]="stepperStep > 3">
+            <div class="step-line" [class.done]="stepperStep > 1"></div>
+            <div class="step" [class.active]="stepperStep >= 2" [class.done]="stepperStep > 2">
                 <div class="step-circle">✓</div>
                 <span>Assinado</span>
             </div>
-            <div class="step-line" [class.done]="stepperStep > 3"></div>
-            <div class="step" [class.active]="stepperStep >= 4">
+            <div class="step-line" [class.done]="stepperStep > 2"></div>
+            <div class="step" [class.active]="stepperStep >= 3" [class.done]="stepperStep > 3">
                 <div class="step-circle">🔒</div>
                 <span>Finalizado</span>
             </div>
