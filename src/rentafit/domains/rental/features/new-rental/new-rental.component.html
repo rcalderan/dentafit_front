@@ -207,35 +207,41 @@
     </div>
 
     <!-- ── Actions ── -->
-    @if (serverError) {
-        <div class="server-error">⚠️ {{ serverError }}</div>
+    @if (contractLoaded) {
+        @if (serverError) {
+            <div class="server-error">⚠️ {{ serverError }}</div>
+        }
+        <div class="actions">
+            @if (serverWarnings.length > 0) {
+                <div class="server-warnings">
+                    @for (w of serverWarnings; track w) {
+                        <div class="server-warning">⚠️ {{ w }}</div>
+                    }
+                </div>
+            }
+            @if (stepperStep === 0) {
+                <button class="btn btn-update" (click)="salvarProposta()" [disabled]="isSaving">
+                    {{ isSaving ? '⏳ Salvando…' : '💾 Salvar Proposta' }}
+                </button>
+            }
+            @if (stepperStep === 1) {
+                <button class="btn btn-sign" (click)="assinarContrato()" [disabled]="isSaving">
+                    ✍️ Assinar Proposta
+                </button>
+            }
+            @if (stepperStep === 2) {
+                <button class="btn btn-save" (click)="finalizarLocacao()" [disabled]="isSaving">
+                    🔒 Finalizar Locação
+                </button>
+            }
+            @if (stepperStep >= 3) {
+                <span class="contract-closed-label">Contrato Fechado</span>
+                <button class="btn btn-duplicate" (click)="duplicateContract()" [disabled]="isSaving">
+                    {{ isSaving ? '⏳ Duplicando…' : '📋 Gerar Nova Proposta Igual' }}
+                </button>
+            }
+        </div>
     }
-    <div class="actions">
-        @if (serverWarnings.length > 0) {
-            <div class="server-warnings">
-                @for (w of serverWarnings; track w) {
-                    <div class="server-warning">⚠️ {{ w }}</div>
-                }
-            </div>
-        }
-        @if (contract.situacao !== ContractStatus.FINALIZED) {
-            <button class="btn btn-update" (click)="salvarProposta()" [disabled]="isSaving">
-                {{ isSaving ? '⏳ Salvando…' : '💾 Salvar Proposta' }}
-            </button>
-            <button class="btn btn-sign" (click)="assinarContrato()"
-                    [disabled]="isSaving || contract.situacao === ContractStatus.SIGNED">
-                ✍️ Cliente Assinou
-            </button>
-            <button class="btn btn-save" (click)="finalizarLocacao()" [disabled]="isSaving">
-                🔒 Finalizar Locação
-            </button>
-        } @else {
-            <span class="contract-closed-label">Contrato Fechado</span>
-            <button class="btn btn-duplicate" (click)="duplicateContract()" [disabled]="isSaving">
-                {{ isSaving ? '⏳ Duplicando…' : '📋 Gerar Nova Proposta Igual' }}
-            </button>
-        }
-    </div>
 
 </div>
 
