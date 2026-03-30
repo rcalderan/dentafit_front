@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, inject, Input, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs/operators';
 import { EmployeeService } from '../../../admin/service/employee.service';
@@ -16,12 +16,15 @@ export interface EmployeeConfirmedEvent {
   templateUrl: './employee-verify.component.html',
   styleUrl: './employee-verify.component.css',
 })
-export class EmployeeVerifyComponent {
+export class EmployeeVerifyComponent implements AfterViewInit {
   @Input() title = 'Identificar Atendente';
   @Input() requirePin = false;
 
   @Output() confirmed = new EventEmitter<EmployeeConfirmedEvent>();
   @Output() cancelled = new EventEmitter<void>();
+
+  @ViewChild('initialsInput') initialsInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('pinInput') pinInput?: ElementRef<HTMLInputElement>;
 
   private readonly employeeService = inject(EmployeeService);
 
@@ -29,6 +32,18 @@ export class EmployeeVerifyComponent {
   pin = '';
   isLoading = false;
   error = '';
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.initialsInput?.nativeElement.focus(), 0);
+  }
+
+  onInitialsEnter(): void {
+    if (this.requirePin) {
+      this.pinInput?.nativeElement.focus();
+    } else {
+      this.confirm();
+    }
+  }
 
   confirm(): void {
     if (!this.initials?.trim()) {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -39,7 +39,11 @@ export type { IItemMeta, INewRentalContract, IProductCatalog, IRentalContractIte
   templateUrl: './new-rental.component.html',
   styleUrls: ['./new-rental.component.css'],
 })
-export class NewRental implements OnInit {
+export class NewRental implements OnInit, AfterViewInit {
+
+  @ViewChild('contractLookupInput') private contractLookupInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('itemCodeInput') private itemCodeInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('paymentValorInput') private paymentValorInput?: ElementRef<HTMLInputElement>;
 
   // Expose enums to template
   ContractStatus = ContractStatus;
@@ -153,6 +157,10 @@ export class NewRental implements OnInit {
 
   // ── Holidays: populated async from HolidayService on init ──
   private holidays = new Set<string>();
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.contractLookupInput?.nativeElement.focus(), 0);
+  }
 
   ngOnInit(): void {
     const currentYear = new Date().getFullYear();
@@ -354,6 +362,7 @@ export class NewRental implements OnInit {
     this.itemModalFoundProductUuid = null;
     this.itemModalError = '';
     this.showItemModal = true;
+    setTimeout(() => this.itemCodeInput?.nativeElement.focus(), 0);
   }
 
   openEditItemModal(index: number): void {
@@ -371,6 +380,7 @@ export class NewRental implements OnInit {
     this.itemModalNewExtraType = 'observacao';
     this.itemModalError = '';
     this.showItemModal = true;
+    setTimeout(() => this.itemCodeInput?.nativeElement.focus(), 0);
   }
 
   closeItemModal(): void {
@@ -515,6 +525,7 @@ export class NewRental implements OnInit {
     }
     this.paymentModalError = '';
     this.showPaymentModal = true;
+    setTimeout(() => this.paymentValorInput?.nativeElement.focus(), 0);
   }
 
   openEditPaymentModal(index: number): void {
@@ -527,6 +538,7 @@ export class NewRental implements OnInit {
     this.paymentModalStatus = p.status;
     this.paymentModalError = '';
     this.showPaymentModal = true;
+    setTimeout(() => this.paymentValorInput?.nativeElement.focus(), 0);
   }
 
   closePaymentModal(): void {

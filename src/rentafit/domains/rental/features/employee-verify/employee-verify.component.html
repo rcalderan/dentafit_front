@@ -5,13 +5,14 @@
     <div class="ev-field">
       <label for="ev-initials">Iniciais do Funcionário</label>
       <input
+        #initialsInput
         id="ev-initials"
         type="text"
         [(ngModel)]="initials"
         placeholder="Ex.: MS"
         maxlength="10"
         [disabled]="isLoading"
-        (keydown.enter)="confirm()"
+        (keydown.enter)="onInitialsEnter()"
       />
     </div>
 
@@ -19,6 +20,7 @@
       <div class="ev-field">
         <label for="ev-pin">PIN</label>
         <input
+          #pinInput
           id="ev-pin"
           type="password"
           [(ngModel)]="pin"

@@ -5,6 +5,7 @@
             <span class="section-label">Carregar Contrato</span>
             <div class="search-input">
                 <input
+                    #contractLookupInput
                     type="text"
                     [(ngModel)]="contractLookupLegacyId"
                     placeholder="Informe o legacyId do contrato..."
@@ -172,12 +173,14 @@
                             <span class="payment-method">{{ paymentMethodLabels[p.forma] }}</span>
                             <span class="payment-date">{{ formatDate(p.data) }}</span>
                         </div>
-                        <span class="payment-amount">R$ {{ formatCurrency(p.valor) }}</span>
-                        <span class="payment-badge"
-                                [class.paid]="p.status === PaymentStatus.PAID"
-                                [class.pending]="p.status === PaymentStatus.PENDING">
-                            {{ p.status === PaymentStatus.PAID ? 'Pago' : 'Pendente' }}
-                        </span>
+                        <div class="payment-amount-col">
+                            <span class="payment-amount">R$ {{ formatCurrency(p.valor) }}</span>
+                            <span class="payment-badge"
+                                    [class.paid]="p.status === PaymentStatus.PAID"
+                                    [class.pending]="p.status === PaymentStatus.PENDING">
+                                {{ p.status === PaymentStatus.PAID ? 'Pago' : 'Pendente' }}
+                            </span>
+                        </div>
                         @if (contract.situacao !== ContractStatus.FINALIZED && p.status !== PaymentStatus.PAID) {
                             <button class="remove-btn" (click)="$event.stopPropagation(); removePayment(i)">✕</button>
                         }
@@ -259,7 +262,7 @@
             <div class="input-group">
                 <label>Código do Produto</label>
                 <div class="search-input">
-                    <input type="text" [(ngModel)]="itemModalCode" class="uppercase"
+                    <input #itemCodeInput type="text" [(ngModel)]="itemModalCode" class="uppercase"
                            placeholder="Código legado..." (keyup.enter)="searchItemByCode()"
                            [disabled]="itemSearchLoading">
                     <button class="icon-btn" (click)="searchItemByCode()" [disabled]="itemSearchLoading">
@@ -339,7 +342,7 @@
                 </div>
                 <div class="input-group">
                     <label>Valor (não planejado: R$ {{ formatCurrency(unplannedAmount) }})</label>
-                    <input type="number" [(ngModel)]="paymentModalValor" min="0.01" step="0.01"
+                    <input #paymentValorInput type="number" [(ngModel)]="paymentModalValor" min="0.01" step="0.01"
                            (keyup.enter)="submitPaymentModal()">
                 </div>
                 <div class="input-group">
