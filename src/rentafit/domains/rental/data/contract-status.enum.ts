@@ -3,4 +3,6 @@ export enum ContractStatus {
   DRAFT = 0,      // Proposta
   SIGNED = 1,     // Assinado
   FINALIZED = 2,  // Contrato fechado
+  REVISION = 3,   // Revisão (nova proposta gerada a partir de um contrato assinado)
+  SUPERSEDED = 4, // Substituído (contrato original invalidado pela revisão assinada)
 }

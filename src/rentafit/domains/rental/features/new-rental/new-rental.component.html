@@ -42,6 +42,26 @@
                 <span>{{ stepperStep > 3 ? 'Finalizado' : 'Finalizar' }}</span>
             </div>
             </div>
+            <div class="stepper-meta">
+                @if (contract.situacao === ContractStatus.REVISION) {
+                    <span class="status-badge badge-revision">📄 Revisão</span>
+                }
+                @if (contract.situacao === ContractStatus.SUPERSEDED) {
+                    <span class="status-badge badge-superseded">❌ Substituído</span>
+                }
+                @if (parentContractId) {
+                    <button class="btn-link" (click)="loadContractById(parentContractId)" [disabled]="contractLookupLoading">
+                        ← Ver contrato original
+                    </button>
+                }
+                @if (replacedByContractId) {
+                    <button class="btn btn-revise"
+                            (click)="loadContractById(replacedByContractId)"
+                            [disabled]="contractLookupLoading">
+                        {{ contract.situacao === ContractStatus.SUPERSEDED ? '📂 Carregar Vigente' : '→ Ir para Revisão' }}
+                    </button>
+                }
+            </div>
             <button class="btn btn-clear-proposal" (click)="clearProposal()" [disabled]="isSaving || contractLookupLoading">
                 🧹 Limpar Proposta
             </button>
@@ -225,6 +245,11 @@
                 </button>
             }
             @if (stepperStep === 1) {
+                @if (contract.situacao === ContractStatus.REVISION) {
+                    <button class="btn btn-update" (click)="salvarProposta()" [disabled]="isSaving">
+                        {{ isSaving ? '⏳ Salvando…' : '💾 Salvar Revisão' }}
+                    </button>
+                }
                 <button class="btn btn-sign" (click)="assinarContrato()" [disabled]="isSaving">
                     ✍️ Assinar Proposta
                 </button>
@@ -233,12 +258,21 @@
                 <button class="btn btn-save" (click)="finalizarLocacao()" [disabled]="isSaving">
                     🔒 Finalizar Locação
                 </button>
+                @if (!replacedByContractId) {
+                    <button class="btn btn-revise" (click)="reviseContrato()" [disabled]="isSaving">
+                        {{ isSaving ? '⏳ Gerando…' : '✏️ Revisar Contrato' }}
+                    </button>
+                }
             }
             @if (stepperStep >= 3) {
-                <span class="contract-closed-label">Contrato Fechado</span>
-                <button class="btn btn-duplicate" (click)="duplicateContract()" [disabled]="isSaving">
-                    {{ isSaving ? '⏳ Duplicando…' : '📋 Gerar Nova Proposta Igual' }}
-                </button>
+                @if (contract.situacao === ContractStatus.SUPERSEDED) {
+                    <span class="contract-closed-label contract-superseded-label">❌ Contrato Substituído</span>
+                } @else {
+                    <span class="contract-closed-label">Contrato Fechado</span>
+                    <button class="btn btn-duplicate" (click)="duplicateContract()" [disabled]="isSaving">
+                        {{ isSaving ? '⏳ Duplicando…' : '📋 Gerar Nova Proposta Igual' }}
+                    </button>
+                }
             }
         </div>
     }

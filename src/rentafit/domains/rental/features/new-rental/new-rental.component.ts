@@ -90,10 +90,16 @@ export class NewRental implements OnInit, AfterViewInit {
   serverError = '';
   serverWarnings: string[] = [];
 
+  /** UUID of the contract that originated this one (REVISION → original SIGNED). */
+  parentContractId: string | null = null;
+  /** UUID of the revision contract created from this one. */
+  replacedByContractId: string | null = null;
+
   // ── Employee verification modal ──
   showEmployeeVerify = false;
   /** Which action is pending employee confirmation. */
-  employeeVerifyAction: 'sign' | 'finalize' | 'save' | 'addItem' | null = null;
+  employeeVerifyAction: 'sign' | 'finalize' | 'save' | 'addItem' | 'payment' | null = null;
+  private pendingPaymentEmployeeId: string | null = null;
 
   get employeeVerifyTitle(): string {
     switch (this.employeeVerifyAction) {
@@ -101,12 +107,13 @@ export class NewRental implements OnInit, AfterViewInit {
       case 'finalize': return 'Identificar Atendente — Finalização';
       case 'save':     return 'Validar Atendente — Salvar Proposta';
       case 'addItem':  return 'Identificar Atendente — Adicionar Item';
+      case 'payment':  return 'Identificar Atendente — Registrar Pagamento';
       default:         return 'Identificar Atendente';
     }
   }
 
   get employeeVerifyRequirePin(): boolean {
-    return this.employeeVerifyAction === 'save';
+    return this.employeeVerifyAction === 'save' || this.employeeVerifyAction === 'payment';
   }
 
   // ── Customer ──
@@ -556,6 +563,17 @@ export class NewRental implements OnInit, AfterViewInit {
   confirmAddPayment(): void {
     // Only used in edit mode now
     this.paymentModalError = '';
+
+    // Signed contracts require employee identification before saving a payment
+    if (
+      this.contract.situacao === ContractStatus.SIGNED &&
+      this.pendingPaymentEmployeeId === null
+    ) {
+      this.employeeVerifyAction = 'payment';
+      this.showEmployeeVerify = true;
+      return;
+    }
+
     const isEditing = this.editingPaymentIndex !== null;
     if (!isEditing) return;
     const currentVal = this.contract.pagamentos[this.editingPaymentIndex!].valor;
@@ -593,7 +611,9 @@ export class NewRental implements OnInit, AfterViewInit {
     if (this.contractId && payment.id) {
       this.isSaving = true;
       this.serverError = '';
-      const request = this.buildPaymentRequest(payment, this.itemModalEmployee ?? '');
+      const employeeId = this.pendingPaymentEmployeeId ?? this.itemModalEmployee ?? '';
+      this.pendingPaymentEmployeeId = null;
+      const request = this.buildPaymentRequest(payment, employeeId);
       this.rentalContractService.updatePayment(this.contractId, payment.id, request)
         .pipe(finalize(() => (this.isSaving = false)))
         .subscribe({
@@ -685,16 +705,50 @@ export class NewRental implements OnInit, AfterViewInit {
   // ==================== Contract flow ====================
 
   isEditable(): boolean {
-    return this.contract.situacao !== ContractStatus.FINALIZED;
+    return (
+      this.contract.situacao === ContractStatus.INITIAL ||
+      this.contract.situacao === ContractStatus.DRAFT ||
+      this.contract.situacao === ContractStatus.REVISION
+    );
   }
 
   get stepperStep(): number {
     switch (this.contract.situacao) {
       case ContractStatus.DRAFT:      return 1; // step 1 done, step 2 active
+      case ContractStatus.REVISION:   return 1; // same visual position as DRAFT
       case ContractStatus.SIGNED:     return 2; // steps 1+2 done, step 3 active
       case ContractStatus.FINALIZED:  return 4; // all done
+      case ContractStatus.SUPERSEDED: return 4; // terminal — differentiated by label
       default:                        return 0; // INITIAL: only step 1 active
     }
+  }
+
+  reviseContrato(): void {
+    if (!this.contractId) return;
+    this.isSaving = true;
+    this.serverError = '';
+    this.serverWarnings = [];
+    this.rentalContractService.revise(this.contractId)
+      .pipe(finalize(() => (this.isSaving = false)))
+      .subscribe({
+        next: (response) => this.mapResponseToContract(response),
+        error: (err: Error) => {
+          this.serverError = err.message || 'Erro ao gerar revisão.';
+        },
+      });
+  }
+
+  loadContractById(id: string): void {
+    this.contractLookupLoading = true;
+    this.contractLookupError = '';
+    this.rentalContractService.getById(id)
+      .pipe(finalize(() => (this.contractLookupLoading = false)))
+      .subscribe({
+        next: (response) => this.mapResponseToContract(response),
+        error: (err: Error) => {
+          this.contractLookupError = err.message || 'Contrato não encontrado.';
+        },
+      });
   }
 
   salvarProposta(): void {
@@ -788,6 +842,12 @@ export class NewRental implements OnInit, AfterViewInit {
     if (action === 'addItem') {
       this.openItemModalExecute();
       this.itemModalEmployee = event.employeeId;
+      return;
+    }
+
+    if (action === 'payment') {
+      this.pendingPaymentEmployeeId = event.employeeId;
+      this.confirmAddPayment();
       return;
     }
 
@@ -890,6 +950,9 @@ export class NewRental implements OnInit, AfterViewInit {
 
     this.serverError = '';
     this.serverWarnings = [];
+
+    this.parentContractId = null;
+    this.replacedByContractId = null;
   }
 
   // ==================== API mapping helpers ====================
@@ -933,6 +996,8 @@ export class NewRental implements OnInit, AfterViewInit {
       0: ContractStatus.DRAFT,
       1: ContractStatus.SIGNED,
       2: ContractStatus.FINALIZED,
+      3: ContractStatus.REVISION,
+      4: ContractStatus.SUPERSEDED,
     };
 
     const METHOD_FROM_API: Record<PaymentMethodApi, PaymentMethod> = {
@@ -999,6 +1064,8 @@ export class NewRental implements OnInit, AfterViewInit {
 
     this.total = response.totalValue;
     this.totalPaid = response.paidValue;
+    this.parentContractId = response.parentContractId ?? null;
+    this.replacedByContractId = response.replacedByContractId ?? null;
     this.recalculate();
   }
 

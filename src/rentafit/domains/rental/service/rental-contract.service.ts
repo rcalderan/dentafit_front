@@ -154,6 +154,13 @@ export class RentalContractService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
+  /** Creates a REVISION contract from a SIGNED/FINALIZED contract. */
+  revise(id: string): Observable<IRentalContractResponse> {
+    return this.http
+      .post<IRentalContractResponse>(`${this.apiUrl}/${id}/revise`, {})
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
   // ─── Payments ────────────────────────────────────────────────────────────────
 
   listPayments(contractId: string): Observable<IRentalPaymentResponse[]> {

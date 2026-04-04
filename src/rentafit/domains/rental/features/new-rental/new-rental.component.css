@@ -627,6 +627,17 @@ select {
     color: var(--primary-color);
 }
 
+.btn-revise {
+    background-color: var(--input-bg);
+    color: var(--warning-color, #f59e0b);
+    border: 1px solid var(--warning-color, #f59e0b);
+}
+
+.btn-revise:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .contract-closed-label {
     font-weight: 700;
     font-size: 1rem;
@@ -634,6 +645,60 @@ select {
     padding: 0.9rem 1.5rem;
     border: 2px solid var(--success-color, #22c55e);
     border-radius: var(--input-radius);
+}
+
+.contract-superseded-label {
+    color: var(--danger-color, #ef4444);
+    border-color: var(--danger-color, #ef4444);
+}
+
+.stepper-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+    padding: 0 0.25rem;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    white-space: nowrap;
+}
+
+.badge-revision {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: var(--warning-color, #f59e0b);
+    border: 1px solid var(--warning-color, #f59e0b);
+}
+
+.badge-superseded {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: var(--danger-color, #ef4444);
+    border: 1px solid var(--danger-color, #ef4444);
+}
+
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    text-decoration: underline;
+    border-radius: 4px;
+}
+
+.btn-link:hover {
+    opacity: 0.75;
+}
+
+.btn-link:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 /* ==================== Modal ==================== */

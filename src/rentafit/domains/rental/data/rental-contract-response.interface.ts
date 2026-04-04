@@ -60,5 +60,7 @@ export interface IRentalContractResponse {
   items: IRentalContractItemResponse[];
   payments?: IRentalPaymentResponse[];
   warnings?: string[];
+  parentContractId?: string;
+  replacedByContractId?: string;
   createdAt: string;
 }
