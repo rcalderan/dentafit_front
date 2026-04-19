@@ -201,8 +201,11 @@
                                 {{ p.status === PaymentStatus.PAID ? 'Pago' : 'Pendente' }}
                             </span>
                         </div>
-                        @if (contract.situacao !== ContractStatus.FINALIZED && p.status !== PaymentStatus.PAID) {
+                        @if (p.status !== PaymentStatus.PAID) {
                             <button class="remove-btn" (click)="$event.stopPropagation(); removePayment(i)">✕</button>
+                        }
+                        @else {                            
+                            <div style="padding: 0.2rem 0.4rem;">✅</div>
                         }
                     </div>
                 }

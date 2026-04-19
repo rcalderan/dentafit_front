@@ -98,7 +98,7 @@ export class NewRental implements OnInit, AfterViewInit {
   // ── Employee verification modal ──
   showEmployeeVerify = false;
   /** Which action is pending employee confirmation. */
-  employeeVerifyAction: 'sign' | 'finalize' | 'save' | 'addItem' | 'payment' | null = null;
+  employeeVerifyAction: 'sign' | 'finalize' | 'save' | 'addItem' | 'payment' | 'addPayment' | null = null;
   private pendingPaymentEmployeeId: string | null = null;
 
   get employeeVerifyTitle(): string {
@@ -106,14 +106,19 @@ export class NewRental implements OnInit, AfterViewInit {
       case 'sign':     return 'Identificar Atendente — Assinatura';
       case 'finalize': return 'Identificar Atendente — Finalização';
       case 'save':     return 'Validar Atendente — Salvar Proposta';
-      case 'addItem':  return 'Identificar Atendente — Adicionar Item';
-      case 'payment':  return 'Identificar Atendente — Registrar Pagamento';
+      case 'addItem':     return 'Identificar Atendente — Adicionar Item';
+      case 'addPayment':  return 'Identificar Atendente — Adicionar Parcela';
+      case 'payment':  return this.paymentModalStatus === PaymentStatus.PAID
+        ? 'Identificar Atendente — Registrar Pagamento'
+        : 'Identificar Atendente — Editar Parcela';
       default:         return 'Identificar Atendente';
     }
   }
 
   get employeeVerifyRequirePin(): boolean {
-    return this.employeeVerifyAction === 'save' || this.employeeVerifyAction === 'payment';
+    return this.employeeVerifyAction === 'save'
+      || this.employeeVerifyAction === 'payment'
+      || this.employeeVerifyAction === 'addPayment';
   }
 
   // ── Customer ──
@@ -538,6 +543,7 @@ export class NewRental implements OnInit, AfterViewInit {
   openEditPaymentModal(index: number): void {
     const p = this.contract.pagamentos[index];
     if (!p) return;
+    if (this.contract.situacao > 0 && p.status !== PaymentStatus.PENDING) return;
     this.editingPaymentIndex = index;
     this.paymentModalForma = p.forma;
     this.paymentModalValor = p.valor;
@@ -564,17 +570,21 @@ export class NewRental implements OnInit, AfterViewInit {
     // Only used in edit mode now
     this.paymentModalError = '';
 
-    // Signed contracts require employee identification before saving a payment
+    const isEditing = this.editingPaymentIndex !== null;
+    const existingPayment = isEditing ? this.contract.pagamentos[this.editingPaymentIndex!] : null;
+
+    // Require employee identification when an action will be persisted to the backend:
+    // - contract is SIGNED (any edit on an existing backend payment), OR
+    // - payment is being marked as PAID on an existing backend payment (has a backend id)
     if (
-      this.contract.situacao === ContractStatus.SIGNED &&
+      (this.contract.situacao === ContractStatus.SIGNED ||
+        (this.paymentModalStatus === PaymentStatus.PAID && existingPayment?.id != null)) &&
       this.pendingPaymentEmployeeId === null
     ) {
       this.employeeVerifyAction = 'payment';
       this.showEmployeeVerify = true;
       return;
     }
-
-    const isEditing = this.editingPaymentIndex !== null;
     if (!isEditing) return;
     const currentVal = this.contract.pagamentos[this.editingPaymentIndex!].valor;
     const maxAllowed = this.unplannedAmount + currentVal;
@@ -608,19 +618,28 @@ export class NewRental implements OnInit, AfterViewInit {
     this.recalculate();
     this.closePaymentModal();
 
-    if (this.contractId && payment.id) {
+    if (this.contractId) {
       this.isSaving = true;
       this.serverError = '';
       const employeeId = this.pendingPaymentEmployeeId ?? this.itemModalEmployee ?? '';
       this.pendingPaymentEmployeeId = null;
+      const contractId = this.contractId;
       const request = this.buildPaymentRequest(payment, employeeId);
-      this.rentalContractService.updatePayment(this.contractId, payment.id, request)
+
+      const save$ = payment.id
+        ? this.rentalContractService.updatePayment(contractId, payment.id, request)
+        : this.rentalContractService.addPayment(contractId, request);
+
+      save$
         .pipe(finalize(() => (this.isSaving = false)))
         .subscribe({
+          next: () => this.loadContractById(contractId),
           error: (err: Error) => {
-            this.serverError = err.message || 'Erro ao atualizar parcela.';
+            this.serverError = err.message || 'Erro ao salvar parcela.';
           },
         });
+    } else {
+      this.pendingPaymentEmployeeId = null;
     }
   }
 
@@ -629,6 +648,17 @@ export class NewRental implements OnInit, AfterViewInit {
 
     if (this.paymentModalValor <= 0) {
       this.paymentModalError = 'Valor deve ser maior que zero.';
+      return;
+    }
+
+    // For SIGNED contracts: require employee identification before persisting to backend
+    if (
+      this.contractId &&
+      this.contract.situacao === ContractStatus.SIGNED &&
+      this.pendingPaymentEmployeeId === null
+    ) {
+      this.employeeVerifyAction = 'addPayment';
+      this.showEmployeeVerify = true;
       return;
     }
 
@@ -674,6 +704,30 @@ export class NewRental implements OnInit, AfterViewInit {
 
     this.recalculate();
     this.closePaymentModal();
+
+    // For SIGNED contracts: persist each new (unsaved) payment to backend
+    if (this.contractId && this.contract.situacao === ContractStatus.SIGNED) {
+      const employeeId = this.pendingPaymentEmployeeId ?? '';
+      this.pendingPaymentEmployeeId = null;
+      const contractId = this.contractId;
+      const unsaved = this.contract.pagamentos.filter(p => !p.id);
+      if (unsaved.length > 0) {
+        this.isSaving = true;
+        this.serverError = '';
+        forkJoin(unsaved.map(p =>
+          this.rentalContractService.addPayment(contractId, this.buildPaymentRequest(p, employeeId))
+        ))
+          .pipe(finalize(() => (this.isSaving = false)))
+          .subscribe({
+            next: () => this.loadContractById(contractId),
+            error: (err: Error) => {
+              this.serverError = err.message || 'Erro ao salvar parcelas.';
+            },
+          });
+      }
+    } else {
+      this.pendingPaymentEmployeeId = null;
+    }
   }
 
   removePayment(index: number): void {
@@ -848,6 +902,12 @@ export class NewRental implements OnInit, AfterViewInit {
     if (action === 'payment') {
       this.pendingPaymentEmployeeId = event.employeeId;
       this.confirmAddPayment();
+      return;
+    }
+
+    if (action === 'addPayment') {
+      this.pendingPaymentEmployeeId = event.employeeId;
+      this.dividePayment();
       return;
     }
 
