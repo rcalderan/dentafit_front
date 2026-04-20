@@ -601,8 +601,25 @@ export class NewRental implements OnInit, AfterViewInit {
       this.paymentModalError = 'Data não pode ser posterior à data de uso.';
       return;
     }
+    const today = this.toDateString(new Date());
+    if (this.paymentModalData < today) {
+      this.paymentModalError = 'Data do pagamento não pode ser anterior à data atual.';
+      return;
+    }
 
     const existing = this.contract.pagamentos[this.editingPaymentIndex!];
+    const isReducingPersistedInstallment =
+      !!existing.id && this.paymentModalValor < existing.valor - 0.001;
+
+    if (isReducingPersistedInstallment) {
+      const confirmed = window.confirm(
+        'A redução do valor desta parcela pode gerar uma parcela compensatória automática. Deseja continuar?'
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
     const payment: IRentalPayment = {
       id: existing.id,
       parcela: existing.parcela,
@@ -633,9 +650,12 @@ export class NewRental implements OnInit, AfterViewInit {
       save$
         .pipe(finalize(() => (this.isSaving = false)))
         .subscribe({
-          next: () => this.loadContractById(contractId),
+          next: () => {
+            this.loadContractById(contractId);
+          },
           error: (err: Error) => {
             this.serverError = err.message || 'Erro ao salvar parcela.';
+            this.loadContractById(contractId);
           },
         });
     } else {
@@ -722,6 +742,7 @@ export class NewRental implements OnInit, AfterViewInit {
             next: () => this.loadContractById(contractId),
             error: (err: Error) => {
               this.serverError = err.message || 'Erro ao salvar parcelas.';
+              this.loadContractById(contractId);
             },
           });
       }
