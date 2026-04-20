@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { CustomerService } from '../../../customer/service/customer.service';
 import { ProductService } from '../../../product/service/product.service';
@@ -27,6 +27,7 @@ import {
   EmployeeVerifyComponent,
 } from '../employee-verify/employee-verify.component';
 import { RentalContractService } from '../../service/rental-contract.service';
+import { AutosaveService, AutosaveStatus } from '../../service/autosave.service';
 
 export { ContractStatus, PaymentMethod, PaymentStatus };
 export type { IItemMeta, INewRentalContract, IProductCatalog, IRentalContractItem, IRentalPayment };
@@ -38,8 +39,9 @@ export type { IItemMeta, INewRentalContract, IProductCatalog, IRentalContractIte
   imports: [CommonModule, FormsModule, EmployeeVerifyComponent],
   templateUrl: './new-rental.component.html',
   styleUrls: ['./new-rental.component.css'],
+  providers: [AutosaveService],
 })
-export class NewRental implements OnInit, AfterViewInit {
+export class NewRental implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('contractLookupInput') private contractLookupInput?: ElementRef<HTMLInputElement>;
   @ViewChild('itemCodeInput') private itemCodeInput?: ElementRef<HTMLInputElement>;
@@ -63,6 +65,14 @@ export class NewRental implements OnInit, AfterViewInit {
   private readonly customerService = inject(CustomerService);
   private readonly productService = inject(ProductService);
   private readonly rentalContractService = inject(RentalContractService);
+  private readonly autosaveService = inject(AutosaveService<IRentalContractCreateRequest, IRentalContractResponse>);
+
+  // ── Autosave ──
+  autosaveStatus: AutosaveStatus = 'idle';
+  autosaveError: string | null = null;
+  /** Employee ID captured during the first manual save; reused for autosave requests. */
+  private autosaveEmployeeId: string | null = null;
+  private autosaveSubscription?: Subscription;
 
   // ── Enum → API string maps (used by buildPaymentRequest & buildCreateRequest) ──
   private readonly METHOD_MAP: Record<PaymentMethod, PaymentMethodApi> = {
@@ -118,7 +128,8 @@ export class NewRental implements OnInit, AfterViewInit {
   get employeeVerifyRequirePin(): boolean {
     return this.employeeVerifyAction === 'save'
       || this.employeeVerifyAction === 'payment'
-      || this.employeeVerifyAction === 'addPayment';
+      || this.employeeVerifyAction === 'addPayment'
+      || this.employeeVerifyAction === 'addItem';
   }
 
   // ── Customer ──
@@ -175,6 +186,12 @@ export class NewRental implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
+    // Subscribe to autosave status changes for UI feedback
+    this.autosaveSubscription = this.autosaveService.status$.subscribe(status => {
+      this.autosaveStatus = status;
+      this.autosaveError = this.autosaveService.lastError;
+    });
+
     const currentYear = new Date().getFullYear();
     const years = [currentYear - 1, currentYear, currentYear + 1];
     forkJoin(years.map(y => this.holidayService.getHolidays(y))).subscribe({
@@ -186,6 +203,10 @@ export class NewRental implements OnInit, AfterViewInit {
       // autoFillDates still runs so the form isn't stuck.
       error: () => this.autoFillDates(),
     });
+  }
+
+  ngOnDestroy(): void {
+    this.autosaveSubscription?.unsubscribe();
   }
 
   // ==================== Helpers ====================
@@ -272,6 +293,7 @@ export class NewRental implements OnInit, AfterViewInit {
 
     this.contract.devolucao = this.toDateString(devolucao);
     this.contract.retirada = this.toDateString(retirada);
+    this.triggerAutosave();
   }
 
   onRetiradaChange(): void {
@@ -280,6 +302,7 @@ export class NewRental implements OnInit, AfterViewInit {
     const d = this.parseDate(this.contract.retirada);
     const adjusted = this.nextBusinessDayFrom(d);
     this.contract.retirada = this.toDateString(adjusted);
+    this.triggerAutosave();
   }
 
   onDevolucaoChange(): void {
@@ -288,6 +311,7 @@ export class NewRental implements OnInit, AfterViewInit {
     const d = this.parseDate(this.contract.devolucao);
     const adjusted = this.nextBusinessDayFrom(d);
     this.contract.devolucao = this.toDateString(adjusted);
+    this.triggerAutosave();
   }
 
   // ==================== Customer ====================
@@ -328,12 +352,17 @@ export class NewRental implements OnInit, AfterViewInit {
 
     obs.pipe(finalize(() => (this.customerLoading = false))).subscribe({
       next: (customer) => {
+        const previousCustomerUuid = this.customerUuid;
         this.customerUuid = customer.id ?? null;
         this.contract.clienteNome = customer.name;
         this.contract.clienteCpf = customer.document;
         this.contract.cliente = customer.legacyId ?? '';
         this.customerFound = true;
         this.customerError = '';
+        // Autosave only when customer actually changed
+        if (this.customerUuid !== previousCustomerUuid) {
+          this.triggerAutosave();
+        }
       },
       error: (err: Error) => {
         this.customerError = err.message || 'Cliente não encontrado.';
@@ -484,6 +513,7 @@ export class NewRental implements OnInit, AfterViewInit {
     this.activateStepperMode();
     this.recalculate();
     this.closeItemModal();
+    this.triggerAutosave();
   }
 
   removeItem(index: number): void {
@@ -492,6 +522,7 @@ export class NewRental implements OnInit, AfterViewInit {
     const removed = this.contract.itens.splice(index, 1)[0];
     if (removed) this.itemRentalIds.delete(removed.codigo);
     this.recalculate();
+    this.triggerAutosave();
   }
 
   // ==================== Payment modal ====================
@@ -660,6 +691,7 @@ export class NewRental implements OnInit, AfterViewInit {
         });
     } else {
       this.pendingPaymentEmployeeId = null;
+      this.triggerAutosave();
     }
   }
 
@@ -725,6 +757,10 @@ export class NewRental implements OnInit, AfterViewInit {
     this.recalculate();
     this.closePaymentModal();
 
+    if (this.serverError.includes('parcela')) {
+      this.serverError = '';
+    }
+
     // For SIGNED contracts: persist each new (unsaved) payment to backend
     if (this.contractId && this.contract.situacao === ContractStatus.SIGNED) {
       const employeeId = this.pendingPaymentEmployeeId ?? '';
@@ -748,6 +784,7 @@ export class NewRental implements OnInit, AfterViewInit {
       }
     } else {
       this.pendingPaymentEmployeeId = null;
+      this.triggerAutosave();
     }
   }
 
@@ -757,6 +794,7 @@ export class NewRental implements OnInit, AfterViewInit {
     this.contract.pagamentos.splice(index, 1);
     this.contract.pagamentos.forEach((p, i) => p.parcela = i + 1);
     this.recalculate();
+    this.triggerAutosave();
   }
 
   togglePaymentStatus(index: number): void {
@@ -846,6 +884,8 @@ export class NewRental implements OnInit, AfterViewInit {
   }
 
   private executeSave(employeeId: string): void {
+    // Capture employee ID for subsequent autosave requests
+    this.autosaveEmployeeId = employeeId;
     const request = this.buildCreateRequest(employeeId);
     this.isSaving = true;
     this.serverError = '';
@@ -1036,6 +1076,31 @@ export class NewRental implements OnInit, AfterViewInit {
     this.replacedByContractId = null;
   }
 
+  // ==================== Autosave ====================
+
+  /** Whether autosave is allowed: contract must exist and be DRAFT. */
+  private canAutosave(): boolean {
+    return !!this.contractId && this.contract.situacao === ContractStatus.DRAFT;
+  }
+
+  /**
+   * Trigger an autosave if eligible. Called after every mutation handler
+   * that constitutes a persistent change.
+   * Uses the employee ID captured during the first manual save.
+   */
+  private triggerAutosave(): void {
+    if (!this.canAutosave()) return;
+    if (!this.autosaveEmployeeId) return;
+
+    const employeeId = this.autosaveEmployeeId;
+    const contractId = this.contractId!;
+
+    this.autosaveService.schedule(
+      () => this.buildCreateRequest(employeeId),
+      (request) => this.rentalContractService.update(contractId, request),
+    );
+  }
+
   // ==================== API mapping helpers ====================
 
   private buildCreateRequest(createdByEmployeeId: string): IRentalContractCreateRequest {
@@ -1148,6 +1213,8 @@ export class NewRental implements OnInit, AfterViewInit {
     this.parentContractId = response.parentContractId ?? null;
     this.replacedByContractId = response.replacedByContractId ?? null;
     this.recalculate();
+    // Reset autosave status after a successful server response
+    this.autosaveService.reset();
   }
 
   private createEmptyContract(): INewRentalContract {

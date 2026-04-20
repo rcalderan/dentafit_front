@@ -945,3 +945,25 @@ select {
     font-size: 0.8rem;
     margin-top: 0.25rem;
 }
+
+/* ── Autosave indicator ── */
+.autosave-indicator {
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--input-radius, 4px);
+    margin-bottom: 0.3rem;
+}
+
+.autosave-saving {
+    color: var(--primary-color, #3b82f6);
+}
+
+.autosave-saved {
+    color: var(--success-color, #22c55e);
+}
+
+.autosave-error {
+    color: var(--danger-color, #ef4444);
+    cursor: help;
+}

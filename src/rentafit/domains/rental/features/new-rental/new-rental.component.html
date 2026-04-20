@@ -242,6 +242,13 @@
                     }
                 </div>
             }
+            @if (autosaveStatus === 'saving') {
+                <span class="autosave-indicator autosave-saving">⏳ Salvando automaticamente…</span>
+            } @else if (autosaveStatus === 'saved') {
+                <span class="autosave-indicator autosave-saved">✅ Salvo</span>
+            } @else if (autosaveStatus === 'error') {
+                <span class="autosave-indicator autosave-error" [title]="autosaveError ?? ''">⚠️ Erro ao salvar</span>
+            }
             @if (stepperStep === 0) {
                 <button class="btn btn-update" (click)="salvarProposta()" [disabled]="isSaving">
                     {{ isSaving ? '⏳ Salvando…' : '💾 Salvar Proposta' }}
