@@ -187,7 +187,11 @@
 
             <div class="payments-list">
                 @for (p of contract.pagamentos; track p.parcela; let i = $index) {
-                    <div class="payment-row" [class.is-paid]="p.status === PaymentStatus.PAID" (click)="openEditPaymentModal(i)">
+                    <div class="payment-row"
+                         [class.is-paid]="p.status === PaymentStatus.PAID"
+                         [class.is-pending]="p.status === PaymentStatus.PENDING"
+                         [class.is-cancelled]="p.status === PaymentStatus.CANCELLED"
+                         (click)="openEditPaymentModal(i)">
                         <div class="payment-parcela">#{{ p.parcela }}</div>
                         <div class="payment-info">
                             <span class="payment-method">{{ paymentMethodLabels[p.forma] }}</span>
@@ -197,15 +201,23 @@
                             <span class="payment-amount">R$ {{ formatCurrency(p.valor) }}</span>
                             <span class="payment-badge"
                                     [class.paid]="p.status === PaymentStatus.PAID"
-                                    [class.pending]="p.status === PaymentStatus.PENDING">
-                                {{ p.status === PaymentStatus.PAID ? 'Pago' : 'Pendente' }}
+                                    [class.pending]="p.status === PaymentStatus.PENDING"
+                                    [class.cancelled]="p.status === PaymentStatus.CANCELLED">
+                                {{ p.status === PaymentStatus.PAID 
+                                    ? 'Pago' 
+                                    : p.status === PaymentStatus.CANCELLED
+                                        ? 'Extornado'
+                                        : 'Pendente' }}
                             </span>
                         </div>
-                        @if (p.status !== PaymentStatus.PAID) {
+                        @if (p.status === PaymentStatus.CANCELLED) {
+                            <div class="payment-row-action cancelled-lock" title="Extornado — irreversível">🔒</div>
+                        } @else if (p.status === PaymentStatus.PAID && contract.situacao === ContractStatus.SIGNED) {
+                            <button class="btn-chargeback" (click)="$event.stopPropagation(); requestChargeBack(i)" title="Extornar parcela">↩</button>
+                        } @else if (p.status !== PaymentStatus.PAID) {
                             <button class="remove-btn" (click)="$event.stopPropagation(); removePayment(i)">✕</button>
-                        }
-                        @else {                            
-                            <div style="padding: 0.2rem 0.4rem;">✅</div>
+                        } @else {
+                            <div class="payment-row-action">✅</div>
                         }
                     </div>
                 }

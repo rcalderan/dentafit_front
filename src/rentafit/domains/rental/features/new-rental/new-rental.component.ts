@@ -58,7 +58,10 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     [PaymentStatus.PAID]: 'Pago',
     [PaymentStatus.CANCELLED]: 'Cancelado',
   };
-  paymentStatusKeys = Object.values(PaymentStatus).filter(v => typeof v === 'number') as PaymentStatus[];
+  // CANCELLED is set only via the dedicated chargeBack flow — never via the status dropdown
+  paymentStatusKeys = Object.values(PaymentStatus).filter(
+    v => typeof v === 'number' && v !== PaymentStatus.CANCELLED
+  ) as PaymentStatus[];
 
   // ── Services ──
   private readonly holidayService = inject(HolidayService);
@@ -108,8 +111,10 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
   // ── Employee verification modal ──
   showEmployeeVerify = false;
   /** Which action is pending employee confirmation. */
-  employeeVerifyAction: 'sign' | 'finalize' | 'save' | 'addItem' | 'payment' | 'addPayment' | null = null;
+  employeeVerifyAction: 'sign' | 'finalize' | 'save' | 'addItem' | 'payment' | 'addPayment' | 'chargeBack' | null = null;
   private pendingPaymentEmployeeId: string | null = null;
+  /** Index of the payment pending chargeBack confirmation. */
+  private pendingChargeBackIndex: number | null = null;
 
   get employeeVerifyTitle(): string {
     switch (this.employeeVerifyAction) {
@@ -121,6 +126,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
       case 'payment':  return this.paymentModalStatus === PaymentStatus.PAID
         ? 'Identificar Atendente — Registrar Pagamento'
         : 'Identificar Atendente — Editar Parcela';
+      case 'chargeBack': return 'Autorizar Extorno de Parcela';
       default:         return 'Identificar Atendente';
     }
   }
@@ -129,7 +135,8 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     return this.employeeVerifyAction === 'save'
       || this.employeeVerifyAction === 'payment'
       || this.employeeVerifyAction === 'addPayment'
-      || this.employeeVerifyAction === 'addItem';
+      || this.employeeVerifyAction === 'addItem'
+      || this.employeeVerifyAction === 'chargeBack';
   }
 
   // ── Customer ──
@@ -574,6 +581,8 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
   openEditPaymentModal(index: number): void {
     const p = this.contract.pagamentos[index];
     if (!p) return;
+    // CANCELLED is irreversible — block modal entirely
+    if (p.status === PaymentStatus.CANCELLED) return;
     if (this.contract.situacao > 0 && p.status !== PaymentStatus.PENDING) return;
     this.editingPaymentIndex = index;
     this.paymentModalForma = p.forma;
@@ -805,6 +814,57 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     this.recalculate();
   }
 
+  // ==================== ChargeBack (Extorno) ====================
+
+  canChargeBack(index: number): boolean {
+    const p = this.contract.pagamentos[index];
+    return !!p
+      && p.status === PaymentStatus.PAID
+      && this.contract.situacao === ContractStatus.SIGNED;
+  }
+
+  requestChargeBack(index: number): void {
+    if (!this.canChargeBack(index)) return;
+    const confirmed = window.confirm(
+      'Tem certeza que deseja extornar esta parcela? Esta ação é irreversível.'
+    );
+    if (!confirmed) return;
+    this.pendingChargeBackIndex = index;
+    this.employeeVerifyAction = 'chargeBack';
+    this.showEmployeeVerify = true;
+  }
+
+  private executeChargeBack(employeeId: string): void {
+    const index = this.pendingChargeBackIndex;
+    this.pendingChargeBackIndex = null;
+    if (index === null) return;
+
+    const p = this.contract.pagamentos[index];
+    if (!p) return;
+
+    if (p.id && this.contractId) {
+      // Persisted payment: call backend DELETE (cancelPayment)
+      const contractId = this.contractId;
+      this.isSaving = true;
+      this.serverError = '';
+      this.rentalContractService
+        .cancelPayment(contractId, p.id)
+        .pipe(finalize(() => (this.isSaving = false)))
+        .subscribe({
+          next: () => this.loadContractById(contractId),
+          error: (err: Error) => {
+            this.serverError = err.message || 'Erro ao extornar parcela.';
+            this.loadContractById(contractId);
+          },
+        });
+    } else {
+      // Unsaved (local-only) payment — just mark locally
+      p.status = PaymentStatus.CANCELLED;
+      this.recalculate();
+      this.triggerAutosave();
+    }
+  }
+
   // ==================== Totals ====================
 
   recalculate(): void {
@@ -963,6 +1023,11 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     if (action === 'payment') {
       this.pendingPaymentEmployeeId = event.employeeId;
       this.confirmAddPayment();
+      return;
+    }
+
+    if (action === 'chargeBack') {
+      this.executeChargeBack(event.employeeId);
       return;
     }
 
