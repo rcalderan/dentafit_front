@@ -34,7 +34,10 @@ export class EmployeeVerifyComponent implements AfterViewInit {
   error = '';
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.initialsInput?.nativeElement.focus(), 0);
+    setTimeout(() => {
+      this.reset();
+      this.initialsInput?.nativeElement.focus();
+    }, 0);
   }
 
   onInitialsEnter(): void {

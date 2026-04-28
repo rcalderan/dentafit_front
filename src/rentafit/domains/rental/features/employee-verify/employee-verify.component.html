@@ -8,7 +8,9 @@
         #initialsInput
         id="ev-initials"
         type="text"
-        [(ngModel)]="initials"
+        autocomplete="off"
+        [ngModel]="initials"
+        (ngModelChange)="initials = $event?.toUpperCase()"
         placeholder="Ex.: MS"
         maxlength="10"
         [disabled]="isLoading"
@@ -23,9 +25,10 @@
           #pinInput
           id="ev-pin"
           type="password"
+          autocomplete="new-password"
           [(ngModel)]="pin"
           placeholder="••••"
-          maxlength="8"
+          maxlength="4"
           [disabled]="isLoading"
           (keydown.enter)="confirm()"
         />
