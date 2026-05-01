@@ -6,8 +6,8 @@
 
     <aside class="sidebar" [class.hidden]="!isSidebarVisible()">
         <nav class="nav-menu">
-            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER])) {
-            <a routerLink="/finance/dashboard" routerLinkActive="active" class="nav-item" title="Finance" (click)="closeAllSubmenus()">
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
+            <a routerLink="/home/dashboard" routerLinkActive="active" class="nav-item" title="Home" (click)="closeAllSubmenus()">
                 <i class="icon">🏠</i>
             </a>
             }

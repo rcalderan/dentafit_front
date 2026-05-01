@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { forkJoin, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { CustomerService } from '../../../customer/service/customer.service';
@@ -69,6 +70,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
   private readonly productService = inject(ProductService);
   private readonly rentalContractService = inject(RentalContractService);
   private readonly autosaveService = inject(AutosaveService<IRentalContractCreateRequest, IRentalContractResponse>);
+  private readonly route = inject(ActivatedRoute);
 
   // ── Autosave ──
   autosaveStatus: AutosaveStatus = 'idle';
@@ -198,6 +200,11 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
       this.autosaveStatus = status;
       this.autosaveError = this.autosaveService.lastError;
     });
+
+    const idParam = this.route.snapshot.queryParams['id'];
+    if (idParam) {
+      this.loadContractById(idParam);
+    }
 
     const currentYear = new Date().getFullYear();
     const years = [currentYear - 1, currentYear, currentYear + 1];

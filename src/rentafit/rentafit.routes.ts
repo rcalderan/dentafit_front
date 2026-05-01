@@ -84,6 +84,12 @@ export const routes: Routes = [
                 data: { roles: [UserRole.ADMIN] }
             },
             {
+                path: 'home/dashboard',
+                loadComponent: () => import('./domains/home/features/dashboard.component').then(m => m.HomeDashboard),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
+            },
+            {
                 path: 'finance/dashboard',
                 loadComponent: () => import('./domains/finance/features/dashboard/dashboard').then(m => m.Dashboard),
                 canActivate: [roleGuard],

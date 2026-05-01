@@ -1,0 +1,211 @@
+<div class="dashboard-container">
+    <h1>Painel Geral</h1>
+
+    <!-- Search Card -->
+    <div class="section-card search-card">
+        <span class="section-title">Pesquisa</span>
+
+        <div class="search-tabs">
+            <button [class.active]="searchType() === 'contract'" (click)="setSearchType('contract')">Contrato</button>
+            <button [class.active]="searchType() === 'customer'" (click)="setSearchType('customer')">Cliente</button>
+            <button [class.active]="searchType() === 'product'"  (click)="setSearchType('product')">Roupa</button>
+        </div>
+
+        <div class="search-input-row">
+            <input type="text"
+                   [placeholder]="searchPlaceholder()"
+                   [ngModel]="searchQuery()"
+                   (ngModelChange)="searchQuery.set($event)"
+                   (keyup.enter)="search()"
+                   class="search-input" />
+            <button class="btn-search" (click)="search()" [disabled]="isSearching()">
+                {{ isSearching() ? 'Buscando…' : 'Buscar' }}
+            </button>
+        </div>
+
+        @if (searchError()) {
+            <div class="error-state">{{ searchError() }}</div>
+        }
+
+        @if (searchResult(); as r) {
+            <div class="search-result-card">
+
+                @if (r.type === 'contract') {
+                    <div class="result-grid">
+                        <div class="result-field"><span class="field-label">Nº Contrato</span><span>{{ asContract(r).legacyId || '—' }}</span></div>
+                        <div class="result-field"><span class="field-label">Cliente</span><span>{{ asContract(r).customerName }}</span></div>
+                        <div class="result-field"><span class="field-label">Data Evento</span><span>{{ formatDate(asContract(r).eventDate) }}</span></div>
+                        <div class="result-field"><span class="field-label">Status</span>
+                            <span [class]="statusClass(asContract(r).status)">{{ statusLabel(asContract(r).status) }}</span>
+                        </div>
+                        <div class="result-field result-field--action">
+                            <a class="action-link"
+                               [routerLink]="['/rental/new']"
+                               [queryParams]="{ id: asContract(r).id }">
+                                Abrir →
+                            </a>
+                        </div>
+                    </div>
+                }
+
+                @if (r.type === 'customer') {
+                    <div class="result-grid">
+                        <div class="result-field"><span class="field-label">Nome</span><span>{{ asCustomer(r).name }}</span></div>
+                        <div class="result-field"><span class="field-label">Documento</span><span>{{ asCustomer(r).document }}</span></div>
+                        <div class="result-field"><span class="field-label">E-mail</span><span>{{ asCustomer(r).email || '—' }}</span></div>
+                        <div class="result-field"><span class="field-label">Telefone</span><span>{{ asCustomer(r).phones[0] || '—' }}</span></div>
+                    </div>
+                }
+
+                @if (r.type === 'product') {
+                    <div class="result-grid">
+                        <div class="result-field"><span class="field-label">Código</span><span>{{ asProduct(r).legacyId || '—' }}</span></div>
+                        <div class="result-field"><span class="field-label">Nome</span><span>{{ asProduct(r).name }}</span></div>
+                        <div class="result-field"><span class="field-label">Tamanho</span><span>{{ asProduct(r).size }}</span></div>
+                        <div class="result-field"><span class="field-label">Cor</span><span>{{ asProduct(r).color }}</span></div>
+                        <div class="result-field"><span class="field-label">Status</span><span>{{ asProduct(r).status }}</span></div>
+                        <div class="result-field"><span class="field-label">Condição</span><span>{{ asProduct(r).condition }}</span></div>
+                    </div>
+                }
+
+            </div>
+        }
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="summary-grid">
+        <div class="summary-card recent">
+            <span class="summary-label">Últimos Contratos</span>
+            <span class="summary-value">{{ recentContracts().length }}</span>
+        </div>
+        <div class="summary-card overdue-pickup">
+            <span class="summary-label">Retiradas Vencidas</span>
+            <span class="summary-value">{{ totalOverduePickup() }}</span>
+        </div>
+        <div class="summary-card late-returns">
+            <span class="summary-label">Em Atraso</span>
+            <span class="summary-value">{{ totalLateReturns() }}</span>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+
+        <!-- Section 1: Recent Contracts (real data) -->
+        <div class="section-card contracts-card">
+            <span class="section-title">Últimos Contratos</span>
+
+            @if (isLoadingRecent()) {
+                <div class="loading-state">Carregando contratos...</div>
+            } @else if (errorRecent()) {
+                <div class="error-state">{{ errorRecent() }}</div>
+            } @else if (recentContracts().length === 0) {
+                <div class="empty-state">Nenhum contrato encontrado.</div>
+            } @else {
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nº</th>
+                                <th>Cliente</th>
+                                <th>Data Evento</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (contract of recentContracts(); track contract.id) {
+                                <tr>
+                                    <td class="legacy-id">{{ contract.legacyId || '—' }}</td>
+                                    <td>{{ contract.customerName }}</td>
+                                    <td>{{ formatDate(contract.eventDate) }}</td>
+                                    <td>
+                                        <span [class]="statusClass(contract.status)">
+                                            {{ statusLabel(contract.status) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a class="action-link"
+                                           [routerLink]="['/rental/new']"
+                                           [queryParams]="{ id: contract.id }"
+                                           title="Abrir contrato">
+                                            Abrir →
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+        <!-- Section 2: Overdue Pickup (mock) -->
+        <div class="section-card">
+            <span class="section-title">Retirada Vencida</span>
+            <div class="mock-banner">
+                ⚠️ Dados mockados — controle de retirada não implementado
+            </div>
+            @if (overduePickupMock.length === 0) {
+                <div class="empty-state">Nenhuma retirada vencida.</div>
+            } @else {
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nº</th>
+                                <th>Cliente</th>
+                                <th>Retirada Prevista</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (item of overduePickupMock; track item.legacyId) {
+                                <tr>
+                                    <td class="legacy-id">{{ item.legacyId }}</td>
+                                    <td>{{ item.customerName }}</td>
+                                    <td class="date-warning">{{ formatDate(item.scheduledPickupDate) }}</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+        <!-- Section 3: Late Returns (mock) -->
+        <div class="section-card late-section">
+            <span class="section-title">Em Atraso (Devolução)</span>
+            <div class="mock-banner danger">
+                🚨 Dados mockados — controle de devolução não implementado
+            </div>
+            @if (lateReturnsMock.length === 0) {
+                <div class="empty-state">Nenhum item em atraso.</div>
+            } @else {
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nº</th>
+                                <th>Cliente</th>
+                                <th>Devolução</th>
+                                <th>Atraso</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (item of lateReturnsMock; track item.legacyId) {
+                                <tr>
+                                    <td class="legacy-id">{{ item.legacyId }}</td>
+                                    <td>{{ item.customerName }}</td>
+                                    <td class="date-warning">{{ formatDate(item.returnDate) }}</td>
+                                    <td>
+                                        <span class="days-late-badge">{{ item.daysLate }}d</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
+    </div>
+</div>

@@ -30,6 +30,7 @@ yarn-error.log
 .copilot/*
 .copilot/agents
 .copilot/skills
+.github/copilot*
 
 # QA artifacts
 .QA/
