@@ -9,6 +9,7 @@ import { CustomerService, ICustomerPageResponse } from '../../customer/service/c
 import { ICustomer } from '../../customer/data/Customer.interface';
 import { ProductService } from '../../product/service/product.service';
 import { IRentalItem } from '../../product/data/Product.interface';
+import { PendingReturnsService, PendingReturnItem } from '../../rental/features/return/data/pending-returns.service';
 
 export type SearchType = 'contract' | 'customer' | 'product';
 
@@ -40,12 +41,19 @@ export class HomeDashboard implements OnInit {
   private readonly rentalContractService = inject(RentalContractService);
   private readonly customerService = inject(CustomerService);
   private readonly productService = inject(ProductService);
+  private readonly pendingReturnsService = inject(PendingReturnsService);
   private readonly router = inject(Router);
 
   // ── Recent contracts ──────────────────────────────────────────────────────
   readonly recentContracts = signal<IRentalContractResponse[]>([]);
   readonly isLoadingRecent = signal(false);
   readonly errorRecent = signal<string | null>(null);
+
+  // ── Pending Returns (Devoluções Pendentes) ────────────────────────────────
+  readonly pendingReturns = signal<PendingReturnItem[]>([]);
+  readonly isLoadingPendingReturns = signal(false);
+  readonly errorPendingReturns = signal<string | null>(null);
+  readonly totalPendingReturns = computed(() => this.pendingReturns().length);
 
   // ── Search ────────────────────────────────────────────────────────────────
   readonly searchType = signal<SearchType>('contract');
@@ -267,6 +275,34 @@ export class HomeDashboard implements OnInit {
           this.isLoadingRecent.set(false);
         },
       });
+
+    this.isLoadingPendingReturns.set(true);
+    this.pendingReturnsService.getPendingReturns().subscribe({
+      next: (items) => {
+        this.pendingReturns.set(items);
+        this.isLoadingPendingReturns.set(false);
+      },
+      error: (err: Error) => {
+        this.errorPendingReturns.set(err.message || 'Erro ao carregar devoluções pendentes.');
+        this.isLoadingPendingReturns.set(false);
+      },
+    });
+  }
+
+  navigateToReturn(contractId: string): void {
+    this.router.navigate(['/rental/return', contractId]);
+  }
+
+  daysUntilReturnLabel(days: number): string {
+    if (days < 0) return `${Math.abs(days)}d atrasado`;
+    if (days === 0) return 'Hoje';
+    return `${days}d restante${days > 1 ? 's' : ''}`;
+  }
+
+  daysUntilReturnClass(days: number): string {
+    if (days < 0) return 'days-overdue';
+    if (days === 0) return 'days-today';
+    return 'days-remaining';
   }
 
   statusLabel(status: ContractStatusApi): string {

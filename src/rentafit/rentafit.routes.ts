@@ -60,6 +60,12 @@ export const routes: Routes = [
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
             },
             {
+                path: 'rental/return/:contractId',
+                loadComponent: () => import('./domains/rental/features/return/return.component').then(m => m.ReturnComponent),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
+            },
+            {
                 path: 'rental/legacy',
                 loadComponent: () => import('./domains/rental/features/legacy/locacao/locacao').then(m => m.LocacaoComponent),
                 canActivate: [roleGuard],

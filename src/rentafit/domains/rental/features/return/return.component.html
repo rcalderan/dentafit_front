@@ -1,0 +1,225 @@
+@if (loading()) {
+  <div class="return-loading">
+    <p>Carregando contrato...</p>
+  </div>
+} @else if (error()) {
+  <div class="return-error">
+    <p class="error-message">{{ error() }}</p>
+    <div class="error-actions">
+      <button type="button" class="btn-primary" (click)="onRetryLoad()">Tentar novamente</button>
+      <button type="button" class="btn-secondary" (click)="onCancel()">Voltar</button>
+    </div>
+  </div>
+} @else if (closeSuccess()) {
+  <div class="return-success">
+    <p class="success-message">Contrato fechado com sucesso!</p>
+    <p>Redirecionando para a lista de contratos...</p>
+  </div>
+} @else {
+  @if (summary(); as s) {
+    <div class="return-container">
+      <header class="return-header">
+        <div class="header-row">
+          <h1 class="return-title">Devolução de Contrato</h1>
+          <span class="contract-id">#{{ s.legacyId }}</span>
+        </div>
+        <div class="header-details">
+          <span class="customer-name">{{ s.customerName }}</span>
+          <span class="separator">•</span>
+          <span class="return-date">Data prevista: {{ formatDate(s.returnDate) }}</span>
+          @if (delayWarning()) {
+            <span class="separator">•</span>
+            <span class="delay-badge">{{ delayWarning() }}</span>
+          }
+        </div>
+      </header>
+
+      <section class="returner-section">
+        <label for="returner-name" class="field-label">
+          Quem está devolvendo <span class="required">*</span>
+        </label>
+        <input
+          id="returner-name"
+          type="text"
+          class="returner-input"
+          [value]="form().returnerName"
+          (input)="onReturnerNameChange($any($event).target.value)"
+          placeholder="Nome da pessoa que está entregando fisicamente"
+          [disabled]="saving() || closing()"
+        />
+        <p class="field-hint">Pode ser diferente do cliente que alugou</p>
+      </section>
+
+      <section class="items-section">
+        <h2 class="section-title">
+          Itens do Contrato
+          @if (s.pendingCount > 0) {
+            <span class="pending-badge">{{ s.pendingCount }} pendente{{ s.pendingCount > 1 ? 's' : '' }}</span>
+          } @else {
+            <span class="complete-badge">Todos devolvidos</span>
+          }
+        </h2>
+
+        <div class="items-list">
+          @for (item of s.items; track item.itemId) {
+            <div class="item-card" [class.returned]="item.isReturned">
+              <div class="item-header">
+                <label class="item-checkbox">
+                  <input
+                    type="checkbox"
+                    [checked]="isItemSelected(item.itemId)"
+                    (change)="onItemToggle(item, $any($event).target.checked)"
+                    [disabled]="item.isReturned || saving() || closing()"
+                  />
+                  <span class="item-name">{{ item.description }}</span>
+                </label>
+
+                @if (item.isReturned) {
+                  <span class="returned-badge">Devolvido</span>
+                }
+              </div>
+
+              @if (item.isReturned && item.returnedAt) {
+                <div class="returned-info">
+                  {{ formatDateTime(item.returnedAt) }} por {{ item.returnedBy }}
+                </div>
+              }
+
+              @if (item.accessories.length > 0) {
+                <div class="accessories-list">
+                  <p class="accessories-label">Acessórios:</p>
+                  @for (acc of item.accessories; track acc.accessoryId) {
+                    <label class="accessory-checkbox">
+                      <input
+                        type="checkbox"
+                        [checked]="isAccessorySelected(item.itemId, acc.accessoryId)"
+                        (change)="onAccessoryToggle(item.itemId, acc, $any($event).target.checked)"
+                        [disabled]="acc.isReturned || saving() || closing()"
+                      />
+                      <span class="accessory-name">{{ acc.description }}</span>
+                      @if (acc.isReturned) {
+                        <span class="accessory-returned-badge">✓</span>
+                      }
+                    </label>
+                    @if (acc.isReturned && acc.returnedAt) {
+                      <div class="accessory-returned-info">
+                        {{ formatDateTime(acc.returnedAt) }}
+                      </div>
+                    }
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+
+      @if (s.delayDays > 0) {
+        <section class="fine-section">
+          <h2 class="section-title">Multa por Atraso</h2>
+          <div class="fine-content">
+            <label class="fine-checkbox">
+              <input
+                type="checkbox"
+                [checked]="form().applyFine"
+                (change)="onApplyFineToggle($any($event).target.checked)"
+                [disabled]="saving() || closing()"
+              />
+              <span>Aplicar multa de:</span>
+            </label>
+            <div class="fine-input-wrapper">
+              <span class="currency">R$</span>
+              <input
+                type="number"
+                class="fine-input"
+                [value]="form().fineAmount ?? ''"
+                (input)="onFineAmountChange($any($event).target.value)"
+                placeholder="{{ s.suggestedFine }}"
+                [disabled]="!form().applyFine || saving() || closing()"
+                step="0.01"
+                min="0"
+              />
+            </div>
+          </div>
+          <p class="fine-hint">Sugestão: {{ formatCurrency(s.suggestedFine) }} ({{ s.delayDays }} dia{{ s.delayDays > 1 ? 's' : '' }} de atraso)</p>
+        </section>
+      }
+
+      <section class="payments-section">
+        <h2 class="section-title">Resumo de Pagamentos</h2>
+        <div class="payments-list">
+          @for (payment of s.paymentsPreview; track payment.installmentNumber) {
+            <div class="payment-row" [class]="paymentStatusClasses[payment.status]">
+              <span class="payment-number">Parcela {{ payment.installmentNumber }}</span>
+              <span class="payment-value">{{ formatCurrency(payment.value) }}</span>
+              <span class="payment-status">{{ paymentStatusLabels[payment.status] }}</span>
+            </div>
+          }
+          @if (form().applyFine && isValidFineAmount()) {
+            <div class="payment-row fine-preview">
+              <span class="payment-number">Nova Parcela</span>
+              <span class="payment-value">{{ formatCurrency(getFineAmount()) }}</span>
+              <span class="payment-status">Multa (ao fechar)</span>
+            </div>
+          }
+        </div>
+      </section>
+
+      <footer class="return-actions">
+        <div class="actions-left">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="onCancel()"
+            [disabled]="saving() || closing()"
+          >
+            Cancelar
+          </button>
+        </div>
+        <div class="actions-right">
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="onConfirmReturn()"
+            [disabled]="!canConfirmReturn() || saving() || closing()"
+          >
+            @if (saving()) { Salvando... } @else { Confirmar Devolução }
+          </button>
+
+          @if (allItemsSelected()) {
+            <button
+              type="button"
+              class="btn-close"
+              (click)="onCloseContract()"
+              [disabled]="!canClose() || closing()"
+              [title]="unpaidPaymentsCount() > 0 ? 'Existem parcelas pendentes de pagamento' : ''"
+            >
+              @if (closing()) { Fechando... } @else { Fechar Contrato }
+            </button>
+          }
+        </div>
+      </footer>
+
+      @if (!form().returnerName.trim() && s.isFullyReturned) {
+        <p class="validation-hint">Informe quem está devolvendo para fechar o contrato</p>
+      }
+      @if (form().applyFine && !isValidFineAmount() && s.isFullyReturned) {
+        <p class="validation-hint">Informe o valor da multa ou desmarque a opção</p>
+      }
+      @if (allItemsSelected() && unpaidPaymentsCount() > 0) {
+        <p class="validation-hint validation-hint--warning">
+          {{ unpaidPaymentsCount() }} parcela{{ unpaidPaymentsCount() > 1 ? 's' : '' }} pendente{{ unpaidPaymentsCount() > 1 ? 's' : '' }} — quite todos os pagamentos para fechar o contrato
+        </p>
+      }
+    </div>
+  }
+}
+
+@if (showEmployeeVerify()) {
+  <rentafit-employee-verify
+    [title]="employeeVerifyMode() === 'confirm' ? 'Confirmar Devolução' : 'Autorizar Fechamento de Contrato'"
+    [requirePin]="true"
+    (confirmed)="onEmployeeConfirmed($event)"
+    (cancelled)="onEmployeeVerifyCancelled()"
+  />
+}

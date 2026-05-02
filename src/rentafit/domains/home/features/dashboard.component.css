@@ -20,7 +20,7 @@ h1 {
 
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
     width: 100%;
     max-width: 1100px;
@@ -391,7 +391,55 @@ tr:last-child td {
     text-align: center;
 }
 
+/* ── Pending Returns Section ──────────────────────────────────────────────── */
+
+.pending-returns .summary-value {
+    color: #1565c0;
+}
+
+.pending-returns-card {
+    border-left: 4px solid #1565c0;
+}
+
+.pending-return-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.pending-return-row:hover {
+    background-color: var(--hover-bg, rgba(0, 0, 0, 0.04));
+}
+
+.days-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.days-overdue {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.days-today {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+.days-remaining {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
 /* ── Responsive ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+    .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
 
 @media (max-width: 768px) {
     .summary-grid {

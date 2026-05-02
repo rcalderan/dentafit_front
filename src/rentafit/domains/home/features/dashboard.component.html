@@ -129,6 +129,10 @@
             <span class="summary-label">Em Atraso</span>
             <span class="summary-value">{{ totalLateReturns() }}</span>
         </div>
+        <div class="summary-card pending-returns">
+            <span class="summary-label">Devoluções Pendentes</span>
+            <span class="summary-value">{{ totalPendingReturns() }}</span>
+        </div>
     </div>
 
     <div class="dashboard-grid">
@@ -214,14 +218,15 @@
             }
         </div>
 
-        <!-- Section 3: Late Returns (mock) -->
-        <div class="section-card late-section">
-            <span class="section-title">Em Atraso (Devolução)</span>
-            <div class="mock-banner danger">
-                🚨 Dados mockados — controle de devolução não implementado
-            </div>
-            @if (lateReturnsMock.length === 0) {
-                <div class="empty-state">Nenhum item em atraso.</div>
+        <!-- Section 3: Pending Returns (Devoluções Pendentes) -->
+        <div class="section-card pending-returns-card">
+            <span class="section-title">Devoluções Pendentes</span>
+            @if (isLoadingPendingReturns()) {
+                <div class="loading-state">Carregando...</div>
+            } @else if (errorPendingReturns()) {
+                <div class="error-state">{{ errorPendingReturns() }}</div>
+            } @else if (pendingReturns().length === 0) {
+                <div class="empty-state">Nenhuma devolução pendente.</div>
             } @else {
                 <div class="table-responsive">
                     <table>
@@ -230,17 +235,31 @@
                                 <th>Nº</th>
                                 <th>Cliente</th>
                                 <th>Devolução</th>
-                                <th>Atraso</th>
+                                <th>Prazo</th>
+                                <th></th>
                             </tr>
                         </thead>
                         <tbody>
-                            @for (item of lateReturnsMock; track item.legacyId) {
-                                <tr>
+                            @for (item of pendingReturns(); track item.contractId) {
+                                <tr class="pending-return-row"
+                                    role="button"
+                                    tabindex="0"
+                                    title="Processar devolução"
+                                    (click)="navigateToReturn(item.contractId)"
+                                    (keyup.enter)="navigateToReturn(item.contractId)"
+                                    (keyup.space)="navigateToReturn(item.contractId)">
                                     <td class="legacy-id">{{ item.legacyId }}</td>
                                     <td>{{ item.customerName }}</td>
-                                    <td class="date-warning">{{ formatDate(item.returnDate) }}</td>
+                                    <td [class.date-warning]="item.daysUntilReturn <= 0">
+                                        {{ formatDate(item.returnDate) }}
+                                    </td>
                                     <td>
-                                        <span class="days-late-badge">{{ item.daysLate }}d</span>
+                                        <span class="days-badge" [class]="daysUntilReturnClass(item.daysUntilReturn)">
+                                            {{ daysUntilReturnLabel(item.daysUntilReturn) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="action-link">Processar →</span>
                                     </td>
                                 </tr>
                             }
