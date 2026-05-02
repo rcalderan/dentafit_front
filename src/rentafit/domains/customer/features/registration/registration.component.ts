@@ -1,6 +1,6 @@
 import { Component, ElementRef, inject, OnInit, signal, effect, computed, OnDestroy } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, Subject } from 'rxjs';
 import { switchMap, tap, takeUntil, catchError, finalize } from 'rxjs/operators';
 import { ICustomer } from '../../data/Customer.interface';
@@ -32,6 +32,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   private service = inject(CustomerService);
   private addressService = inject(AddressService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private readonly maxPhones = 5;
   private readonly phonePattern = /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/;
   private readonly phoneValidator = (control: AbstractControl): ValidationErrors | null => {
@@ -257,6 +258,24 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     };
 
     this.setPhones(this.customer.phones);
+
+    const legacyIdParam = this.route.snapshot.queryParams['legacyId'];
+    const idParam = this.route.snapshot.queryParams['id'];
+
+    if (legacyIdParam) {
+      const legacyId = Number(legacyIdParam);
+      if (!Number.isNaN(legacyId)) {
+        this.service.getCustomerByLegacyId(legacyId).subscribe({
+          next: (customer: ICustomer) => this.loadCustomerForm(customer),
+          error: () => this.errorMessage.set('Não foi possível carregar cliente pelo legacyId informado.'),
+        });
+      }
+    } else if (idParam) {
+      this.service.getCustomerById(idParam).subscribe({
+        next: (customer: ICustomer) => this.loadCustomerForm(customer),
+        error: () => this.errorMessage.set('Não foi possível carregar cliente pelo id informado.'),
+      });
+    }
 
     // Subscrever ao observable de endereço para capturar erros
     this.address$.subscribe({

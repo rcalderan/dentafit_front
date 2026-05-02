@@ -5,12 +5,13 @@ import { vi } from 'vitest';
 import { RegistrationComponent } from './registration.component';
 import { CustomerService } from '../../service/customer.service';
 import { AddressService } from '../../service/address.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ICustomer } from '../../data/Customer.interface';
 
 describe('RegistrationComponent', () => {
   let customerService: {
     saveCustomer: ReturnType<typeof vi.fn>;
+    getCustomerById: ReturnType<typeof vi.fn>;
     getCustomerByLegacyId: ReturnType<typeof vi.fn>;
     getCustomerByDocument: ReturnType<typeof vi.fn>;
   };
@@ -35,7 +36,7 @@ describe('RegistrationComponent', () => {
 
   const buildSavedCustomer = (overrides: Partial<ICustomer> = {}): ICustomer => ({
     id: 'c-1',
-    legacyId: 10,
+    legacyId: '10',
     name: 'João da Silva',
     document: '12345678901',
     email: 'joao@silva.com',
@@ -58,6 +59,7 @@ describe('RegistrationComponent', () => {
     Element.prototype.scrollIntoView = () => {};
     customerService = {
       saveCustomer: vi.fn(),
+      getCustomerById: vi.fn(),
       getCustomerByLegacyId: vi.fn(),
       getCustomerByDocument: vi.fn()
     };
@@ -69,7 +71,8 @@ describe('RegistrationComponent', () => {
       providers: [
         { provide: CustomerService, useValue: customerService },
         { provide: AddressService, useValue: addressService },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} } } }
       ]
     }).compileComponents();
   });

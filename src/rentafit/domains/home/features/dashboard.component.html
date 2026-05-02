@@ -27,8 +27,67 @@
             <div class="error-state">{{ searchError() }}</div>
         }
 
+        @if (searchType() === 'customer' && customerSearchResults().length > 0) {
+            <div class="section-title customer-results-title">
+                Clientes encontrados: {{ customerSearchTotalElements() }}
+            </div>
+
+            <div class="table-responsive customer-search-table-wrapper">
+                <table class="customer-search-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Documento</th>
+                            <th>E-mail</th>
+                            <th>Telefone</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (customer of customerSearchResults(); track customer.id ?? customer.document) {
+                            <tr class="customer-search-row"
+                                role="button"
+                                tabindex="0"
+                                title="Abrir cliente"
+                                (click)="openCustomerSearchResult(customer)"
+                                (keyup.enter)="openCustomerSearchResult(customer)"
+                                (keyup.space)="openCustomerSearchResult(customer)">
+                                <td>{{ customer.name }}</td>
+                                <td>{{ customer.document }}</td>
+                                <td>{{ customer.email || '—' }}</td>
+                                <td>{{ customer.phones[0] || '—' }}</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="customer-pagination">
+                <button class="btn-page"
+                        (click)="searchCustomerPreviousPage()"
+                        [disabled]="isSearching() || customerSearchPage() === 0">
+                    Anterior
+                </button>
+                <span class="page-info">
+                    Página {{ customerSearchPage() + 1 }} de {{ customerSearchTotalPages() || 1 }}
+                </span>
+                <button class="btn-page"
+                        (click)="searchCustomerNextPage()"
+                        [disabled]="isSearching() || customerSearchPage() + 1 >= customerSearchTotalPages()">
+                    Próxima
+                </button>
+            </div>
+        } @else if (searchType() === 'customer' && !isSearching() && !searchError() && customerSearchTotalElements() === 0 && customerSearchAppliedName() !== '') {
+            <div class="empty-state">Nenhum cliente encontrado.</div>
+        }
+
         @if (searchResult(); as r) {
-            <div class="search-result-card">
+            <div class="search-result-card"
+                 role="button"
+                 tabindex="0"
+                 title="Abrir resultado"
+                 (click)="onSearchResultCardClick()"
+                 (keyup.enter)="onSearchResultCardClick()"
+                 (keyup.space)="onSearchResultCardClick()">
 
                 @if (r.type === 'contract') {
                     <div class="result-grid">
@@ -38,22 +97,6 @@
                         <div class="result-field"><span class="field-label">Status</span>
                             <span [class]="statusClass(asContract(r).status)">{{ statusLabel(asContract(r).status) }}</span>
                         </div>
-                        <div class="result-field result-field--action">
-                            <a class="action-link"
-                               [routerLink]="['/rental/new']"
-                               [queryParams]="{ id: asContract(r).id }">
-                                Abrir →
-                            </a>
-                        </div>
-                    </div>
-                }
-
-                @if (r.type === 'customer') {
-                    <div class="result-grid">
-                        <div class="result-field"><span class="field-label">Nome</span><span>{{ asCustomer(r).name }}</span></div>
-                        <div class="result-field"><span class="field-label">Documento</span><span>{{ asCustomer(r).document }}</span></div>
-                        <div class="result-field"><span class="field-label">E-mail</span><span>{{ asCustomer(r).email || '—' }}</span></div>
-                        <div class="result-field"><span class="field-label">Telefone</span><span>{{ asCustomer(r).phones[0] || '—' }}</span></div>
                     </div>
                 }
 

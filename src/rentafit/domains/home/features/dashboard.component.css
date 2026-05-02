@@ -288,6 +288,12 @@ tr:last-child td {
     border-radius: var(--border-radius);
     padding: 1rem 1.25rem;
     background: var(--card-bg);
+    transition: filter 0.2s ease, background-color 0.2s ease;
+}
+
+.search-result-card:hover {
+    cursor: pointer;
+    filter: brightness(0.95);
 }
 
 .result-grid {
@@ -304,16 +310,68 @@ tr:last-child td {
     min-width: 120px;
 }
 
-.result-field--action {
-    margin-left: auto;
-}
-
 .field-label {
     font-size: 0.75rem;
     font-weight: 600;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+}
+
+.customer-results-title {
+    margin-top: 1rem;
+    margin-bottom: 0.8rem;
+}
+
+.customer-search-table-wrapper {
+    margin-top: 0.2rem;
+}
+
+.customer-search-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.customer-search-row {
+    transition: background-color 0.2s;
+}
+
+.customer-search-row:hover {
+    cursor: pointer;
+    background-color: var(--input-bg);
+}
+
+.customer-pagination {
+    margin-top: 0.9rem;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.btn-page {
+    padding: 0.45rem 0.9rem;
+    border: 1px solid var(--input-bg);
+    background: var(--card-bg);
+    color: var(--text-color);
+    border-radius: var(--border-radius);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-page:hover:not(:disabled) {
+    background: var(--input-bg);
+}
+
+.btn-page:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.page-info {
+    font-size: 0.85rem;
+    color: var(--text-muted);
 }
 
 /* ── States ────────────────────────────────────────────────────────────────── */

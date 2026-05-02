@@ -12,7 +12,7 @@ describe('CustomerService', () => {
 
   const buildCustomer = (overrides: Partial<ICustomer> = {}): ICustomer => ({
     id: 'c-1',
-    legacyId: 10,
+    legacyId: '10',
     name: 'Ana Silva',
     document: '12345678900',
     isAuthenticated: true,
@@ -71,7 +71,7 @@ describe('CustomerService', () => {
   });
 
   it('gets customer by legacy id', () => {
-    const customer = buildCustomer({ legacyId: 55 });
+    const customer = buildCustomer({ legacyId: '55' });
 
     service.getCustomerByLegacyId(55).subscribe(result => {
       expect(result).toEqual(customer);
@@ -80,6 +80,32 @@ describe('CustomerService', () => {
     const req = httpMock.expectOne('/api/v1/customers/byLegacyId/55');
     expect(req.request.method).toBe('GET');
     req.flush(customer);
+  });
+
+  it('lists customers with name filter and pagination', () => {
+    const pageResponse = {
+      content: [buildCustomer({ id: 'c-20', name: 'Ana Paula' })],
+      totalElements: 1,
+      totalPages: 1,
+      number: 0,
+      size: 10,
+    };
+
+    service.listCustomers({ name: 'Ana', page: 0, size: 10, sort: 'name,asc' }).subscribe(result => {
+      expect(result).toEqual(pageResponse);
+      expect(result.content[0].name).toBe('Ana Paula');
+    });
+
+    const req = httpMock.expectOne((request) => {
+      return request.url === '/api/v1/customers'
+        && request.params.get('name') === 'Ana'
+        && request.params.get('page') === '0'
+        && request.params.get('size') === '10'
+        && request.params.get('sort') === 'name,asc';
+    });
+
+    expect(req.request.method).toBe('GET');
+    req.flush(pageResponse);
   });
 
   it('creates a new customer when no id exists', () => {

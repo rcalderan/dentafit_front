@@ -1,11 +1,11 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RentalContractService } from '../../rental/service/rental-contract.service';
 import { IRentalContractResponse } from '../../rental/data/rental-contract-response.interface';
 import { ContractStatusApi } from '../../rental/data/rental-api.types';
-import { CustomerService } from '../../customer/service/customer.service';
+import { CustomerService, ICustomerPageResponse } from '../../customer/service/customer.service';
 import { ICustomer } from '../../customer/data/Customer.interface';
 import { ProductService } from '../../product/service/product.service';
 import { IRentalItem } from '../../product/data/Product.interface';
@@ -14,7 +14,6 @@ export type SearchType = 'contract' | 'customer' | 'product';
 
 type SearchResult =
   | { type: 'contract'; data: IRentalContractResponse }
-  | { type: 'customer'; data: ICustomer }
   | { type: 'product';  data: IRentalItem };
 
 interface IOverduePickupMock {
@@ -41,6 +40,7 @@ export class HomeDashboard implements OnInit {
   private readonly rentalContractService = inject(RentalContractService);
   private readonly customerService = inject(CustomerService);
   private readonly productService = inject(ProductService);
+  private readonly router = inject(Router);
 
   // ── Recent contracts ──────────────────────────────────────────────────────
   readonly recentContracts = signal<IRentalContractResponse[]>([]);
@@ -53,11 +53,18 @@ export class HomeDashboard implements OnInit {
   readonly isSearching = signal(false);
   readonly searchResult = signal<SearchResult | null>(null);
   readonly searchError = signal<string | null>(null);
+  readonly customerSearchResults = signal<ICustomer[]>([]);
+  readonly customerSearchPage = signal(0);
+  readonly customerSearchTotalPages = signal(0);
+  readonly customerSearchTotalElements = signal(0);
+  readonly customerSearchAppliedName = signal('');
+
+  private readonly customerSearchPageSize = 10;
 
   readonly searchPlaceholder = computed(() => {
     switch (this.searchType()) {
       case 'contract': return 'Nº do contrato (legacyId)';
-      case 'customer': return 'CPF ou nº legado do cliente';
+      case 'customer': return 'Nome, CPF ou CNPJ';
       case 'product':  return 'Código legado da roupa';
     }
   });
@@ -66,51 +73,166 @@ export class HomeDashboard implements OnInit {
     this.searchType.set(type);
     this.searchQuery.set('');
     this.searchResult.set(null);
+    this.clearCustomerSearchResults();
     this.searchError.set(null);
   }
 
   search(): void {
     const q = this.searchQuery().trim();
-    if (!q) return;
+    if (!q && this.searchType() !== 'customer') return;
+
     this.isSearching.set(true);
     this.searchResult.set(null);
     this.searchError.set(null);
+    this.clearCustomerSearchResults();
 
     switch (this.searchType()) {
       case 'contract':
         this.rentalContractService.getByLegacyId(q).subscribe({
-          next: (data) => { this.searchResult.set({ type: 'contract', data }); this.isSearching.set(false); },
+          next: (data) => {
+            this.handleSingleSearchResult({ type: 'contract', data });
+            this.isSearching.set(false);
+          },
           error: (err: Error) => { this.searchError.set(err.message || 'Contrato não encontrado.'); this.isSearching.set(false); },
         });
         break;
 
       case 'customer':
-        this.searchCustomer(q);
+        this.customerSearchAppliedName.set(q);
+        if (this.isCpfOrCnpj(q)) {
+          this.searchCustomerByDocument(this.normalizeDocument(q));
+        } else {
+          this.searchCustomerPage(0);
+        }
         break;
 
       case 'product':
         this.productService.getRentalItemByLegacyId(q).subscribe({
-          next: (data) => { this.searchResult.set({ type: 'product', data }); this.isSearching.set(false); },
+          next: (data) => {
+            this.handleSingleSearchResult({ type: 'product', data });
+            this.isSearching.set(false);
+          },
           error: (err: Error) => { this.searchError.set(err.message || 'Roupa não encontrada.'); this.isSearching.set(false); },
         });
         break;
     }
   }
 
-  private searchCustomer(query: string): void {
-    const isLegacyId = /^\d{1,6}$/.test(query);
-    const obs = isLegacyId
-      ? this.customerService.getCustomerByLegacyId(+query)
-      : this.customerService.getCustomerByDocument(query);
+  searchCustomerNextPage(): void {
+    const nextPage = this.customerSearchPage() + 1;
+    if (nextPage >= this.customerSearchTotalPages()) return;
+    this.searchCustomerPage(nextPage);
+  }
 
-    obs.subscribe({
-      next: (data) => { this.searchResult.set({ type: 'customer', data }); this.isSearching.set(false); },
-      error: (err: Error) => { this.searchError.set(err.message || 'Cliente não encontrado.'); this.isSearching.set(false); },
+  searchCustomerPreviousPage(): void {
+    const previousPage = this.customerSearchPage() - 1;
+    if (previousPage < 0) return;
+    this.searchCustomerPage(previousPage);
+  }
+
+  openCustomerSearchResult(customer: ICustomer): void {
+    this.router.navigate(['/customer/registration'], {
+      queryParams: {
+        legacyId: customer.legacyId,
+        id: customer.id,
+      },
     });
   }
 
+  private searchCustomerPage(page: number): void {
+    this.isSearching.set(true);
+    this.searchError.set(null);
+
+    this.customerService
+      .listCustomers({
+        name: this.customerSearchAppliedName(),
+        page,
+        size: this.customerSearchPageSize,
+        sort: 'name,asc',
+      })
+      .subscribe({
+        next: (response: ICustomerPageResponse) => {
+          this.customerSearchResults.set(response.content);
+          this.customerSearchPage.set(response.number);
+          this.customerSearchTotalPages.set(response.totalPages);
+          this.customerSearchTotalElements.set(response.totalElements);
+          this.isSearching.set(false);
+
+          if (response.totalElements === 1 && response.content.length === 1) {
+            this.openCustomerSearchResult(response.content[0]);
+          }
+        },
+        error: (err: Error) => {
+          this.searchError.set(err.message || 'Erro ao buscar clientes.');
+          this.clearCustomerSearchResults();
+          this.isSearching.set(false);
+        },
+      });
+  }
+
+  private searchCustomerByDocument(document: string): void {
+    this.customerService.getCustomerByDocument(document).subscribe({
+      next: (customer: ICustomer) => {
+        this.customerSearchResults.set([customer]);
+        this.customerSearchPage.set(0);
+        this.customerSearchTotalPages.set(1);
+        this.customerSearchTotalElements.set(1);
+        this.isSearching.set(false);
+
+        this.openCustomerSearchResult(customer);
+      },
+      error: (err: Error) => {
+        this.searchError.set(err.message || 'Cliente não encontrado para CPF/CNPJ informado.');
+        this.clearCustomerSearchResults();
+        this.isSearching.set(false);
+      },
+    });
+  }
+
+  private normalizeDocument(value: string): string {
+    return value.replace(/\D/g, '');
+  }
+
+  private isCpfOrCnpj(value: string): boolean {
+    const digits = this.normalizeDocument(value);
+    return digits.length === 11 || digits.length === 14;
+  }
+
+  private clearCustomerSearchResults(): void {
+    this.customerSearchResults.set([]);
+    this.customerSearchPage.set(0);
+    this.customerSearchTotalPages.set(0);
+    this.customerSearchTotalElements.set(0);
+  }
+
+  onSearchResultCardClick(): void {
+    const result = this.searchResult();
+    if (!result) return;
+    this.openSearchResult(result);
+  }
+
+  private handleSingleSearchResult(result: SearchResult): void {
+    this.searchResult.set(result);
+    this.openSearchResult(result);
+  }
+
+  private openSearchResult(result: SearchResult): void {
+    switch (result.type) {
+      case 'contract':
+        this.router.navigate(['/rental/new'], { queryParams: { id: result.data.id } });
+        break;
+      case 'product':
+        this.router.navigate(['/product/registration'], {
+          queryParams: {
+            id: result.data.id,
+            legacyId: result.data.legacyId,
+          },
+        });
+        break;
+    }
+  }
+
   asContract(r: SearchResult): IRentalContractResponse { return (r as { type: 'contract'; data: IRentalContractResponse }).data; }
-  asCustomer(r: SearchResult): ICustomer               { return (r as { type: 'customer'; data: ICustomer }).data; }
   asProduct(r: SearchResult):  IRentalItem             { return (r as { type: 'product';  data: IRentalItem }).data; }
 
   // ── Mock data: pickup overdue (awaiting customer to collect) ──────────────
