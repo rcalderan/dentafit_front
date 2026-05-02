@@ -3,13 +3,13 @@ import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RentalContractService } from '../../rental/service/rental-contract.service';
-import { IRentalContractResponse } from '../../rental/data/rental-contract-response.interface';
+import { IRentalContractResponse, IRentalContractSummaryResponse } from '../../rental/data/rental-contract-response.interface';
 import { ContractStatusApi } from '../../rental/data/rental-api.types';
 import { CustomerService, ICustomerPageResponse } from '../../customer/service/customer.service';
 import { ICustomer } from '../../customer/data/Customer.interface';
 import { ProductService } from '../../product/service/product.service';
 import { IRentalItem } from '../../product/data/Product.interface';
-import { PendingReturnsService, PendingReturnItem } from '../../rental/features/return/data/pending-returns.service';
+import { PendingReturnsService, PendingReturnItem } from '../../rental/features/return/service/pending-returns.service';
 
 export type SearchType = 'contract' | 'customer' | 'product';
 
@@ -45,7 +45,7 @@ export class HomeDashboard implements OnInit {
   private readonly router = inject(Router);
 
   // ── Recent contracts ──────────────────────────────────────────────────────
-  readonly recentContracts = signal<IRentalContractResponse[]>([]);
+  readonly recentContracts = signal<IRentalContractSummaryResponse[]>([]);
   readonly isLoadingRecent = signal(false);
   readonly errorRecent = signal<string | null>(null);
 
@@ -305,28 +305,28 @@ export class HomeDashboard implements OnInit {
     return 'days-remaining';
   }
 
-  statusLabel(status: ContractStatusApi): string {
-    const labels: Record<number, string> = {
-      [-1]: 'Inicial',
-      [0]: 'Proposta',
-      [1]: 'Assinado',
-      [2]: 'Finalizado',
-      [3]: 'Revisão',
-      [4]: 'Substituído',
+  statusLabel(status: string | ContractStatusApi): string {
+    const labels: Record<string, string> = {
+      DRAFT: 'Proposta',
+      SIGNED: 'Assinado',
+      FINALIZED: 'Finalizado',
+      REVISION: 'Revisão',
+      SUPERSEDED: 'Substituído',
+      CLOSED: 'Concluído',
     };
-    return labels[status] ?? 'Desconhecido';
+    return labels[String(status)] ?? String(status);
   }
 
-  statusClass(status: ContractStatusApi): string {
-    const classes: Record<number, string> = {
-      [-1]: 'status-initial',
-      [0]: 'status-draft',
-      [1]: 'status-signed',
-      [2]: 'status-finalized',
-      [3]: 'status-revision',
-      [4]: 'status-superseded',
+  statusClass(status: string | ContractStatusApi): string {
+    const classes: Record<string, string> = {
+      DRAFT: 'status-draft',
+      SIGNED: 'status-signed',
+      FINALIZED: 'status-finalized',
+      REVISION: 'status-revision',
+      SUPERSEDED: 'status-superseded',
+      CLOSED: 'status-closed',
     };
-    return `status-badge ${classes[status] ?? ''}`;
+    return `status-badge ${classes[String(status)] ?? ''}`;
   }
 
   formatDate(dateStr: string | undefined): string {

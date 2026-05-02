@@ -13,6 +13,7 @@ import {
 import {
   IPageResponse,
   IRentalContractResponse,
+  IRentalContractSummaryResponse,
   IRentalPaymentResponse,
 } from '../data/rental-contract-response.interface';
 
@@ -39,17 +40,15 @@ export class RentalContractService {
 
   // ─── Contract CRUD ───────────────────────────────────────────────────────────
 
-  list(params?: ContractListParams): Observable<IPageResponse<IRentalContractResponse>> {
+  list(params?: ContractListParams): Observable<IPageResponse<IRentalContractSummaryResponse>> {
     let httpParams = new HttpParams();
     if (params?.page != null) httpParams = httpParams.set('page', params.page);
     if (params?.size != null) httpParams = httpParams.set('size', params.size);
     if (params?.sort) httpParams = httpParams.set('sort', params.sort);
 
     return this.http
-      .get<IPageResponse<IRentalContractResponse>>(this.apiUrl, { params: httpParams })
-      .pipe(catchError(this.handleError.bind(this)), map((response) => {
-        return response;
-      }));
+      .get<IPageResponse<IRentalContractSummaryResponse>>(this.apiUrl, { params: httpParams })
+      .pipe(catchError(this.handleError.bind(this)));
   }
 
   getById(id: string): Observable<IRentalContractResponse> {

@@ -1,13 +1,13 @@
 import { Injectable, Signal, signal, computed, inject } from '@angular/core';
 import { Observable, catchError, finalize, of, switchMap, tap } from 'rxjs';
-import { ReturnApiPort } from '../data/return-api.port';
+import { ReturnApiPort } from '../features/return/data/return-api.port';
 import {
   CloseReturnRequestModel,
   MarkReturnEntryModel,
   MarkReturnRequestModel,
   ReturnFormState,
   ReturnSummaryModel,
-} from '../data/return.model';
+} from '../features/return/data/return.model';
 
 interface ReturnState {
   summary: ReturnSummaryModel | null;

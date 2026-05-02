@@ -8,6 +8,29 @@ export interface IPageResponse<T> {
   size: number;
 }
 
+/**
+ * Resposta do endpoint de listagem paginada (RentalContractSummaryDTO).
+ * status é o nome do enum Java (ex: "FINALIZED"), não o código numérico.
+ */
+export interface IRentalContractSummaryResponse {
+  id: string;
+  legacyId?: string;
+  contractType: number;
+  status: string;
+  statusDescription: string;
+  customerId: string;
+  customerName: string;
+  parentContractId?: string;
+  replacedByContractId?: string;
+  eventDate: string;
+  pickupDate: string;
+  returnDate: string;
+  returned: boolean;
+  totalValue: number;
+  paidValue: number;
+  createdAt: string;
+}
+
 export interface IItemMetaResponse {
   id: string;
   type: ItemMetaTypeApi;

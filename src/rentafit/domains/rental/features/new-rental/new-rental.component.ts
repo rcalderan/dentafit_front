@@ -58,6 +58,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     [PaymentStatus.PENDING]: 'Pendente',
     [PaymentStatus.PAID]: 'Pago',
     [PaymentStatus.CANCELLED]: 'Cancelado',
+    [PaymentStatus.MULTA]: 'Multa',
   };
   // CANCELLED is set only via the dedicated chargeBack flow — never via the status dropdown
   paymentStatusKeys = Object.values(PaymentStatus).filter(
@@ -92,6 +93,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     [PaymentStatus.PENDING]: 'PENDING',
     [PaymentStatus.PAID]: 'PAID',
     [PaymentStatus.CANCELLED]: 'CANCELLED',
+    [PaymentStatus.MULTA]: 'MULTA',
   };
 
   // ── Backend contract state ──
@@ -1216,6 +1218,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
       2: ContractStatus.FINALIZED,
       3: ContractStatus.REVISION,
       4: ContractStatus.SUPERSEDED,
+      5: ContractStatus.CLOSED,
     };
 
     const METHOD_FROM_API: Record<PaymentMethodApi, PaymentMethod> = {
@@ -1230,6 +1233,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
       PENDING: PaymentStatus.PENDING,
       PAID: PaymentStatus.PAID,
       CANCELLED: PaymentStatus.CANCELLED,
+      MULTA: PaymentStatus.MULTA,
     };
 
     this.customerUuid = response.customerId;
