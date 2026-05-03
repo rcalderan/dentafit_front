@@ -33,19 +33,19 @@ export class ReturnComponent implements OnInit {
   readonly saving = this.facade.saving;
   readonly closing = this.facade.closing;
   readonly form = this.facade.form;
-  readonly canClose = this.facade.canClose;
+  readonly canClose = this.facade.canDirectClose;
   readonly hasChanges = this.facade.hasChanges;
   readonly delayWarning = this.facade.delayWarning;
   readonly unpaidPaymentsCount = this.facade.unpaidPaymentsCount;
+  readonly showConfirmButton = this.facade.showConfirmButton;
 
   readonly showEmployeeVerify = signal(false);
   readonly closeSuccess = signal(false);
   readonly employeeVerifyMode = signal<'close' | 'confirm'>('close');
 
   readonly canConfirmReturn = computed(() => {
-    const hasChanges = this.facade.hasChanges();
     const returnerName = this.form().returnerName?.trim();
-    return hasChanges && returnerName && returnerName.length > 0;
+    return this.showConfirmButton() && !!returnerName && returnerName.length > 0;
   });
 
   readonly allItemsSelected = computed(() => {
@@ -135,6 +135,7 @@ export class ReturnComponent implements OnInit {
 
   onCloseContract(): void {
     if (!this.canClose()) return;
+    this.employeeVerifyMode.set('close');
     this.showEmployeeVerify.set(true);
   }
 

@@ -44,18 +44,6 @@ export class ReturnFacadeService {
   readonly closing: Signal<boolean> = computed(() => this.state().closing);
   readonly form: Signal<ReturnFormState> = computed(() => this.state().form);
 
-  readonly canClose: Signal<boolean> = computed(() => {
-    const s = this.state().summary;
-    const form = this.state().form;
-    if (!s) return false;
-    if (!s.isFullyReturned) return false;
-    if (!form.returnerName.trim()) return false;
-    if (form.applyFine && (form.fineAmount === null || form.fineAmount <= 0)) return false;
-    const hasUnpaidPayments = s.paymentsPreview.some(p => p.status === 'PENDING');
-    if (hasUnpaidPayments) return false;
-    return true;
-  });
-
   readonly unpaidPaymentsCount: Signal<number> = computed(() => {
     const s = this.state().summary;
     if (!s) return 0;
@@ -65,6 +53,37 @@ export class ReturnFacadeService {
   readonly hasChanges: Signal<boolean> = computed(() => {
     const form = this.state().form;
     return form.selectedItems.size > 0 || form.selectedAccessories.size > 0;
+  });
+
+  /**
+   * Fecha direto: todos devolvidos, sem parcelas pendentes e nome preenchido.
+   * Não exige etapa intermediária de "Confirmar Devolução".
+   */
+  readonly canDirectClose: Signal<boolean> = computed(() => {
+    const s = this.state().summary;
+    const form = this.state().form;
+    if (!s || !s.isFullyReturned) return false;
+    if (!form.returnerName.trim()) return false;
+    if (this.unpaidPaymentsCount() > 0) return false;
+    if (form.applyFine && (form.fineAmount === null || form.fineAmount <= 0)) return false;
+    return true;
+  });
+
+  /**
+   * @deprecated Use canDirectClose. Mantido para compatibilidade com template legado.
+   */
+  readonly canClose = this.canDirectClose;
+
+  /**
+   * Exibe botão "Confirmar Devolução": há seleções parciais OU devolução completa
+   * mas ainda existem parcelas pendentes (precisa confirmar antes de fechar).
+   */
+  readonly showConfirmButton: Signal<boolean> = computed(() => {
+    const s = this.state().summary;
+    if (!s) return false;
+    const hasSelections = this.hasChanges();
+    const fullyReturnedWithPending = s.isFullyReturned && this.unpaidPaymentsCount() > 0;
+    return hasSelections || fullyReturnedWithPending;
   });
 
   readonly delayWarning: Signal<string | null> = computed(() => {
@@ -89,7 +108,7 @@ export class ReturnFacadeService {
               selectedItems: new Set<string>(),
               selectedAccessories: new Map<string, Set<string>>(),
               applyFine: false,
-              fineAmount: summary.suggestedFine > 0 ? summary.suggestedFine : null,
+              fineAmount: (!summary.isFullyReturned && summary.suggestedFine > 0) ? summary.suggestedFine : null,
             },
           }));
         }),

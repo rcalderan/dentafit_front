@@ -114,7 +114,7 @@
         </div>
       </section>
 
-      @if (s.delayDays > 0) {
+      @if (s.delayDays > 0 && !s.isFullyReturned) {
         <section class="fine-section">
           <h2 class="section-title">Multa por Atraso</h2>
           <div class="fine-content">
@@ -177,22 +177,23 @@
           </button>
         </div>
         <div class="actions-right">
-          <button
-            type="button"
-            class="btn-primary"
-            (click)="onConfirmReturn()"
-            [disabled]="!canConfirmReturn() || saving() || closing()"
-          >
-            @if (saving()) { Salvando... } @else { Confirmar Devolução }
-          </button>
+          @if (showConfirmButton()) {
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="onConfirmReturn()"
+              [disabled]="!canConfirmReturn() || saving() || closing()"
+            >
+              @if (saving()) { Salvando... } @else { Confirmar Devolução }
+            </button>
+          }
 
-          @if (allItemsSelected()) {
+          @if (s.isFullyReturned && unpaidPaymentsCount() === 0) {
             <button
               type="button"
               class="btn-close"
               (click)="onCloseContract()"
               [disabled]="!canClose() || closing()"
-              [title]="unpaidPaymentsCount() > 0 ? 'Existem parcelas pendentes de pagamento' : ''"
             >
               @if (closing()) { Fechando... } @else { Fechar Contrato }
             </button>
@@ -200,15 +201,15 @@
         </div>
       </footer>
 
-      @if (!form().returnerName.trim() && s.isFullyReturned) {
+      @if (s.isFullyReturned && unpaidPaymentsCount() === 0 && !form().returnerName.trim()) {
         <p class="validation-hint">Informe quem está devolvendo para fechar o contrato</p>
       }
-      @if (form().applyFine && !isValidFineAmount() && s.isFullyReturned) {
+      @if (form().applyFine && !isValidFineAmount()) {
         <p class="validation-hint">Informe o valor da multa ou desmarque a opção</p>
       }
-      @if (allItemsSelected() && unpaidPaymentsCount() > 0) {
+      @if (s.isFullyReturned && unpaidPaymentsCount() > 0) {
         <p class="validation-hint validation-hint--warning">
-          {{ unpaidPaymentsCount() }} parcela{{ unpaidPaymentsCount() > 1 ? 's' : '' }} pendente{{ unpaidPaymentsCount() > 1 ? 's' : '' }} — quite todos os pagamentos para fechar o contrato
+          {{ unpaidPaymentsCount() }} parcela{{ unpaidPaymentsCount() > 1 ? 's' : '' }} pendente{{ unpaidPaymentsCount() > 1 ? 's' : '' }} — quite os pagamentos para fechar o contrato
         </p>
       }
     </div>
