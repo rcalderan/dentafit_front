@@ -24,6 +24,7 @@ export class MainLayout {
   protected readonly isProductSubmenuOpen = signal(false);
   protected readonly isRentalSubmenuOpen = signal(false);
   protected readonly isReportsSubmenuOpen = signal(false);
+  protected readonly showFab = signal(true);
 
   // Expõe UserRole para uso no template
   protected readonly UserRole = UserRole;
@@ -41,9 +42,12 @@ export class MainLayout {
     });
 
     // Fecha a sidebar automaticamente ao navegar no mobile
+    // e oculta o FAB nas rotas de devolução (BUG-2026-05-02-4)
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
+    ).subscribe((event) => {
+      const url = (event as NavigationEnd).url;
+      this.showFab.set(!url.includes('/rental/return/'));
       if (this.isMobile()) {
         this.isSidebarVisible.set(false);
       }

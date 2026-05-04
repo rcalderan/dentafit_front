@@ -108,7 +108,7 @@
         </nav>
     </aside>
 
-    @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
+    @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE]) && showFab()) {
     <div class="floating-action">
         <button class="btn-new-contract" routerLink="/rental/new">
             <span class="plus-icon">+</span>

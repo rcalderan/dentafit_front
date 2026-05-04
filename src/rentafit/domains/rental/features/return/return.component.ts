@@ -45,7 +45,8 @@ export class ReturnComponent implements OnInit {
 
   readonly canConfirmReturn = computed(() => {
     const returnerName = this.form().returnerName?.trim();
-    return this.showConfirmButton() && !!returnerName && returnerName.length > 0;
+    const fineOk = !this.form().applyFine || this.isValidFineAmount();
+    return this.showConfirmButton() && !!returnerName && returnerName.length > 0 && fineOk;
   });
 
   readonly allItemsSelected = computed(() => {
