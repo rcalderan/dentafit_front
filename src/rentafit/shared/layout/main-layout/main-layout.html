@@ -76,6 +76,22 @@
             </div>
             }
 
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
+            <div class="nav-item-container" [class.open]="isSalesSubmenuOpen()">
+                <button class="nav-item" (click)="toggleSalesSubmenu()" title="Sales">
+                    <i class="icon">🛒</i>
+                </button>
+                @if (isSalesSubmenuOpen()) {
+                <div class="submenu">
+                    <a routerLink="/sales/management" routerLinkActive="active" class="submenu-item"
+                        title="Vendas">
+                        <span>Vendas</span>
+                    </a>
+                </div>
+                }
+            </div>
+            }
+
             <!-- @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER])) {
             <div class="nav-item-container" [class.open]="isReportsSubmenuOpen()">
                 <button class="nav-item" (click)="toggleReportsSubmenu()" title="Reports">
@@ -113,6 +129,10 @@
         <button class="btn-new-contract" routerLink="/rental/new">
             <span class="plus-icon">+</span>
             <span class="btn-text">Novo Contrato</span>
+        </button>
+        <button class="btn-new-contract" routerLink="/sales/new">
+            <span class="plus-icon">🛒</span>
+            <span class="btn-text">Nova Venda</span>
         </button>
         <!-- <button class="btn-new-contract legacy" routerLink="/rental/legacy">
             <span class="plus-icon">🏛️</span>

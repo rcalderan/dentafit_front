@@ -23,6 +23,7 @@ export class MainLayout {
   protected readonly isCustomerSubmenuOpen = signal(false);
   protected readonly isProductSubmenuOpen = signal(false);
   protected readonly isRentalSubmenuOpen = signal(false);
+  protected readonly isSalesSubmenuOpen = signal(false);
   protected readonly isReportsSubmenuOpen = signal(false);
   protected readonly showFab = signal(true);
 
@@ -62,6 +63,7 @@ export class MainLayout {
     this.isCustomerSubmenuOpen.set(false);
     this.isProductSubmenuOpen.set(false);
     this.isRentalSubmenuOpen.set(false);
+    this.isSalesSubmenuOpen.set(false);
     this.isReportsSubmenuOpen.set(false);
   }
 
@@ -81,6 +83,12 @@ export class MainLayout {
     const nextState = !this.isRentalSubmenuOpen();
     this.closeAllSubmenus();
     this.isRentalSubmenuOpen.set(nextState);
+  }
+
+  protected toggleSalesSubmenu(): void {
+    const nextState = !this.isSalesSubmenuOpen();
+    this.closeAllSubmenus();
+    this.isSalesSubmenuOpen.set(nextState);
   }
 
   protected toggleReportsSubmenu(): void {

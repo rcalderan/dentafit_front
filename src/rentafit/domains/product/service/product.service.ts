@@ -1,10 +1,24 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { ErrorMessages, HTTP_ERROR_MAP } from '../../../shared/data/error-messages';
 import { IProduct, IRentalItem, IRetailItem } from '../data/Product.interface';
 import { APP_CONFIG } from '../../../shared/data/app-config.token';
+
+export interface RetailListParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
+export interface IRetailPageResponse {
+  content: IRetailItem[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -62,6 +76,17 @@ export class ProductService {
       );
     }
     return this.httpClient.post<IRetailItem>(this.retailApiUrl, item).pipe(
+      catchError(this.handleError.bind(this))
+    );
+  }
+
+  listRetailItems(params?: RetailListParams): Observable<IRetailPageResponse> {
+    let httpParams = new HttpParams();
+    if (params?.page != null) httpParams = httpParams.set('page', params.page);
+    if (params?.size != null) httpParams = httpParams.set('size', params.size);
+    if (params?.sort) httpParams = httpParams.set('sort', params.sort);
+
+    return this.httpClient.get<IRetailPageResponse>(this.retailApiUrl, { params: httpParams }).pipe(
       catchError(this.handleError.bind(this))
     );
   }

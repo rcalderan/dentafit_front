@@ -90,6 +90,18 @@ export const routes: Routes = [
                 data: { roles: [UserRole.ADMIN] }
             },
             {
+                path: 'sales/new',
+                loadComponent: () => import('./domains/sales/features/new-sale/new-sale.component').then(m => m.NewSale),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
+            },
+            {
+                path: 'sales/management',
+                loadComponent: () => import('./domains/sales/features/management/sales-management.component').then(m => m.SalesManagement),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE] }
+            },
+            {
                 path: 'home/dashboard',
                 loadComponent: () => import('./domains/home/features/dashboard.component').then(m => m.HomeDashboard),
                 canActivate: [roleGuard],

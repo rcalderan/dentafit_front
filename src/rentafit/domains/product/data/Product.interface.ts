@@ -48,6 +48,7 @@ export interface IRentalItem extends IProductBase {
 export interface IRetailItem extends IProductBase {
   sku?: string;
   details?: string;
+  warrantyDays?: number;
   stock?: IStockDTO;
 }
 
