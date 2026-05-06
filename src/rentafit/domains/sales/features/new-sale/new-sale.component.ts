@@ -92,12 +92,12 @@ export class NewSale implements OnInit {
 
   protected readonly canConfirm = computed(() => {
     const o = this.order();
-    return o?.status === 'DRAFT' && (o.items?.length ?? 0) > 0;
+    return !!o?.id && o.status === 'DRAFT' && (o.items?.length ?? 0) > 0;
   });
 
   protected readonly canCancel = computed(() => {
     const o = this.order();
-    return o?.status === 'DRAFT' || o?.status === 'CONFIRMED';
+    return !!o?.id && (o.status === 'DRAFT' || o.status === 'CONFIRMED');
   });
 
   protected readonly subtotal = computed(() => {
@@ -356,10 +356,8 @@ export class NewSale implements OnInit {
       ).subscribe({
         next: (created) => {
           this.order.set(created);
-          this.router.navigate([], {
-            relativeTo: this.route,
+          this.router.navigate(['/sales/new'], {
             queryParams: { id: created.id },
-            queryParamsHandling: 'merge',
           });
           this.showSuccess('Pedido criado: ' + created.legacyId);
         },

@@ -1,5 +1,5 @@
-import { Component, inject, signal, effect } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { filter } from 'rxjs';
 import { CommonModule } from '@angular/common';
@@ -16,6 +16,7 @@ import { UserRole } from '../../../domains/auth/data/user.model';
 export class MainLayout {
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly router = inject(Router);
+  private readonly activatedRoute = inject(ActivatedRoute);
   protected readonly authService = inject(AuthService);
 
   protected readonly isMobile = signal(false);
@@ -26,6 +27,7 @@ export class MainLayout {
   protected readonly isSalesSubmenuOpen = signal(false);
   protected readonly isReportsSubmenuOpen = signal(false);
   protected readonly showFab = signal(true);
+  protected readonly pageTitle = signal('Dashboard');
 
   // Expõe UserRole para uso no template
   protected readonly UserRole = UserRole;
@@ -42,13 +44,19 @@ export class MainLayout {
       this.isSidebarVisible.set(!mobile);
     });
 
-    // Fecha a sidebar automaticamente ao navegar no mobile
-    // e oculta o FAB nas rotas de devolução (BUG-2026-05-02-4)
+    // BUG-2026-05-04-4: atualiza título do header e estado do FAB a cada navegação
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event) => {
       const url = (event as NavigationEnd).url;
       this.showFab.set(!url.includes('/rental/return/'));
+
+      // Percorre a árvore de rotas ativadas para encontrar o title mais específico
+      let child = this.activatedRoute.firstChild;
+      while (child?.firstChild) { child = child.firstChild; }
+      const title = child?.snapshot.data?.['title'] as string | undefined;
+      this.pageTitle.set(title ?? 'Dashboard');
+
       if (this.isMobile()) {
         this.isSidebarVisible.set(false);
       }
