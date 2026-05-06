@@ -2,7 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { finalize, switchMap } from 'rxjs/operators';
 import { SalesOrderService } from '../../service/sales-order.service';
 import { CustomerService, ICustomerPageResponse } from '../../../customer/service/customer.service';
 import { ProductService } from '../../../product/service/product.service';
@@ -18,6 +19,10 @@ import { SalesOrderStatus, SALES_ORDER_STATUS_LABELS } from '../../data/sales-or
 import { SalesItemStatus, SALES_ITEM_STATUS_LABELS } from '../../data/sales-item-status.enum';
 import { PaymentMethodApi, PaymentStatusApi, SalesOrderStatusApi } from '../../data/sales-api.types';
 import { IRetailItem } from '../../../product/data/Product.interface';
+import {
+  EmployeeConfirmedEvent,
+  EmployeeVerifyComponent,
+} from '../../../rental/features/employee-verify/employee-verify.component';
 
 /** Métodos de pagamento e seus labels (reutilizados do rental) */
 const PAYMENT_METHOD_LABELS: Record<PaymentMethodApi, string> = {
@@ -31,7 +36,7 @@ const PAYMENT_METHOD_LABELS: Record<PaymentMethodApi, string> = {
 @Component({
   selector: 'rentafit-new-sale',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, EmployeeVerifyComponent],
   templateUrl: './new-sale.component.html',
   styleUrl: './new-sale.component.css',
 })
@@ -82,6 +87,15 @@ export class NewSale implements OnInit {
   // Cancel
   protected readonly showCancelModal = signal(false);
   protected cancelReason = '';
+
+  // Employee verification
+  protected readonly showEmployeeVerify = signal(false);
+  protected employeeVerifyAction: 'payment' | 'confirm' | null = null;
+  private pendingPaymentEmployeeId: string | null = null;
+
+  // Inline modal errors
+  protected itemModalError = '';
+  protected paymentModalError = '';
 
   // ─── Computed ───────────────────────────────────────────────────────────────
 
@@ -205,6 +219,7 @@ export class NewSale implements OnInit {
     this.itemDiscount = 0;
     this.itemNeedsTailoring = false;
     this.itemTailoringNotes = '';
+    this.itemModalError = '';
     this.productSearch = '';
     this.filteredProducts.set(this.retailProducts());
     this.showItemModal.set(true);
@@ -226,6 +241,18 @@ export class NewSale implements OnInit {
 
   protected confirmAddItem(): void {
     if (!this.selectedProduct) return;
+
+    if (this.itemQuantity <= 0) {
+      this.itemModalError = 'Quantidade deve ser maior que zero.';
+      return;
+    }
+    const maxDiscount = this.selectedProduct.value * this.itemQuantity;
+    if (this.itemDiscount < 0 || this.itemDiscount > maxDiscount) {
+      this.itemModalError = `Desconto deve ser entre R$0 e ${this.formatCurrency(maxDiscount)}.`;
+      return;
+    }
+    this.itemModalError = '';
+
     const current = this.order();
     const newItem: ISalesOrderItem = {
       retailProductId: this.selectedProduct.id!,
@@ -271,14 +298,63 @@ export class NewSale implements OnInit {
     this.paymentValue = this.remainingValue();
     this.paymentInstallments = 1;
     this.paymentStatus = 'PENDING';
+    this.paymentModalError = '';
     this.showPaymentModal.set(true);
   }
 
   protected confirmAddPayment(): void {
-    if (this.paymentValue <= 0) return;
+    if (this.paymentValue <= 0) {
+      this.paymentModalError = 'Valor deve ser maior que zero.';
+      return;
+    }
+    if (!this.paymentDate) {
+      this.paymentModalError = 'Informe a data do pagamento.';
+      return;
+    }
+    if (this.paymentInstallment < 1 || this.paymentInstallment > 24) {
+      this.paymentModalError = 'Número da parcela deve ser entre 1 e 24.';
+      return;
+    }
+    this.paymentModalError = '';
     const current = this.order();
     if (!current) return;
 
+    // Exige PIN do funcionário antes de registrar qualquer pagamento
+    if (this.pendingPaymentEmployeeId === null) {
+      this.employeeVerifyAction = 'payment';
+      this.showEmployeeVerify.set(true);
+      return;
+    }
+
+    const employeeId = this.pendingPaymentEmployeeId;
+    this.pendingPaymentEmployeeId = null;
+
+    // Em CONFIRMED/PAID: persiste direto via endpoint dedicado (não aceita PUT)
+    if (current.id && current.status !== 'DRAFT') {
+      const request: ISalesPaymentRequest = {
+        installmentNumber: this.paymentInstallment,
+        paymentDate: this.paymentDate,
+        paymentMethod: this.paymentMethod,
+        value: this.paymentValue,
+        installments: this.paymentInstallments,
+        status: this.paymentStatus,
+        processedByEmployeeId: employeeId,
+      };
+      this.isSaving.set(true);
+      this.salesService.addPayment(current.id, request).pipe(
+        finalize(() => this.isSaving.set(false))
+      ).subscribe({
+        next: (updated) => {
+          this.order.set(updated);
+          this.showPaymentModal.set(false);
+          this.showSuccess('Pagamento adicionado');
+        },
+        error: (err) => this.errorMsg.set(err.message),
+      });
+      return;
+    }
+
+    // Em DRAFT: acumula no signal local (será persistido no save/confirm)
     const newPayment: ISalesPayment = {
       installmentNumber: this.paymentInstallment,
       paymentDate: this.paymentDate,
@@ -286,8 +362,8 @@ export class NewSale implements OnInit {
       value: this.paymentValue,
       installments: this.paymentInstallments,
       status: this.paymentStatus,
+      processedByEmployeeId: employeeId,
     };
-
     this.order.set({ ...current, payments: [...current.payments, newPayment] });
     this.showPaymentModal.set(false);
   }
@@ -304,7 +380,18 @@ export class NewSale implements OnInit {
 
   protected save(): void {
     const o = this.order();
-    if (!o) return;
+    if (!o) {
+      this.errorMsg.set('Adicione pelo menos um item antes de criar o pedido.');
+      return;
+    }
+    if ((o.items?.length ?? 0) === 0) {
+      this.errorMsg.set('Adicione pelo menos um item antes de criar o pedido.');
+      return;
+    }
+    if (this.orderDiscount < 0) {
+      this.errorMsg.set('Desconto geral não pode ser negativo.');
+      return;
+    }
 
     const items: ISalesOrderItemRequest[] = o.items.map(i => ({
       retailProductId: i.retailProductId,
@@ -321,6 +408,7 @@ export class NewSale implements OnInit {
       value: p.value,
       installments: p.installments,
       status: p.status as PaymentStatusApi,
+      processedByEmployeeId: p.processedByEmployeeId,
     }));
 
     this.isSaving.set(true);
@@ -371,8 +459,22 @@ export class NewSale implements OnInit {
   protected confirm(): void {
     const o = this.order();
     if (!o?.id) return;
+
+    // BUG-2026-05-05-2: exige PIN antes de confirmar
+    this.employeeVerifyAction = 'confirm';
+    this.showEmployeeVerify.set(true);
+  }
+
+  private executeConfirm(): void {
+    const o = this.order();
+    if (!o?.id) return;
+
     this.isSaving.set(true);
-    this.salesService.confirm(o.id).pipe(
+    this.errorMsg.set(null);
+
+    // BUG-2026-05-05-1: persiste o estado local (incluindo parcelas) via save antes de confirmar
+    this.buildSaveRequest(o).pipe(
+      switchMap((saved) => this.salesService.confirm(saved.id!)),
       finalize(() => this.isSaving.set(false))
     ).subscribe({
       next: (updated) => {
@@ -381,6 +483,46 @@ export class NewSale implements OnInit {
       },
       error: (err) => this.errorMsg.set(err.message),
     });
+  }
+
+  /** Constrói e envia o save (create ou update) e retorna o pedido persistido. */
+  private buildSaveRequest(o: ISalesOrder): Observable<ISalesOrder> {
+    const items: ISalesOrderItemRequest[] = o.items.map(i => ({
+      retailProductId: i.retailProductId,
+      quantity: i.quantity,
+      discountValue: i.discountValue,
+      needsTailoring: i.needsTailoring,
+      tailoringNotes: i.tailoringNotes,
+    }));
+    const payments: ISalesPaymentRequest[] = o.payments.map(p => ({
+      installmentNumber: p.installmentNumber,
+      paymentDate: p.paymentDate,
+      paymentMethod: p.paymentMethod as PaymentMethodApi,
+      value: p.value,
+      installments: p.installments,
+      status: p.status as PaymentStatusApi,
+      processedByEmployeeId: p.processedByEmployeeId,
+    }));
+
+    if (o.id) {
+      const request: ISalesOrderUpdateRequest = {
+        customerId: this.selectedCustomer()?.id,
+        notes: this.orderNotes,
+        discountValue: this.orderDiscount,
+        items,
+        payments,
+      };
+      return this.salesService.update(o.id, request);
+    }
+
+    const request: ISalesOrderCreateRequest = {
+      customerId: this.selectedCustomer()?.id,
+      notes: this.orderNotes,
+      discountValue: this.orderDiscount,
+      items,
+      payments,
+    };
+    return this.salesService.create(request);
   }
 
   protected openCancelModal(): void {
@@ -433,6 +575,30 @@ export class NewSale implements OnInit {
       },
       error: (err) => this.errorMsg.set(err.message),
     });
+  }
+
+  // ─── Employee Verify ────────────────────────────────────────────────────────
+
+  protected onEmployeeConfirmed(event: EmployeeConfirmedEvent): void {
+    this.showEmployeeVerify.set(false);
+    const action = this.employeeVerifyAction;
+    this.employeeVerifyAction = null;
+
+    if (action === 'payment') {
+      this.pendingPaymentEmployeeId = event.employeeId;
+      this.confirmAddPayment();
+      return;
+    }
+
+    if (action === 'confirm') {
+      this.executeConfirm();
+    }
+  }
+
+  protected onEmployeeCancelled(): void {
+    this.showEmployeeVerify.set(false);
+    this.employeeVerifyAction = null;
+    this.pendingPaymentEmployeeId = null;
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────────────

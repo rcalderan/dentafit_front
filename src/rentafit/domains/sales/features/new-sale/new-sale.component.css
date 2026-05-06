@@ -360,6 +360,26 @@
   margin-top: 1rem;
 }
 
+.modal-error {
+  color: #c0392b;
+  font-size: 0.82rem;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  background: #fdf0f0;
+  border-left: 3px solid #e74c3c;
+  border-radius: 4px;
+}
+
+.modal-warning {
+  color: #856404;
+  font-size: 0.82rem;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  background: #fff9e6;
+  border-left: 3px solid #ffc107;
+  border-radius: 4px;
+}
+
 .product-list {
   max-height: 200px;
   overflow-y: auto;
