@@ -90,8 +90,9 @@ export class NewSale implements OnInit {
 
   // Employee verification
   protected readonly showEmployeeVerify = signal(false);
-  protected employeeVerifyAction: 'payment' | 'confirm' | null = null;
+  protected employeeVerifyAction: 'payment' | 'confirm' | 'deliver' | 'ready' | 'invoice' | null = null;
   private pendingPaymentEmployeeId: string | null = null;
+  private pendingItemId: string | null = null;
 
   // Inline modal errors
   protected itemModalError = '';
@@ -548,6 +549,12 @@ export class NewSale implements OnInit {
   }
 
   protected markItemReady(itemId: string): void {
+    this.pendingItemId = itemId;
+    this.employeeVerifyAction = 'ready';
+    this.showEmployeeVerify.set(true);
+  }
+
+  private executeMarkItemReady(itemId: string): void {
     const o = this.order();
     if (!o?.id) return;
     this.salesService.markItemReady(o.id, itemId).subscribe({
@@ -557,15 +564,26 @@ export class NewSale implements OnInit {
   }
 
   protected deliverItem(itemId: string): void {
+    this.pendingItemId = itemId;
+    this.employeeVerifyAction = 'deliver';
+    this.showEmployeeVerify.set(true);
+  }
+
+  private executeDeliverItem(itemId: string, employeeId: string): void {
     const o = this.order();
     if (!o?.id) return;
-    this.salesService.deliverItem(o.id, itemId).subscribe({
+    this.salesService.deliverItem(o.id, itemId, employeeId).subscribe({
       next: (updated) => this.order.set(updated),
       error: (err) => this.errorMsg.set(err.message),
     });
   }
 
   protected emitInvoice(): void {
+    this.employeeVerifyAction = 'invoice';
+    this.showEmployeeVerify.set(true);
+  }
+
+  private executeEmitInvoice(): void {
     const o = this.order();
     if (!o?.id) return;
     this.salesService.emitInvoice(o.id).subscribe({
@@ -589,9 +607,22 @@ export class NewSale implements OnInit {
       this.confirmAddPayment();
       return;
     }
-
     if (action === 'confirm') {
       this.executeConfirm();
+      return;
+    }
+    if (action === 'deliver' && this.pendingItemId) {
+      this.executeDeliverItem(this.pendingItemId, event.employeeId);
+      this.pendingItemId = null;
+      return;
+    }
+    if (action === 'ready' && this.pendingItemId) {
+      this.executeMarkItemReady(this.pendingItemId);
+      this.pendingItemId = null;
+      return;
+    }
+    if (action === 'invoice') {
+      this.executeEmitInvoice();
     }
   }
 
@@ -599,6 +630,8 @@ export class NewSale implements OnInit {
     this.showEmployeeVerify.set(false);
     this.employeeVerifyAction = null;
     this.pendingPaymentEmployeeId = null;
+    this.pendingItemId = null;
+    this.errorMsg.set(null);
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────────────

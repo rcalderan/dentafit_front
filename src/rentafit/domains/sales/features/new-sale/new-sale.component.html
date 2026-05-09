@@ -334,7 +334,11 @@
 <!-- ═══════════════════ EMPLOYEE VERIFY ═══════════════════ -->
 @if (showEmployeeVerify()) {
   <rentafit-employee-verify
-    [title]="employeeVerifyAction === 'confirm' ? 'Identificar Atendente — Confirmação' : 'Identificar Atendente — Pagamento'"
+    [title]="employeeVerifyAction === 'confirm' ? 'Identificar Atendente — Confirmação'
+           : employeeVerifyAction === 'deliver' ? 'Identificar Atendente — Entrega'
+           : employeeVerifyAction === 'ready'   ? 'Identificar Atendente — Pronto para Entrega'
+           : employeeVerifyAction === 'invoice' ? 'Identificar Atendente — Emissão NFS-e'
+           : 'Identificar Atendente — Pagamento'"
     [requirePin]="true"
     (confirmed)="onEmployeeConfirmed($event)"
     (cancelled)="onEmployeeCancelled()"

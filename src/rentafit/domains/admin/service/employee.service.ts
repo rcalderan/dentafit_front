@@ -14,6 +14,9 @@ export class EmployeeService {
 
   private handleError(error: HttpErrorResponse): Observable<never> {
     console.error('EmployeeService error:', error);
+    if (error.status === 422) {
+      return throwError(() => new Error('Credenciais inválidas. Verifique as iniciais e o PIN.'));
+    }
     const msg = HTTP_ERROR_MAP[error.status] ?? error.error?.message ?? ErrorMessages.UNKNOWN_ERROR;
     return throwError(() => new Error(msg));
   }

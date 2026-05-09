@@ -22,6 +22,5 @@ export const HTTP_ERROR_MAP: Record<number, string> = {
   400: ErrorMessages.INVALID_FORMAT,
   404: ErrorMessages.NOT_FOUND,
   408: ErrorMessages.TIMEOUT,
-  422: 'Credenciais inválidas. Verifique as iniciais e o PIN.',
   500: ErrorMessages.SERVER_ERROR
 };
