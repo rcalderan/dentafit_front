@@ -207,6 +207,39 @@ describe('RetailRegistration', () => {
     expect(component.errorMessage()).not.toBeNull();
   });
 
+  // Regressão BUG-2026-05-10-2: ProductService não deve converter HttpErrorResponse em Error genérico
+  it('exibe mensagens de campo quando service relança HttpErrorResponse 400 diretamente', () => {
+    const error = new HttpErrorResponse({
+      status: 400,
+      error: { errors: [{ message: 'Size is required' }] }
+    });
+    productService.saveRetailItem.mockReturnValue(throwError(() => error));
+
+    const fixture = TestBed.createComponent(RetailRegistration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    buildValidForm(component);
+    component.save();
+
+    expect(component.errorMessage()).toEqual(['Size is required']);
+  });
+
+  it('exibe mensagem genérica quando service relança HttpErrorResponse 500 diretamente', () => {
+    const error = new HttpErrorResponse({ status: 500 });
+    productService.saveRetailItem.mockReturnValue(throwError(() => error));
+
+    const fixture = TestBed.createComponent(RetailRegistration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    buildValidForm(component);
+    component.save();
+
+    expect(component.errorMessage()).not.toBeNull();
+    expect(typeof component.errorMessage()).toBe('string');
+  });
+
   //  Scroll para o primeiro campo inválido 
 
   it('marca todos os controles como touched ao salvar com formulário inválido', () => {

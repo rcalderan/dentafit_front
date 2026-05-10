@@ -1,8 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
-import { ErrorMessages, HTTP_ERROR_MAP } from '../../../shared/data/error-messages';
+import { catchError } from 'rxjs/operators';
 import { IProduct, IRentalItem, IRetailItem } from '../data/Product.interface';
 import { APP_CONFIG } from '../../../shared/data/app-config.token';
 
@@ -32,8 +31,7 @@ export class ProductService {
 
   private handleError(error: HttpErrorResponse): Observable<never> {
     console.error('ProductService error:', error);
-    const errorMessage = HTTP_ERROR_MAP[error.status] || error.error?.message || ErrorMessages.UNKNOWN_ERROR;
-    return throwError(() => new Error(errorMessage));
+    return throwError(() => error);
   }
 
   // ─── Rental (Aluguel) ───────────────────────────────────

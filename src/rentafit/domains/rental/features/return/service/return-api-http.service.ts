@@ -94,7 +94,7 @@ export class ReturnApiHttpService implements ReturnApiPort {
     const body = {
       employeeId: request.employeeId,
       applyFine: request.applyFine,
-      fineAmount: request.fineAmount ?? null,
+      fineAmount: request.applyFine ? (request.fineAmount ?? null) : null,
     };
 
     return this.http

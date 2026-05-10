@@ -3,7 +3,6 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { lastValueFrom, of } from 'rxjs';
 import { vi } from 'vitest';
 import { ProductService } from './product.service';
-import { ErrorMessages } from '../../../shared/data/error-messages';
 import { IRentalItem, IRetailItem } from '../data/Product.interface';
 import { APP_CONFIG } from '../../../shared/data/app-config.token';
 
@@ -176,12 +175,12 @@ describe('ProductService', () => {
     expect(spy).toHaveBeenCalledWith(item);
   });
 
-  it('maps server errors to friendly messages', async () => {
+  it('relança HttpErrorResponse original para que os componentes tratem o status HTTP', async () => {
     const resultPromise = lastValueFrom(service.getRetailItemById('bad'));
 
     const req = httpMock.expectOne('/api/v1/products/retail/bad');
     req.flush({}, { status: 500, statusText: 'Server Error' });
 
-    await expect(resultPromise).rejects.toThrow(ErrorMessages.SERVER_ERROR);
+    await expect(resultPromise).rejects.toMatchObject({ status: 500, name: 'HttpErrorResponse' });
   });
 });
