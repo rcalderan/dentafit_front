@@ -437,6 +437,178 @@ describe('RegistrationComponent', () => {
     expect(component.errorMessage()).toBeNull();
   });
 
+  //  ngOnInit com query params 
+
+  it('carrega cliente por legacyId quando queryParam legacyId está presente', async () => {
+    const customer = buildSavedCustomer();
+    customerService.getCustomerByLegacyId.mockReturnValue(of(customer));
+
+    await TestBed.overrideProvider(ActivatedRoute, {
+      useValue: { snapshot: { queryParams: { legacyId: '42' } } }
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    fixture.detectChanges();
+
+    expect(customerService.getCustomerByLegacyId).toHaveBeenCalledWith(42);
+    expect(fixture.componentInstance.isReadOnly()).toBe(true);
+  });
+
+  it('exibe erro quando legacyId da query param não encontra cliente', async () => {
+    customerService.getCustomerByLegacyId.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 404 }))
+    );
+
+    await TestBed.overrideProvider(ActivatedRoute, {
+      useValue: { snapshot: { queryParams: { legacyId: '99' } } }
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.errorMessage()).not.toBeNull();
+  });
+
+  it('carrega cliente por id quando queryParam id está presente', async () => {
+    const customer = buildSavedCustomer();
+    customerService.getCustomerById.mockReturnValue(of(customer));
+
+    await TestBed.overrideProvider(ActivatedRoute, {
+      useValue: { snapshot: { queryParams: { id: 'c-uuid-1' } } }
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    fixture.detectChanges();
+
+    expect(customerService.getCustomerById).toHaveBeenCalledWith('c-uuid-1');
+    expect(fixture.componentInstance.isReadOnly()).toBe(true);
+  });
+
+  it('exibe erro quando id da query param não encontra cliente', async () => {
+    customerService.getCustomerById.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 404 }))
+    );
+
+    await TestBed.overrideProvider(ActivatedRoute, {
+      useValue: { snapshot: { queryParams: { id: 'c-invalido' } } }
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.errorMessage()).not.toBeNull();
+  });
+
+  //  findByDocument 
+
+  it('não realiza busca por documento quando tecla não é Enter', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const event = { key: 'Tab' } as KeyboardEvent;
+    component.findByDocument(event, '12345678901');
+    expect(customerService.getCustomerByDocument).not.toHaveBeenCalled();
+  });
+
+  it('busca cliente por documento ao pressionar Enter', () => {
+    const customer = buildSavedCustomer();
+    customerService.getCustomerByDocument.mockReturnValue(of(customer));
+
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.findByDocument({ key: 'Enter' } as KeyboardEvent, '12345678901');
+
+    expect(customerService.getCustomerByDocument).toHaveBeenCalledWith('12345678901');
+    expect(component.isReadOnly()).toBe(true);
+  });
+
+  it('exibe erro quando documento não encontra cliente', () => {
+    customerService.getCustomerByDocument.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 404 }))
+    );
+
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.findByDocument({ key: 'Enter' } as KeyboardEvent, '00000000000');
+
+    expect(component.errorMessage()).not.toBeNull();
+  });
+
+  //  findAddressByZipCode 
+
+  it('não busca CEP quando tecla não é Enter', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.findAddressByZipCode({ key: 'Tab' } as KeyboardEvent, '01310-100');
+    expect(addressService.searchByZipCode).not.toHaveBeenCalled();
+  });
+
+  it('não busca CEP quando string está vazia', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.findAddressByZipCode({ key: 'Enter' } as KeyboardEvent, '');
+    expect(addressService.searchByZipCode).not.toHaveBeenCalled();
+  });
+
+  it('busca CEP e preenche formulário de endereço ao pressionar Enter', () => {
+    const address = {
+      zipCode: '01310-100',
+      street: 'Av. Paulista',
+      neighborhood: 'Bela Vista',
+      city: 'São Paulo',
+      state: 'SP'
+    };
+    addressService.searchByZipCode.mockReturnValue(of(address));
+
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.findAddressByZipCode({ key: 'Enter' } as KeyboardEvent, '01310-100');
+
+    expect(addressService.searchByZipCode).toHaveBeenCalledWith('01310-100');
+    expect(component.form.get('address.street')?.value).toBe('Av. Paulista');
+    expect(component.form.get('address.city')?.value).toBe('São Paulo');
+  });
+
+  it('exibe erro quando busca por CEP falha', () => {
+    addressService.searchByZipCode.mockReturnValue(
+      throwError(() => new Error('CEP não encontrado'))
+    );
+
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.findAddressByZipCode({ key: 'Enter' } as KeyboardEvent, '99999-999');
+
+    expect(component.errorMessage()).not.toBeNull();
+  });
+
+  //  getPhoneError — fallback 
+
+  it('retorna mensagem genérica de telefone inválido quando erro não é invalidPhone', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const phoneControl = component.getPhoneControl(0);
+    phoneControl.setErrors({ required: true });
+    phoneControl.markAsTouched();
+    phoneControl.markAsDirty();
+
+    expect(component.getPhoneError(0)).toBe('Telefone inválido');
+  });
+
   //  DOM 
 
   it('exibe o modal de erro quando há mensagem de erro', () => {
