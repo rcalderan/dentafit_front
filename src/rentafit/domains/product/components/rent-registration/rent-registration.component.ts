@@ -232,7 +232,7 @@ export class Registration implements OnInit, OnDestroy {
     }
   }
 
-  private handleError(error: any): void {
+  private handleError(error: unknown): void {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 400) {
         this.errorMessage.set(

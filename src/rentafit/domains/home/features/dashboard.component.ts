@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -101,7 +102,7 @@ export class HomeDashboard implements OnInit {
             this.handleSingleSearchResult({ type: 'contract', data });
             this.isSearching.set(false);
           },
-          error: (err: Error) => { this.searchError.set(err.message || 'Contrato não encontrado.'); this.isSearching.set(false); },
+          error: (err: unknown) => { this.searchError.set(this.resolveHttpError(err, 404, 'Contrato não encontrado.')); this.isSearching.set(false); },
         });
         break;
 
@@ -120,7 +121,7 @@ export class HomeDashboard implements OnInit {
             this.handleSingleSearchResult({ type: 'product', data });
             this.isSearching.set(false);
           },
-          error: (err: Error) => { this.searchError.set(err.message || 'Roupa não encontrada.'); this.isSearching.set(false); },
+          error: (err: unknown) => { this.searchError.set(this.resolveHttpError(err, 404, 'Roupa não encontrada.')); this.isSearching.set(false); },
         });
         break;
     }
@@ -170,8 +171,8 @@ export class HomeDashboard implements OnInit {
             this.openCustomerSearchResult(response.content[0]);
           }
         },
-        error: (err: Error) => {
-          this.searchError.set(err.message || 'Erro ao buscar clientes.');
+        error: (err: unknown) => {
+          this.searchError.set(this.resolveHttpError(err, 404, 'Nenhum cliente encontrado.', 'Erro ao buscar clientes.'));
           this.clearCustomerSearchResults();
           this.isSearching.set(false);
         },
@@ -189,8 +190,8 @@ export class HomeDashboard implements OnInit {
 
         this.openCustomerSearchResult(customer);
       },
-      error: (err: Error) => {
-        this.searchError.set(err.message || 'Cliente não encontrado para CPF/CNPJ informado.');
+      error: (err: unknown) => {
+        this.searchError.set(this.resolveHttpError(err, 404, 'Cliente não encontrado para o CPF/CNPJ informado.'));
         this.clearCustomerSearchResults();
         this.isSearching.set(false);
       },
@@ -270,8 +271,8 @@ export class HomeDashboard implements OnInit {
           this.recentContracts.set(page.content);
           this.isLoadingRecent.set(false);
         },
-        error: (err: Error) => {
-          this.errorRecent.set(err.message || 'Erro ao carregar contratos.');
+        error: (err: unknown) => {
+          this.errorRecent.set(this.resolveHttpError(err, null, 'Erro ao carregar contratos.'));
           this.isLoadingRecent.set(false);
         },
       });
@@ -282,8 +283,8 @@ export class HomeDashboard implements OnInit {
         this.pendingReturns.set(items);
         this.isLoadingPendingReturns.set(false);
       },
-      error: (err: Error) => {
-        this.errorPendingReturns.set(err.message || 'Erro ao carregar devoluções pendentes.');
+      error: (err: unknown) => {
+        this.errorPendingReturns.set(this.resolveHttpError(err, null, 'Erro ao carregar devoluções pendentes.'));
         this.isLoadingPendingReturns.set(false);
       },
     });
@@ -327,6 +328,25 @@ export class HomeDashboard implements OnInit {
       CLOSED: 'status-closed',
     };
     return `status-badge ${classes[String(status)] ?? ''}`;
+  }
+
+  /**
+   * Traduz um erro HTTP desconhecido para mensagem amigável.
+   * Quando o status bate com notFoundStatus, retorna notFoundMsg.
+   * Caso contrário retorna fallbackMsg (ou mensagem genérica).
+   * Nunca expõe URL ou status HTTP ao usuário.
+   */
+  resolveHttpError(
+    err: unknown,
+    notFoundStatus: number | null,
+    notFoundMsg: string,
+    fallbackMsg = 'Ocorreu um erro. Tente novamente.'
+  ): string {
+    if (err instanceof HttpErrorResponse) {
+      if (notFoundStatus !== null && err.status === notFoundStatus) return notFoundMsg;
+      return fallbackMsg;
+    }
+    return fallbackMsg;
   }
 
   formatDate(dateStr: string | undefined): string {

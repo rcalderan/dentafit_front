@@ -453,4 +453,55 @@ describe('Registration', () => {
     const modal = fixture.nativeElement.querySelector('rentafit-modal');
     expect(modal).not.toBeNull();
   });
+
+  // BUG-2026-05-10-2 REGRESSION — ProductService deve relançar HttpErrorResponse original
+
+  it('BUG-2026-05-10-2: exibe mensagens de campo quando service relança HttpErrorResponse 400 diretamente', () => {
+    const error = new HttpErrorResponse({
+      status: 400,
+      error: { errors: [{ message: 'Name is required' }] }
+    });
+    productService.saveRentalItem.mockReturnValue(throwError(() => error));
+
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    buildValidForm(component);
+    component.save();
+
+    expect(component.errorMessage()).toEqual(['Name is required']);
+  });
+
+  it('BUG-2026-05-10-2: NÃO exibe falha silenciosa — errorMessage nunca fica null após erro 400', () => {
+    const error = new HttpErrorResponse({
+      status: 400,
+      error: { errors: [{ message: 'Size is required' }] }
+    });
+    productService.saveRentalItem.mockReturnValue(throwError(() => error));
+
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    buildValidForm(component);
+    component.save();
+
+    expect(component.errorMessage()).not.toBeNull();
+  });
+
+  it('BUG-2026-05-10-2: exibe mensagem genérica quando service relança HttpErrorResponse 500 diretamente', () => {
+    productService.saveRentalItem.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 500 }))
+    );
+
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    buildValidForm(component);
+    component.save();
+
+    expect(component.errorMessage()).toBe('Ocorreu um erro ao salvar os dados do produto.');
+  });
 });

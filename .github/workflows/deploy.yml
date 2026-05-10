@@ -93,7 +93,7 @@ jobs:
         aws-region: ${{ secrets.AWS_S3_REGION }}
 
     - name: Deploy para S3
-      uses: jakejarvis/s3-sync-action@master
+      uses: jakejarvis/s3-sync-action@v0.5.1
       with:
         args: --delete
       env:
