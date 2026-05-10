@@ -21,7 +21,7 @@ describe('RegistrationComponent', () => {
   const buildValidForm = (component: RegistrationComponent) => {
     component.form.patchValue({
       name: 'João da Silva',
-      document: '12345678901',
+      document: '71428793860',
       email: 'joao@silva.com',
       number: '100',
       address: {
@@ -38,7 +38,7 @@ describe('RegistrationComponent', () => {
     id: 'c-1',
     legacyId: '10',
     name: 'João da Silva',
-    document: '12345678901',
+    document: '71428793860',
     email: 'joao@silva.com',
     isAuthenticated: false,
     notes: '',
@@ -507,7 +507,7 @@ describe('RegistrationComponent', () => {
     fixture.detectChanges();
 
     const event = { key: 'Tab' } as KeyboardEvent;
-    component.findByDocument(event, '12345678901');
+    component.findByDocument(event, '71428793860');
     expect(customerService.getCustomerByDocument).not.toHaveBeenCalled();
   });
 
@@ -519,9 +519,9 @@ describe('RegistrationComponent', () => {
     const component = fixture.componentInstance;
     fixture.detectChanges();
 
-    component.findByDocument({ key: 'Enter' } as KeyboardEvent, '12345678901');
+    component.findByDocument({ key: 'Enter' } as KeyboardEvent, '71428793860');
 
-    expect(customerService.getCustomerByDocument).toHaveBeenCalledWith('12345678901');
+    expect(customerService.getCustomerByDocument).toHaveBeenCalledWith('71428793860');
     expect(component.isReadOnly()).toBe(true);
   });
 
@@ -621,5 +621,56 @@ describe('RegistrationComponent', () => {
 
     const modal = fixture.nativeElement.querySelector('rentafit-modal');
     expect(modal).not.toBeNull();
+  });
+
+  //  cpfCnpjValidator — regression for BUG-2026-05-10-8
+
+  it('rejeita CPF com todos os dígitos iguais', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.form.patchValue({ document: '11111111111' });
+    component.form.get('document')?.markAsTouched();
+    expect(component.form.get('document')?.invalid).toBe(true);
+    expect(component.getControlError('document')).toBe('CPF/CNPJ inválido');
+  });
+
+  it('rejeita CPF com dígito verificador errado', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.form.patchValue({ document: '12345678901' });
+    component.form.get('document')?.markAsTouched();
+    expect(component.form.get('document')?.invalid).toBe(true);
+  });
+
+  it('aceita CPF válido com máscara', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.form.patchValue({ document: '714.287.938-60' });
+    expect(component.form.get('document')?.valid).toBe(true);
+  });
+
+  it('rejeita CNPJ com todos os dígitos iguais', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.form.patchValue({ document: '11111111111111' });
+    component.form.get('document')?.markAsTouched();
+    expect(component.form.get('document')?.invalid).toBe(true);
+  });
+
+  it('aceita CNPJ válido', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.form.patchValue({ document: '11222333000181' });
+    expect(component.form.get('document')?.valid).toBe(true);
   });
 });

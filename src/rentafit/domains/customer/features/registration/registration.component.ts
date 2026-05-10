@@ -17,8 +17,53 @@ export function cpfCnpjValidator(control: AbstractControl): ValidationErrors | n
     return { invalidFormat: 'Documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos' };
   }
 
-  // Validação simplificada para exemplo, ideal seria uma lib ou algoritmos completos
-  return null;
+  if (isAllDigitsSame(value)) return { invalidFormat: 'CPF/CNPJ inválido' };
+
+  const isValid = value.length === 11 ? isValidCpf(value) : isValidCnpj(value);
+  return isValid ? null : { invalidFormat: 'CPF/CNPJ inválido' };
+}
+
+function isAllDigitsSame(s: string): boolean {
+  return s.split('').every(c => c === s[0]);
+}
+
+function isValidCpf(cpf: string): boolean {
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cpf[i], 10) * (10 - i);
+  }
+  let remainder = sum % 11;
+  const firstDigit = remainder < 2 ? 0 : 11 - remainder;
+
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cpf[i], 10) * (11 - i);
+  }
+  remainder = sum % 11;
+  const secondDigit = remainder < 2 ? 0 : 11 - remainder;
+
+  return parseInt(cpf[9], 10) === firstDigit && parseInt(cpf[10], 10) === secondDigit;
+}
+
+function isValidCnpj(cnpj: string): boolean {
+  const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+  let sum = 0;
+  for (let i = 0; i < 12; i++) {
+    sum += parseInt(cnpj[i], 10) * weights1[i];
+  }
+  let remainder = sum % 11;
+  const firstDigit = remainder < 2 ? 0 : 11 - remainder;
+
+  sum = 0;
+  for (let i = 0; i < 13; i++) {
+    sum += parseInt(cnpj[i], 10) * weights2[i];
+  }
+  remainder = sum % 11;
+  const secondDigit = remainder < 2 ? 0 : 11 - remainder;
+
+  return parseInt(cnpj[12], 10) === firstDigit && parseInt(cnpj[13], 10) === secondDigit;
 }
 
 @Component({
