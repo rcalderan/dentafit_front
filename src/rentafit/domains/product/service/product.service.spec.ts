@@ -3,7 +3,6 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { lastValueFrom, of } from 'rxjs';
 import { vi } from 'vitest';
 import { ProductService } from './product.service';
-import { ErrorMessages } from '../../../shared/data/error-messages';
 import { IRentalItem, IRetailItem } from '../data/Product.interface';
 import { APP_CONFIG } from '../../../shared/data/app-config.token';
 
@@ -176,12 +175,64 @@ describe('ProductService', () => {
     expect(spy).toHaveBeenCalledWith(item);
   });
 
-  it('maps server errors to friendly messages', async () => {
+  // ── listRetailItems ─────────────────────────────────────────────────────────
+
+  it('lista itens retail sem parâmetros', () => {
+    const page = { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 };
+
+    service.listRetailItems().subscribe(result => {
+      expect(result).toEqual(page);
+    });
+
+    const req = httpMock.expectOne('/api/v1/products/retail');
+    expect(req.request.method).toBe('GET');
+    req.flush(page);
+  });
+
+  it('lista itens retail com page e size', () => {
+    const page = { content: [], totalElements: 0, totalPages: 0, number: 2, size: 5 };
+
+    service.listRetailItems({ page: 2, size: 5 }).subscribe(result => {
+      expect(result.number).toBe(2);
+    });
+
+    const req = httpMock.expectOne(r => r.url === '/api/v1/products/retail');
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('size')).toBe('5');
+    req.flush(page);
+  });
+
+  it('lista itens retail com sort', () => {
+    const page = { content: [], totalElements: 0, totalPages: 0, number: 0, size: 10 };
+
+    service.listRetailItems({ sort: 'name,asc' }).subscribe();
+
+    const req = httpMock.expectOne(r => r.url === '/api/v1/products/retail');
+    expect(req.request.params.get('sort')).toBe('name,asc');
+    expect(req.request.params.has('page')).toBe(false);
+    req.flush(page);
+  });
+
+  it('lista itens retail com todos os parâmetros', () => {
+    const page = { content: [], totalElements: 20, totalPages: 2, number: 1, size: 10 };
+
+    service.listRetailItems({ page: 1, size: 10, sort: 'value,desc' }).subscribe();
+
+    const req = httpMock.expectOne(r => r.url === '/api/v1/products/retail');
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('size')).toBe('10');
+    expect(req.request.params.get('sort')).toBe('value,desc');
+    req.flush(page);
+  });
+
+  // ── handleError ─────────────────────────────────────────────────────────────
+
+  it('relança HttpErrorResponse original para que os componentes tratem o status HTTP', async () => {
     const resultPromise = lastValueFrom(service.getRetailItemById('bad'));
 
     const req = httpMock.expectOne('/api/v1/products/retail/bad');
     req.flush({}, { status: 500, statusText: 'Server Error' });
 
-    await expect(resultPromise).rejects.toThrow(ErrorMessages.SERVER_ERROR);
+    await expect(resultPromise).rejects.toMatchObject({ status: 500, name: 'HttpErrorResponse' });
   });
 });

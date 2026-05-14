@@ -29,7 +29,7 @@ export class Login implements OnInit {
 
   ngOnInit(): void {
     if (this.authService.isAuthenticated()) {
-      const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/finance/dashboard';
+      const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/home/dashboard';
       this.router.navigate([returnUrl]);
     }
   }
@@ -45,7 +45,7 @@ export class Login implements OnInit {
 
     this.authService.login(this.username, this.password).subscribe({
       next: (user) => {
-        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/finance/dashboard';
+        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/home/dashboard';
 
         this.router.navigate([returnUrl]).then(
           (success) => {

@@ -1,0 +1,363 @@
+<div class="new-sale">
+  <!-- Header -->
+  <header class="page-header">
+    <button class="btn-back" (click)="goBack()">← Voltar</button>
+    <div class="header-info">
+      @if (order()?.legacyId) {
+        <h2>{{ order()!.legacyId }}</h2>
+      } @else {
+        <h2>Nova Venda</h2>
+      }
+      @if (order()?.status) {
+        <span class="status-badge" [class]="'status-' + order()!.status.toLowerCase()">
+          {{ statusLabels[order()!.status] }}
+        </span>
+      }
+    </div>
+    <div class="header-actions">
+      @if (isDraft()) {
+        <button class="btn btn-primary" [disabled]="isSaving()" (click)="save()">
+          {{ isSaving() ? 'Salvando...' : (order()?.id ? 'Salvar' : 'Criar Pedido') }}
+        </button>
+      }
+      @if (canConfirm()) {
+        <button class="btn btn-success" [disabled]="isSaving()" (click)="confirm()">Confirmar</button>
+      }
+      @if (canCancel()) {
+        <button class="btn btn-danger" (click)="openCancelModal()">Cancelar</button>
+      }
+      @if (order()?.status === 'PAID' && order()?.invoiceStatus !== 'EMITTED') {
+        <button class="btn btn-secondary" (click)="emitInvoice()">Emitir NFS-e</button>
+      }
+    </div>
+  </header>
+
+  <!-- Messages -->
+  @if (errorMsg()) {
+    <div class="msg msg-error">{{ errorMsg() }}</div>
+  }
+  @if (successMsg()) {
+    <div class="msg msg-success">{{ successMsg() }}</div>
+  }
+
+  @if (isLoading()) {
+    <div class="loading">Carregando...</div>
+  } @else {
+
+  <!-- Customer Section -->
+  <section class="section">
+    <h3>Cliente</h3>
+    @if (isDraft()) {
+      @if (!selectedCustomer()) {
+        <div class="customer-search">
+          <input type="text" [(ngModel)]="customerSearch" (input)="searchCustomer()"
+                 placeholder="Buscar cliente por nome..." class="input" />
+          @if (customerResults().length > 0) {
+            <div class="search-results">
+              @for (c of customerResults(); track c.id) {
+                <div class="result-item" (click)="selectCustomer(c)">
+                  <strong>{{ c.name }}</strong> <span class="doc">{{ c.document }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+        <p class="hint">Deixe em branco para venda de balcão.</p>
+      } @else {
+        <div class="selected-customer">
+          <span><strong>{{ selectedCustomer()!.name }}</strong> — {{ selectedCustomer()!.document }}</span>
+          <button class="btn-icon" (click)="clearCustomer()">✕</button>
+        </div>
+      }
+    } @else {
+      <div class="customer-info">
+        <strong>{{ order()?.customerName || 'Venda Balcão' }}</strong>
+        @if (order()?.customerDocument) {
+          <span> — {{ order()!.customerDocument }}</span>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Items Section -->
+  <section class="section">
+    <div class="section-header">
+      <h3>Itens</h3>
+      @if (isDraft()) {
+        <button class="btn btn-sm btn-primary" (click)="openItemModal()">+ Adicionar Item</button>
+      }
+    </div>
+
+    @if ((order()?.items?.length ?? 0) === 0) {
+      <p class="empty">Nenhum item adicionado.</p>
+    } @else {
+      <div class="items-list">
+        @for (item of order()!.items; track $index; let i = $index) {
+          <div class="item-card">
+            <div class="item-main">
+              <div class="item-desc">
+                <strong>{{ item.sku }}</strong> — {{ item.description }}
+              </div>
+              <div class="item-details">
+                <span>{{ item.quantity }}x {{ formatCurrency(item.unitPrice) }}</span>
+                @if (item.discountValue > 0) {
+                  <span class="discount">-{{ formatCurrency(item.discountValue) }}</span>
+                }
+                <span class="line-total">{{ formatCurrency((item.unitPrice * item.quantity) - item.discountValue) }}</span>
+              </div>
+            </div>
+            <div class="item-meta">
+              <span class="item-status" [class]="'istatus-' + item.itemStatus.toLowerCase()">
+                {{ itemStatusLabels[item.itemStatus] || item.itemStatus }}
+              </span>
+              @if (item.needsTailoring) {
+                <span class="tailoring-badge">Ajuste</span>
+              }
+              @if (item.itemStatus === 'RESERVED') {
+                <button class="btn btn-xs" (click)="markItemReady(item.id!)">Pronto</button>
+              }
+              @if (item.itemStatus === 'READY') {
+                <button class="btn btn-xs btn-success" (click)="deliverItem(item.id!)">Entregar</button>
+              }
+            </div>
+            @if (isDraft()) {
+              <button class="btn-icon btn-remove" (click)="removeItem(i)">✕</button>
+            }
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Totals -->
+  <section class="section totals">
+    <div class="total-row">
+      <span>Subtotal</span>
+      <span>{{ formatCurrency(subtotal()) }}</span>
+    </div>
+    @if (isDraft()) {
+      <div class="total-row discount-row">
+        <label>Desconto geral</label>
+        <input type="number" [(ngModel)]="orderDiscount" min="0" max="999999" step="0.01" class="input input-sm" />
+      </div>
+    } @else if ((order()?.discountValue ?? 0) > 0) {
+      <div class="total-row">
+        <span>Desconto</span>
+        <span class="discount">-{{ formatCurrency(order()!.discountValue) }}</span>
+      </div>
+    }
+    <div class="total-row total-final">
+      <strong>Total</strong>
+      <strong>{{ formatCurrency(totalValue()) }}</strong>
+    </div>
+    @if (paidValue() > 0) {
+      <div class="total-row">
+        <span>Pago</span>
+        <span class="paid">{{ formatCurrency(paidValue()) }}</span>
+      </div>
+      <div class="total-row">
+        <span>Restante</span>
+        <span class="remaining">{{ formatCurrency(remainingValue()) }}</span>
+      </div>
+    }
+  </section>
+
+  <!-- Notes -->
+  @if (isDraft()) {
+    <section class="section">
+      <h3>Observações</h3>
+      <textarea [(ngModel)]="orderNotes" rows="3" class="input textarea" placeholder="Notas internas..."></textarea>
+    </section>
+  } @else if (order()?.notes) {
+    <section class="section">
+      <h3>Observações</h3>
+      <p>{{ order()!.notes }}</p>
+    </section>
+  }
+
+  <!-- Payments Section -->
+  <section class="section">
+    <div class="section-header">
+      <h3>Pagamentos</h3>
+      @if (order()?.status === 'CONFIRMED' || order()?.status === 'PAID' || isDraft()) {
+        <button class="btn btn-sm btn-primary" (click)="openPaymentModal()">+ Adicionar Pagamento</button>
+      }
+    </div>
+
+    @if ((order()?.payments?.length ?? 0) === 0) {
+      <p class="empty">Nenhum pagamento registrado.</p>
+    } @else {
+      <div class="payments-list">
+        @for (pay of order()!.payments; track $index; let i = $index) {
+          <div class="payment-card">
+            <div class="pay-main">
+              <span class="pay-method">{{ paymentMethodLabel(pay.paymentMethod) }}</span>
+              <span class="pay-value">{{ formatCurrency(pay.value) }}</span>
+            </div>
+            <div class="pay-meta">
+              <span>Parcela {{ pay.installmentNumber }}</span>
+              <span>{{ pay.paymentDate }}</span>
+              <span class="pay-status" [class]="'pstatus-' + pay.status.toLowerCase()">{{ pay.statusDescription || pay.status }}</span>
+            </div>
+            @if (isDraft() || pay.status === 'PENDING') {
+              <button class="btn-icon btn-remove" (click)="removePayment(i)">✕</button>
+            }
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Invoice Info -->
+  @if (order()?.invoiceStatus && order()!.invoiceStatus !== 'NONE') {
+    <section class="section">
+      <h3>NFS-e</h3>
+      <p>
+        Status: <strong>{{ order()!.invoiceStatusDescription || order()!.invoiceStatus }}</strong>
+        @if (order()!.invoiceId) {
+          <span> — ID: {{ order()!.invoiceId }}</span>
+        }
+      </p>
+    </section>
+  }
+
+  }<!-- end isLoading -->
+</div>
+
+<!-- ═══════════════════ ITEM MODAL ═══════════════════ -->
+@if (showItemModal()) {
+  <div class="modal-overlay" (click)="showItemModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3>Adicionar Item</h3>
+      <input type="text" [(ngModel)]="productSearch" (input)="filterProducts()"
+             placeholder="Buscar produto por nome ou SKU..." class="input" />
+
+      <div class="product-list">
+        @for (p of filteredProducts(); track p.id) {
+          <div class="product-option" [class.selected]="selectedProduct?.id === p.id" (click)="selectProduct(p)">
+            <div class="prod-name"><strong>{{ p.name }}</strong></div>
+            <div class="prod-info">
+              <span>{{ p.sku }}</span> · <span>{{ p.size }}</span> · <span>{{ formatCurrency(p.value) }}</span>
+              @if (p.stock?.quantityAvailable != null) {
+                <span class="stock-qty"> ({{ p.stock!.quantityAvailable }} disp.)</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (selectedProduct) {
+        <div class="item-form">
+          <div class="form-row">
+            <label>Quantidade</label>
+            <input type="number" [(ngModel)]="itemQuantity" min="1" class="input input-sm" />
+          </div>
+          <div class="form-row">
+            <label>Desconto (R$)</label>
+            <input type="number" [(ngModel)]="itemDiscount" min="0" step="0.01" class="input input-sm" />
+          </div>
+          <div class="form-row">
+            <label>
+              <input type="checkbox" [(ngModel)]="itemNeedsTailoring" /> Precisa de ajuste
+            </label>
+          </div>
+          @if (itemNeedsTailoring) {
+            <div class="form-row">
+              <label>Notas de ajuste</label>
+              <input type="text" [(ngModel)]="itemTailoringNotes" class="input" />
+            </div>
+          }
+        </div>
+      }
+
+      @if (itemModalError) {
+        <div class="modal-error">{{ itemModalError }}</div>
+      }
+      <div class="modal-actions">
+        <button class="btn" (click)="showItemModal.set(false)">Cancelar</button>
+        <button class="btn btn-primary" [disabled]="!selectedProduct" (click)="confirmAddItem()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════ PAYMENT MODAL ═══════════════════ -->
+@if (showPaymentModal()) {
+  <div class="modal-overlay" (click)="showPaymentModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3>Adicionar Pagamento</h3>
+      <div class="form-row">
+        <label>Parcela</label>
+        <input type="number" [(ngModel)]="paymentInstallment" min="1" max="24" class="input input-sm" />
+      </div>
+      <div class="form-row">
+        <label>Data</label>
+        <input type="date" [(ngModel)]="paymentDate" class="input" />
+      </div>
+      <div class="form-row">
+        <label>Método</label>
+        <select [(ngModel)]="paymentMethod" class="input">
+          @for (m of paymentMethods; track m) {
+            <option [value]="m">{{ paymentMethodLabels[m] }}</option>
+          }
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Valor (R$)</label>
+        <input type="number" [(ngModel)]="paymentValue" min="0.01" step="0.01" class="input input-sm" />
+      </div>
+      <div class="form-row">
+        <label>Vezes (cartão)</label>
+        <input type="number" [(ngModel)]="paymentInstallments" min="1" max="24" class="input input-sm" />
+      </div>
+      <div class="form-row">
+        <label>Status</label>
+        <select [(ngModel)]="paymentStatus" class="input">
+          <option value="PENDING">Pendente</option>
+          <option value="PAID">Pago</option>
+        </select>
+      </div>
+      @if (paymentValue > 0 && totalValue() > 0 && paymentValue > remainingValue()) {
+        <div class="modal-warning">Valor superior ao restante ({{ formatCurrency(remainingValue()) }}). Pagamento excede o total do pedido.</div>
+      }
+      @if (paymentModalError) {
+        <div class="modal-error">{{ paymentModalError }}</div>
+      }
+      <div class="modal-actions">
+        <button class="btn" (click)="showPaymentModal.set(false)">Cancelar</button>
+        <button class="btn btn-primary" [disabled]="paymentValue <= 0" (click)="confirmAddPayment()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════ EMPLOYEE VERIFY ═══════════════════ -->
+@if (showEmployeeVerify()) {
+  <rentafit-employee-verify
+    [title]="employeeVerifyAction === 'confirm' ? 'Identificar Atendente — Confirmação'
+           : employeeVerifyAction === 'deliver' ? 'Identificar Atendente — Entrega'
+           : employeeVerifyAction === 'ready'   ? 'Identificar Atendente — Pronto para Entrega'
+           : employeeVerifyAction === 'invoice' ? 'Identificar Atendente — Emissão NFS-e'
+           : 'Identificar Atendente — Pagamento'"
+    [requirePin]="true"
+    (confirmed)="onEmployeeConfirmed($event)"
+    (cancelled)="onEmployeeCancelled()"
+  />
+}
+
+<!-- ═══════════════════ CANCEL MODAL ═══════════════════ -->
+@if (showCancelModal()) {
+  <div class="modal-overlay" (click)="showCancelModal.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <h3>Cancelar Pedido</h3>
+      <div class="form-row">
+        <label>Motivo do cancelamento</label>
+        <textarea [(ngModel)]="cancelReason" rows="3" class="input textarea" placeholder="Informe o motivo..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" (click)="showCancelModal.set(false)">Voltar</button>
+        <button class="btn btn-danger" [disabled]="!cancelReason.trim()" (click)="confirmCancel()">Confirmar Cancelamento</button>
+      </div>
+    </div>
+  </div>
+}

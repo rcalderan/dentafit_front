@@ -1,6 +1,6 @@
-import { Component, inject, OnInit, signal, effect, computed, OnDestroy } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, signal, effect, computed, OnDestroy } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, Subject } from 'rxjs';
 import { switchMap, tap, takeUntil, catchError, finalize } from 'rxjs/operators';
 import { ICustomer } from '../../data/Customer.interface';
@@ -17,8 +17,53 @@ export function cpfCnpjValidator(control: AbstractControl): ValidationErrors | n
     return { invalidFormat: 'Documento deve ter 11 (CPF) ou 14 (CNPJ) dígitos' };
   }
 
-  // Validação simplificada para exemplo, ideal seria uma lib ou algoritmos completos
-  return null;
+  if (isAllDigitsSame(value)) return { invalidFormat: 'CPF/CNPJ inválido' };
+
+  const isValid = value.length === 11 ? isValidCpf(value) : isValidCnpj(value);
+  return isValid ? null : { invalidFormat: 'CPF/CNPJ inválido' };
+}
+
+function isAllDigitsSame(s: string): boolean {
+  return s.split('').every(c => c === s[0]);
+}
+
+function isValidCpf(cpf: string): boolean {
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cpf[i], 10) * (10 - i);
+  }
+  let remainder = sum % 11;
+  const firstDigit = remainder < 2 ? 0 : 11 - remainder;
+
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cpf[i], 10) * (11 - i);
+  }
+  remainder = sum % 11;
+  const secondDigit = remainder < 2 ? 0 : 11 - remainder;
+
+  return parseInt(cpf[9], 10) === firstDigit && parseInt(cpf[10], 10) === secondDigit;
+}
+
+function isValidCnpj(cnpj: string): boolean {
+  const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+  let sum = 0;
+  for (let i = 0; i < 12; i++) {
+    sum += parseInt(cnpj[i], 10) * weights1[i];
+  }
+  let remainder = sum % 11;
+  const firstDigit = remainder < 2 ? 0 : 11 - remainder;
+
+  sum = 0;
+  for (let i = 0; i < 13; i++) {
+    sum += parseInt(cnpj[i], 10) * weights2[i];
+  }
+  remainder = sum % 11;
+  const secondDigit = remainder < 2 ? 0 : 11 - remainder;
+
+  return parseInt(cnpj[12], 10) === firstDigit && parseInt(cnpj[13], 10) === secondDigit;
 }
 
 @Component({
@@ -32,6 +77,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   private service = inject(CustomerService);
   private addressService = inject(AddressService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private readonly maxPhones = 5;
   private readonly phonePattern = /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/;
   private readonly phoneValidator = (control: AbstractControl): ValidationErrors | null => {
@@ -42,6 +88,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private zipCodeSubject$ = new Subject<string>();
+  private el = inject(ElementRef);
 
   //currentIndex = signal(0);
   private customer: ICustomer;
@@ -257,6 +304,24 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
     this.setPhones(this.customer.phones);
 
+    const legacyIdParam = this.route.snapshot.queryParams['legacyId'];
+    const idParam = this.route.snapshot.queryParams['id'];
+
+    if (legacyIdParam) {
+      const legacyId = Number(legacyIdParam);
+      if (!Number.isNaN(legacyId)) {
+        this.service.getCustomerByLegacyId(legacyId).subscribe({
+          next: (customer: ICustomer) => this.loadCustomerForm(customer),
+          error: () => this.errorMessage.set('Não foi possível carregar cliente pelo legacyId informado.'),
+        });
+      }
+    } else if (idParam) {
+      this.service.getCustomerById(idParam).subscribe({
+        next: (customer: ICustomer) => this.loadCustomerForm(customer),
+        error: () => this.errorMessage.set('Não foi possível carregar cliente pelo id informado.'),
+      });
+    }
+
     // Subscrever ao observable de endereço para capturar erros
     this.address$.subscribe({
       error: (error: Error) => {
@@ -272,18 +337,31 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   }
 
   save() {
-    if (this.form.valid) {
-      const v = this.form.getRawValue();
+    this.form.markAllAsTouched();
+    if (this.form.invalid) {
+      this.scrollToFirstInvalid();
+      return;
+    }
 
-      const customer: ICustomer = v;
-      this.service.saveCustomer(customer).subscribe(
-        {
-          next: (customer: ICustomer) => {
-            console.log('Cliente Salvo:', customer);
-            this.loadCustomerForm(customer);
-          },
-          error: (error) => this.handleError(error)
-        });
+    const v = this.form.getRawValue();
+    const customer: ICustomer = v;
+    this.service.saveCustomer(customer).subscribe(
+      {
+        next: (customer: ICustomer) => {
+          console.log('Cliente Salvo:', customer);
+          this.loadCustomerForm(customer);
+        },
+        error: (error) => this.handleError(error)
+      });
+  }
+
+  private scrollToFirstInvalid(): void {
+    const el: HTMLElement | null = this.el.nativeElement.querySelector(
+      'input.ng-invalid, textarea.ng-invalid, select.ng-invalid'
+    );
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.focus();
     }
   }
 

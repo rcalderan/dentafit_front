@@ -1,0 +1,1334 @@
+import { CommonModule } from '@angular/common';
+import { AfterViewInit, Component, ElementRef, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
+import { forkJoin, Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { CustomerService } from '../../../customer/service/customer.service';
+import { ProductService } from '../../../product/service/product.service';
+import { HolidayService } from '../../../../shared/services/holiday.service';
+import { ContractStatus } from '../../data/contract-status.enum';
+import { IItemMeta } from '../../data/item-meta.interface';
+import { PaymentMethod, PAYMENT_METHOD_LABELS } from '../../data/payment-method.enum';
+import { PaymentStatus } from '../../data/payment-status.enum';
+import { IProductCatalog } from '../../data/product-catalog.interface';
+import {
+  IItemMetaRequest,
+  IRentalContractCreateRequest,
+  IRentalContractItemRequest,
+  IRentalPaymentRequest,
+} from '../../data/rental-contract-request.interface';
+import { IRentalContractResponse } from '../../data/rental-contract-response.interface';
+import { IRentalContractItem } from '../../data/rental-contract-item.interface';
+import { INewRentalContract } from '../../data/rental-contract.interface';
+import { IRentalPayment } from '../../data/rental-payment.interface';
+import { ContractStatusApi, PaymentMethodApi, PaymentStatusApi } from '../../data/rental-api.types';
+import {
+  EmployeeConfirmedEvent,
+  EmployeeVerifyComponent,
+} from '../employee-verify/employee-verify.component';
+import { RentalContractService } from '../../service/rental-contract.service';
+import { AutosaveService, AutosaveStatus } from '../../service/autosave.service';
+
+export { ContractStatus, PaymentMethod, PaymentStatus };
+export type { IItemMeta, INewRentalContract, IProductCatalog, IRentalContractItem, IRentalPayment };
+
+// ==================== Component ====================
+
+@Component({
+  selector: 'rentafit-new-rental',
+  imports: [CommonModule, FormsModule, EmployeeVerifyComponent],
+  templateUrl: './new-rental.component.html',
+  styleUrls: ['./new-rental.component.css'],
+  providers: [AutosaveService],
+})
+export class NewRental implements OnInit, AfterViewInit, OnDestroy {
+
+  @ViewChild('contractLookupInput') private contractLookupInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('itemCodeInput') private itemCodeInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('paymentValorInput') private paymentValorInput?: ElementRef<HTMLInputElement>;
+
+  // Expose enums to template
+  ContractStatus = ContractStatus;
+  PaymentStatus = PaymentStatus;
+  PaymentMethod = PaymentMethod;
+  paymentMethodLabels = PAYMENT_METHOD_LABELS;
+  paymentMethodKeys = Object.values(PaymentMethod).filter(v => typeof v === 'number') as PaymentMethod[];
+  paymentStatusLabels: Record<PaymentStatus, string> = {
+    [PaymentStatus.PENDING]: 'Pendente',
+    [PaymentStatus.PAID]: 'Pago',
+    [PaymentStatus.CANCELLED]: 'Cancelado',
+    [PaymentStatus.MULTA]: 'Multa',
+  };
+  // CANCELLED is set only via the dedicated chargeBack flow — never via the status dropdown
+  paymentStatusKeys = Object.values(PaymentStatus).filter(
+    v => typeof v === 'number' && v !== PaymentStatus.CANCELLED
+  ) as PaymentStatus[];
+
+  // ── Services ──
+  private readonly holidayService = inject(HolidayService);
+  private readonly customerService = inject(CustomerService);
+  private readonly productService = inject(ProductService);
+  private readonly rentalContractService = inject(RentalContractService);
+  private readonly autosaveService = inject(AutosaveService<IRentalContractCreateRequest, IRentalContractResponse>);
+  private readonly route = inject(ActivatedRoute);
+
+  // ── Autosave ──
+  autosaveStatus: AutosaveStatus = 'idle';
+  autosaveError: string | null = null;
+  /** Employee ID captured during the first manual save; reused for autosave requests. */
+  private autosaveEmployeeId: string | null = null;
+  private autosaveSubscription?: Subscription;
+
+  // ── Enum → API string maps (used by buildPaymentRequest & buildCreateRequest) ──
+  private readonly METHOD_MAP: Record<PaymentMethod, PaymentMethodApi> = {
+    [PaymentMethod.CASH]: 'CASH',
+    [PaymentMethod.PIX]: 'PIX',
+    [PaymentMethod.CREDIT_CARD]: 'CREDIT_CARD',
+    [PaymentMethod.DEBIT_CARD]: 'DEBIT_CARD',
+    [PaymentMethod.BANK_TRANSFER]: 'BANK_TRANSFER',
+  };
+
+  private readonly STATUS_MAP: Record<PaymentStatus, PaymentStatusApi> = {
+    [PaymentStatus.PENDING]: 'PENDING',
+    [PaymentStatus.PAID]: 'PAID',
+    [PaymentStatus.CANCELLED]: 'CANCELLED',
+    [PaymentStatus.MULTA]: 'MULTA',
+  };
+
+  // ── Backend contract state ──
+  /** UUID of the contract saved on the backend; null until first save. */
+  contractId: string | null = null;
+  contractLoaded = false;
+  contractLookupLegacyId = '';
+  contractLookupLoading = false;
+  contractLookupError = '';
+  isSaving = false;
+  serverError = '';
+  serverWarnings: string[] = [];
+
+  /** UUID of the contract that originated this one (REVISION → original SIGNED). */
+  parentContractId: string | null = null;
+  /** UUID of the revision contract created from this one. */
+  replacedByContractId: string | null = null;
+
+  // ── Employee verification modal ──
+  showEmployeeVerify = false;
+  /** Which action is pending employee confirmation. */
+  employeeVerifyAction: 'sign' | 'finalize' | 'save' | 'addItem' | 'payment' | 'addPayment' | 'chargeBack' | null = null;
+  private pendingPaymentEmployeeId: string | null = null;
+  /** Index of the payment pending chargeBack confirmation. */
+  private pendingChargeBackIndex: number | null = null;
+
+  get employeeVerifyTitle(): string {
+    switch (this.employeeVerifyAction) {
+      case 'sign':     return 'Identificar Atendente — Assinatura';
+      case 'finalize': return 'Identificar Atendente — Finalização';
+      case 'save':     return 'Validar Atendente — Salvar Proposta';
+      case 'addItem':     return 'Identificar Atendente — Adicionar Item';
+      case 'addPayment':  return 'Identificar Atendente — Adicionar Parcela';
+      case 'payment':  return this.paymentModalStatus === PaymentStatus.PAID
+        ? 'Identificar Atendente — Registrar Pagamento'
+        : 'Identificar Atendente — Editar Parcela';
+      case 'chargeBack': return 'Autorizar Extorno de Parcela';
+      default:         return 'Identificar Atendente';
+    }
+  }
+
+  get employeeVerifyRequirePin(): boolean {
+    return this.employeeVerifyAction === 'save'
+      || this.employeeVerifyAction === 'payment'
+      || this.employeeVerifyAction === 'addPayment'
+      || this.employeeVerifyAction === 'addItem'
+      || this.employeeVerifyAction === 'chargeBack';
+  }
+
+  // ── Customer ──
+  customerFound = false;
+  customerSearchQuery = '';
+  customerUuid: string | null = null;
+  customerLoading = false;
+  customerError = '';
+
+  // ── Contract ──
+  contract: INewRentalContract = this.createEmptyContract();
+
+  // ── Totals ──
+  subtotal = 0;
+  discount = 0;
+  total = 0;
+  totalPaid = 0;
+
+  // ── Item modal ──
+  showItemModal = false;
+  itemModalCode = '';
+  itemModalName = '';
+  itemModalMeta = '';   // e.g. "TAM: 42 | COR: PRETO"
+  itemModalValor = 0;  
+  itemModalEmployee = '';
+  itemModalExtras: IItemMeta[] = [];
+  itemModalNewExtraType: 'acessorio' | 'observacao' = 'observacao';
+  itemModalNewExtraDesc = '';
+  itemModalFoundProduct: IProductCatalog | null = null;
+  /** UUID of the rental item found by ProductService. */
+  itemModalFoundProductUuid: string | null = null;
+  itemModalError = '';
+  itemSearchLoading = false;
+
+  /** Maps item legacyCode → rental item UUID from the backend. */
+  private itemRentalIds = new Map<string, string>();
+
+  // ── Payment modal ──
+  showPaymentModal = false;
+  paymentModalForma: PaymentMethod = PaymentMethod.PIX;
+  paymentModalValor = 0;
+  paymentModalData = '';
+  paymentModalStatus: PaymentStatus = PaymentStatus.PENDING;
+  paymentModalError = '';
+
+  editingItemIndex: number | null = null;
+  editingPaymentIndex: number | null = null;
+
+  // ── Holidays: populated async from HolidayService on init ──
+  private holidays = new Set<string>();
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.contractLookupInput?.nativeElement.focus(), 0);
+  }
+
+  ngOnInit(): void {
+    // Subscribe to autosave status changes for UI feedback
+    this.autosaveSubscription = this.autosaveService.status$.subscribe(status => {
+      this.autosaveStatus = status;
+      this.autosaveError = this.autosaveService.lastError;
+    });
+
+    const idParam = this.route.snapshot.queryParams['id'];
+    if (idParam) {
+      this.loadContractById(idParam);
+    }
+
+    const currentYear = new Date().getFullYear();
+    const years = [currentYear - 1, currentYear, currentYear + 1];
+    forkJoin(years.map(y => this.holidayService.getHolidays(y))).subscribe({
+      next: sets => {
+        sets.forEach(set => set.forEach(d => this.holidays.add(d)));
+        this.autoFillDates();
+      },
+      // Silent failure: emergency cache already applied inside the service;
+      // autoFillDates still runs so the form isn't stuck.
+      error: () => this.autoFillDates(),
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.autosaveSubscription?.unsubscribe();
+  }
+
+  // ==================== Helpers ====================
+
+  toDateString(d: Date): string {
+    return d.toISOString().slice(0, 10);
+  }
+
+  parseDate(s: string): Date {
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  isHoliday(d: Date): boolean {
+    return this.holidays.has(this.toDateString(d));
+  }
+
+  isWeekend(d: Date): boolean {
+    return d.getDay() === 0 || d.getDay() === 6;
+  }
+
+  isBusinessDay(d: Date): boolean {
+    return !this.isWeekend(d) && !this.isHoliday(d);
+  }
+
+  /** Advance date forward until it's a business day */
+  nextBusinessDayFrom(d: Date): Date {
+    const r = new Date(d);
+    while (!this.isBusinessDay(r)) {
+      r.setDate(r.getDate() + 1);
+    }
+    return r;
+  }
+
+  /** Go back N business days from d (exclusive) */
+  prevBusinessDays(from: Date, n: number): Date {
+    const r = new Date(from);
+    let count = 0;
+    while (count < n) {
+      r.setDate(r.getDate() - 1);
+      if (this.isBusinessDay(r)) count++;
+    }
+    return r;
+  }
+
+  /** Next Saturday from today (or today if Saturday) */
+  getNextSaturday(): Date {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay(); // 0=Sun,6=Sat
+    const daysUntilSat = day === 6 ? 7 : (6 - day);
+    d.setDate(d.getDate() + daysUntilSat);
+    return d;
+  }
+
+  // ==================== Date auto-fill ====================
+
+  autoFillDates(): void {
+    const uso = this.getNextSaturday();
+
+    // Devolução: next business day (Monday or later, skip holidays)
+    const rawDevolucao = new Date(uso);
+    rawDevolucao.setDate(rawDevolucao.getDate() + 2); // Monday
+    const devolucao = this.nextBusinessDayFrom(rawDevolucao);
+
+    // Retirada: 2 business days before uso (Thursday or earlier, skip holidays)
+    const retirada = this.prevBusinessDays(uso, 2);
+
+    this.contract.usa = this.toDateString(uso);
+    this.contract.devolucao = this.toDateString(devolucao);
+    this.contract.retirada = this.toDateString(retirada);
+  }
+
+  onUsoDateChange(): void {
+    this.activateStepperMode();
+    if (!this.contract.usa) return;
+    const uso = this.parseDate(this.contract.usa);
+
+    const rawDevolucao = new Date(uso);
+    rawDevolucao.setDate(rawDevolucao.getDate() + 2);
+    const devolucao = this.nextBusinessDayFrom(rawDevolucao);
+
+    const retirada = this.prevBusinessDays(uso, 2);
+
+    this.contract.devolucao = this.toDateString(devolucao);
+    this.contract.retirada = this.toDateString(retirada);
+    this.triggerAutosave();
+  }
+
+  onRetiradaChange(): void {
+    this.activateStepperMode();
+    if (!this.contract.retirada) return;
+    const d = this.parseDate(this.contract.retirada);
+    const adjusted = this.nextBusinessDayFrom(d);
+    this.contract.retirada = this.toDateString(adjusted);
+    this.triggerAutosave();
+  }
+
+  onDevolucaoChange(): void {
+    this.activateStepperMode();
+    if (!this.contract.devolucao) return;
+    const d = this.parseDate(this.contract.devolucao);
+    const adjusted = this.nextBusinessDayFrom(d);
+    this.contract.devolucao = this.toDateString(adjusted);
+    this.triggerAutosave();
+  }
+
+  // ==================== Customer ====================
+
+  loadContractByLegacyId(): void {
+    const legacyId = this.contractLookupLegacyId.trim();
+
+    this.contractLookupLoading = true;
+    this.contractLookupError = '';
+    this.serverError = '';
+    this.serverWarnings = [];
+
+    this.rentalContractService
+      .getByLegacyId(legacyId)
+      .pipe(finalize(() => (this.contractLookupLoading = false)))
+      .subscribe({
+        next: (response) => {
+          this.mapResponseToContract(response);
+          this.contractLoaded = true;
+        },
+        error: (err: unknown) => {
+          this.contractLookupError = err instanceof Error ? err.message : 'Contrato não encontrado.';
+        },
+      });
+  }
+
+  searchCustomer(): void {
+    const query = this.customerSearchQuery.trim();
+    if (!query) return;
+
+    this.customerLoading = true;
+    this.customerError = '';
+
+    const isNumeric = /^\d+$/.test(query) && query.length <= 9; // legacy IDs are short numbers
+    const obs = isNumeric
+      ? this.customerService.getCustomerByLegacyId(+query)
+      : this.customerService.getCustomerByDocument(query);
+
+    obs.pipe(finalize(() => (this.customerLoading = false))).subscribe({
+      next: (customer) => {
+        const previousCustomerUuid = this.customerUuid;
+        this.customerUuid = customer.id ?? null;
+        this.contract.clienteNome = customer.name;
+        this.contract.clienteCpf = customer.document;
+        this.contract.cliente = customer.legacyId ?? '';
+        this.customerFound = true;
+        this.customerError = '';
+        // Autosave only when customer actually changed
+        if (this.customerUuid !== previousCustomerUuid) {
+          this.triggerAutosave();
+        }
+      },
+      error: (err: Error) => {
+        this.customerError = err.message || 'Cliente não encontrado.';
+      },
+    });
+  }
+
+  clearCustomer(): void {
+    this.activateStepperMode();
+    this.customerFound = false;
+    this.customerSearchQuery = '';
+    this.customerUuid = null;
+    this.customerError = '';
+    this.contract.clienteNome = '';
+    this.contract.clienteCpf = '';
+    this.contract.cliente = '';
+  }
+
+  // ==================== Item modal ====================
+
+  openItemModal(): void {
+    if (!this.isEditable()) return;
+    // Require employee identification before adding any new item
+    this.employeeVerifyAction = 'addItem';
+    this.showEmployeeVerify = true;
+  }
+
+  private openItemModalExecute(): void {
+    this.editingItemIndex = null;
+    this.itemModalCode = '';
+    this.itemModalName = '';
+    this.itemModalMeta = '';
+    this.itemModalValor = 0;
+    this.itemModalEmployee = '';
+    this.itemModalExtras = [];
+    this.itemModalNewExtraDesc = '';
+    this.itemModalFoundProduct = null;
+    this.itemModalFoundProductUuid = null;
+    this.itemModalError = '';
+    this.showItemModal = true;
+    setTimeout(() => this.itemCodeInput?.nativeElement.focus(), 0);
+  }
+
+  openEditItemModal(index: number): void {
+    const item = this.contract.itens[index];
+    if (!item) return;
+    this.editingItemIndex = index;
+    this.itemModalCode = item.codigo;
+    this.itemModalName = item.descricao;
+    this.itemModalValor = item.valor;
+    this.itemModalMeta = '';
+    this.itemModalEmployee = '';
+    this.itemModalExtras = [...item.sub];
+    this.itemModalFoundProduct = { nome: item.descricao } as any;
+    this.itemModalNewExtraDesc = '';
+    this.itemModalNewExtraType = 'observacao';
+    this.itemModalError = '';
+    this.showItemModal = true;
+    setTimeout(() => this.itemCodeInput?.nativeElement.focus(), 0);
+  }
+
+  closeItemModal(): void {
+    this.showItemModal = false;
+  }
+
+  searchItemByCode(): void {
+    const code = this.itemModalCode.trim();
+    if (!code) return;
+
+    this.itemSearchLoading = true;
+    this.itemModalError = '';
+    this.itemModalFoundProduct = null;
+    this.itemModalFoundProductUuid = null;
+
+    this.productService
+      .getRentalItemByLegacyId(code)
+      .pipe(finalize(() => (this.itemSearchLoading = false)))
+      .subscribe({
+        next: (item) => {
+          this.itemModalFoundProductUuid = item.id ?? null;
+          this.itemModalFoundProduct = {
+            _id: parseInt(item.legacyId ?? '0', 10),
+            nome: item.name,
+            locado: false,
+            obs: item.notes ?? '',
+            valor: item.value,
+            tamanho: item.size ?? '',
+            nloc: 0,
+            no_estoque: true,
+            cor: item.color ?? '',
+            base: item.value,
+            ajuste: 0,
+            data: '',
+            preco_id: 0,
+            status: 1,
+            tipo: 1,
+          };
+          this.itemModalName = item.name;
+          this.itemModalMeta = [
+            item.size ? `TAM: ${item.size}` : null,
+            item.color ? `COR: ${item.color}` : null,
+          ]
+            .filter(Boolean)
+            .join(' | ');
+          this.itemModalValor = item.value;
+        },
+        error: (err: Error) => {
+          this.itemModalError = err.message || 'Produto não encontrado.';
+        },
+      });
+  }
+
+  addItemModalExtra(): void {
+    if (!this.itemModalNewExtraDesc.trim()) return;
+    this.itemModalExtras.push({
+      tipo: this.itemModalNewExtraType,
+      descricao: this.itemModalNewExtraDesc.trim(),
+    });
+    this.itemModalNewExtraDesc = '';
+  }
+
+  removeItemModalExtra(i: number): void {
+    this.itemModalExtras.splice(i, 1);
+  }
+
+  confirmAddItem(): void {
+    if (this.editingItemIndex === null && !this.itemModalFoundProduct) return;
+    if (!this.isEditable()) return;
+    const item: IRentalContractItem = {
+      codigo: this.itemModalCode,
+      descricao: this.itemModalName,
+      valor: this.itemModalValor,
+      entregue: false,
+      attendantEmployeeId: this.itemModalEmployee,
+      sub: [
+        ...(this.itemModalMeta ? [{ tipo: 'observacao' as const, descricao: this.itemModalMeta }] : []),
+        ...this.itemModalExtras,
+      ],
+    };
+    if (this.editingItemIndex !== null) {
+      this.contract.itens[this.editingItemIndex] = item;
+    } else {
+      this.contract.itens.push(item);
+      if (this.itemModalFoundProductUuid) {
+        this.itemRentalIds.set(this.itemModalCode, this.itemModalFoundProductUuid);
+      }
+    }
+    this.activateStepperMode();
+    this.recalculate();
+    this.closeItemModal();
+    this.triggerAutosave();
+  }
+
+  removeItem(index: number): void {
+    if (!this.isEditable()) return;
+    this.activateStepperMode();
+    const removed = this.contract.itens.splice(index, 1)[0];
+    if (removed) this.itemRentalIds.delete(removed.codigo);
+    this.recalculate();
+    this.triggerAutosave();
+  }
+
+  // ==================== Payment modal ====================
+
+  get canAddPayment(): boolean {
+    return this.contract.itens.length > 0;
+  }
+
+  get nextParcela(): number {
+    return this.contract.pagamentos.length + 1;
+  }
+
+  get remainingAmount(): number {
+    return Math.max(0, this.total - this.totalPaid);
+  }
+
+  /** Total of all planned parcelas (regardless of payment status) */
+  get totalPlanned(): number {
+    return this.contract.pagamentos.reduce((s, p) => s + p.valor, 0);
+  }
+
+  /** Amount not yet covered by any parcela */
+  get unplannedAmount(): number {
+    return Math.max(0, this.total - this.totalPlanned);
+  }
+
+  openPaymentModal(): void {
+    if (!this.canAddPayment) return;
+    this.editingPaymentIndex = null;
+    const prev = this.contract.pagamentos.at(-1);
+    this.paymentModalForma = prev ? prev.forma : PaymentMethod.PIX;
+    this.paymentModalValor = this.unplannedAmount;
+    if (prev) {
+      const d = new Date(prev.data + 'T12:00:00');
+      d.setMonth(d.getMonth() + 1);
+      const nextMonthStr = this.toDateString(d);
+      const retiradaDate = this.contract.retirada;
+      this.paymentModalData = retiradaDate && nextMonthStr > retiradaDate
+        ? retiradaDate
+        : nextMonthStr;
+    } else {
+      this.paymentModalData = this.toDateString(new Date());
+    }
+    this.paymentModalError = '';
+    this.showPaymentModal = true;
+    setTimeout(() => this.paymentValorInput?.nativeElement.focus(), 0);
+  }
+
+  openEditPaymentModal(index: number): void {
+    const p = this.contract.pagamentos[index];
+    if (!p) return;
+    // CANCELLED is irreversible — block modal entirely
+    if (p.status === PaymentStatus.CANCELLED) return;
+    if (this.contract.situacao > 0 && p.status !== PaymentStatus.PENDING) return;
+    this.editingPaymentIndex = index;
+    this.paymentModalForma = p.forma;
+    this.paymentModalValor = p.valor;
+    this.paymentModalData = p.data;
+    this.paymentModalStatus = p.status;
+    this.paymentModalError = '';
+    this.showPaymentModal = true;
+    setTimeout(() => this.paymentValorInput?.nativeElement.focus(), 0);
+  }
+
+  closePaymentModal(): void {
+    this.showPaymentModal = false;
+  }
+
+  submitPaymentModal(): void {
+    if (this.editingPaymentIndex !== null) {
+      this.confirmAddPayment();
+    } else {
+      this.dividePayment();
+    }
+  }
+
+  confirmAddPayment(): void {
+    // Only used in edit mode now
+    this.paymentModalError = '';
+
+    const isEditing = this.editingPaymentIndex !== null;
+    const existingPayment = isEditing ? this.contract.pagamentos[this.editingPaymentIndex!] : null;
+
+    // Require employee identification when an action will be persisted to the backend:
+    // - contract is SIGNED (any edit on an existing backend payment), OR
+    // - payment is being marked as PAID on an existing backend payment (has a backend id)
+    if (
+      (this.contract.situacao === ContractStatus.SIGNED ||
+        (this.paymentModalStatus === PaymentStatus.PAID && existingPayment?.id != null)) &&
+      this.pendingPaymentEmployeeId === null
+    ) {
+      this.employeeVerifyAction = 'payment';
+      this.showEmployeeVerify = true;
+      return;
+    }
+    if (!isEditing) return;
+    const currentVal = this.contract.pagamentos[this.editingPaymentIndex!].valor;
+    const maxAllowed = this.unplannedAmount + currentVal;
+
+    if (this.paymentModalValor <= 0) {
+      this.paymentModalError = 'Valor deve ser maior que zero.';
+      return;
+    }
+    if (this.paymentModalValor > maxAllowed + 0.001) {
+      this.paymentModalError = `Valor supera o saldo de R$ ${maxAllowed.toFixed(2).replace('.', ',')}.`;
+      return;
+    }
+    if (this.contract.usa && this.paymentModalData > this.contract.usa) {
+      this.paymentModalError = 'Data não pode ser posterior à data de uso.';
+      return;
+    }
+    const today = this.toDateString(new Date());
+    if (this.paymentModalData < today) {
+      this.paymentModalError = 'Data do pagamento não pode ser anterior à data atual.';
+      return;
+    }
+
+    const existing = this.contract.pagamentos[this.editingPaymentIndex!];
+    const isReducingPersistedInstallment =
+      !!existing.id && this.paymentModalValor < existing.valor - 0.001;
+
+    if (isReducingPersistedInstallment) {
+      const confirmed = window.confirm(
+        'A redução do valor desta parcela pode gerar uma parcela compensatória automática. Deseja continuar?'
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    const payment: IRentalPayment = {
+      id: existing.id,
+      parcela: existing.parcela,
+      data: this.paymentModalData,
+      forma: this.paymentModalForma,
+      valor: this.paymentModalValor,
+      processedByEmployeeId: this.itemModalEmployee,
+      vezes: 1,
+      status: this.paymentModalStatus,
+    };
+    this.activateStepperMode();
+    this.contract.pagamentos[this.editingPaymentIndex!] = payment;
+    this.recalculate();
+    this.closePaymentModal();
+
+    if (this.contractId) {
+      this.isSaving = true;
+      this.serverError = '';
+      const employeeId = this.pendingPaymentEmployeeId ?? this.itemModalEmployee ?? '';
+      this.pendingPaymentEmployeeId = null;
+      const contractId = this.contractId;
+      const request = this.buildPaymentRequest(payment, employeeId);
+
+      const save$ = payment.id
+        ? this.rentalContractService.updatePayment(contractId, payment.id, request)
+        : this.rentalContractService.addPayment(contractId, request);
+
+      save$
+        .pipe(finalize(() => (this.isSaving = false)))
+        .subscribe({
+          next: () => {
+            this.loadContractById(contractId);
+          },
+          error: (err: Error) => {
+            this.serverError = err.message || 'Erro ao salvar parcela.';
+            this.loadContractById(contractId);
+          },
+        });
+    } else {
+      this.pendingPaymentEmployeeId = null;
+      this.triggerAutosave();
+    }
+  }
+
+  dividePayment(): void {
+    this.paymentModalError = '';
+
+    if (this.paymentModalValor <= 0) {
+      this.paymentModalError = 'Valor deve ser maior que zero.';
+      return;
+    }
+
+    // For SIGNED contracts: require employee identification before persisting to backend
+    if (
+      this.contractId &&
+      this.contract.situacao === ContractStatus.SIGNED &&
+      this.pendingPaymentEmployeeId === null
+    ) {
+      this.employeeVerifyAction = 'addPayment';
+      this.showEmployeeVerify = true;
+      return;
+    }
+
+    this.activateStepperMode();
+    let remaining = this.unplannedAmount;
+    if (remaining <= 0.001) {
+      this.paymentModalError = 'Não há saldo a planejar.';
+      return;
+    }
+    if (this.paymentModalValor > remaining + 0.001) {
+      this.paymentModalError = `Valor supera o saldo restante de R$ ${remaining.toFixed(2).replace('.', ',')}.`;
+      return;
+    }
+
+    const retiradaDate = this.contract.retirada;
+    let currentDate = this.paymentModalData; // usa a data pré-calculada do modal
+
+    while (remaining > 0.001) {
+      if (this.contract.pagamentos.length >= 24) {
+        this.paymentModalError = 'Limite de 24 parcelas atingido.';
+        break;
+      }
+      const valor = parseFloat(Math.min(this.paymentModalValor, remaining).toFixed(2));
+      this.contract.pagamentos.push({
+        parcela: this.contract.pagamentos.length + 1,
+        data: currentDate,
+        forma: this.paymentModalForma,
+        valor,
+        vezes: 1,
+        processedByEmployeeId: "",
+        status: PaymentStatus.PENDING,
+      });
+      remaining = parseFloat((remaining - this.paymentModalValor).toFixed(2));
+
+      // Avança um mês; se ultrapassar a retirada, usa a data de retirada
+      const d = new Date(currentDate + 'T12:00:00');
+      d.setMonth(d.getMonth() + 1);
+      const nextMonthStr = this.toDateString(d);
+      currentDate = retiradaDate && nextMonthStr > retiradaDate
+        ? retiradaDate
+        : nextMonthStr;
+    }
+
+    this.recalculate();
+    this.closePaymentModal();
+
+    if (this.serverError.includes('parcela')) {
+      this.serverError = '';
+    }
+
+    // For SIGNED contracts: persist each new (unsaved) payment to backend
+    if (this.contractId && this.contract.situacao === ContractStatus.SIGNED) {
+      const employeeId = this.pendingPaymentEmployeeId ?? '';
+      this.pendingPaymentEmployeeId = null;
+      const contractId = this.contractId;
+      const unsaved = this.contract.pagamentos.filter(p => !p.id);
+      if (unsaved.length > 0) {
+        this.isSaving = true;
+        this.serverError = '';
+        forkJoin(unsaved.map(p =>
+          this.rentalContractService.addPayment(contractId, this.buildPaymentRequest(p, employeeId))
+        ))
+          .pipe(finalize(() => (this.isSaving = false)))
+          .subscribe({
+            next: () => this.loadContractById(contractId),
+            error: (err: Error) => {
+              this.serverError = err.message || 'Erro ao salvar parcelas.';
+              this.loadContractById(contractId);
+            },
+          });
+      }
+    } else {
+      this.pendingPaymentEmployeeId = null;
+      this.triggerAutosave();
+    }
+  }
+
+  removePayment(index: number): void {
+    if (this.contract.situacao === ContractStatus.FINALIZED) return;
+    this.activateStepperMode();
+    this.contract.pagamentos.splice(index, 1);
+    this.contract.pagamentos.forEach((p, i) => p.parcela = i + 1);
+    this.recalculate();
+    this.triggerAutosave();
+  }
+
+  togglePaymentStatus(index: number): void {
+    const p = this.contract.pagamentos[index];
+    if (!p) return;
+    this.activateStepperMode();
+    p.status = p.status === PaymentStatus.PAID ? PaymentStatus.PENDING : PaymentStatus.PAID;
+    this.recalculate();
+  }
+
+  // ==================== ChargeBack (Extorno) ====================
+
+  canChargeBack(index: number): boolean {
+    const p = this.contract.pagamentos[index];
+    return !!p
+      && p.status === PaymentStatus.PAID
+      && this.contract.situacao === ContractStatus.SIGNED;
+  }
+
+  requestChargeBack(index: number): void {
+    if (!this.canChargeBack(index)) return;
+    const confirmed = window.confirm(
+      'Tem certeza que deseja extornar esta parcela? Esta ação é irreversível.'
+    );
+    if (!confirmed) return;
+    this.pendingChargeBackIndex = index;
+    this.employeeVerifyAction = 'chargeBack';
+    this.showEmployeeVerify = true;
+  }
+
+  private executeChargeBack(employeeId: string): void {
+    const index = this.pendingChargeBackIndex;
+    this.pendingChargeBackIndex = null;
+    if (index === null) return;
+
+    const p = this.contract.pagamentos[index];
+    if (!p) return;
+
+    if (p.id && this.contractId) {
+      // Persisted payment: call backend DELETE (cancelPayment)
+      const contractId = this.contractId;
+      this.isSaving = true;
+      this.serverError = '';
+      this.rentalContractService
+        .cancelPayment(contractId, p.id)
+        .pipe(finalize(() => (this.isSaving = false)))
+        .subscribe({
+          next: () => this.loadContractById(contractId),
+          error: (err: Error) => {
+            this.serverError = err.message || 'Erro ao extornar parcela.';
+            this.loadContractById(contractId);
+          },
+        });
+    } else {
+      // Unsaved (local-only) payment — just mark locally
+      p.status = PaymentStatus.CANCELLED;
+      this.recalculate();
+      this.triggerAutosave();
+    }
+  }
+
+  // ==================== Totals ====================
+
+  recalculate(): void {
+    this.subtotal = this.contract.itens.reduce((s, i) => s + i.valor, 0);
+    this.total = Math.max(0, this.subtotal - this.discount);
+    this.totalPaid = this.contract.pagamentos
+      .filter(p => p.status === PaymentStatus.PAID)
+      .reduce((s, p) => s + p.valor, 0);
+  }
+
+  // ==================== Contract flow ====================
+
+  isEditable(): boolean {
+    return (
+      this.contract.situacao === ContractStatus.INITIAL ||
+      this.contract.situacao === ContractStatus.DRAFT ||
+      this.contract.situacao === ContractStatus.REVISION
+    );
+  }
+
+  get stepperStep(): number {
+    switch (this.contract.situacao) {
+      case ContractStatus.DRAFT:      return 1; // step 1 done, step 2 active
+      case ContractStatus.REVISION:   return 1; // same visual position as DRAFT
+      case ContractStatus.SIGNED:     return 2; // steps 1+2 done, step 3 active
+      case ContractStatus.FINALIZED:  return 4; // all done
+      case ContractStatus.SUPERSEDED: return 4; // terminal — differentiated by label
+      default:                        return 0; // INITIAL: only step 1 active
+    }
+  }
+
+  reviseContrato(): void {
+    if (!this.contractId) return;
+    this.isSaving = true;
+    this.serverError = '';
+    this.serverWarnings = [];
+    this.rentalContractService.revise(this.contractId)
+      .pipe(finalize(() => (this.isSaving = false)))
+      .subscribe({
+        next: (response) => this.mapResponseToContract(response),
+        error: (err: Error) => {
+          this.serverError = err.message || 'Erro ao gerar revisão.';
+        },
+      });
+  }
+
+  loadContractById(id: string): void {
+    this.contractLookupLoading = true;
+    this.contractLookupError = '';
+    this.rentalContractService.getById(id)
+      .pipe(finalize(() => (this.contractLookupLoading = false)))
+      .subscribe({
+        next: (response) => this.mapResponseToContract(response),
+        error: (err: Error) => {
+          this.contractLookupError = err.message || 'Contrato não encontrado.';
+        },
+      });
+  }
+
+  salvarProposta(): void {
+    if (this.contract.situacao === ContractStatus.FINALIZED) return;
+    if (!this.customerUuid) {
+      this.serverError = 'Selecione um cliente antes de salvar.';
+      return;
+    }
+    if (this.contract.pagamentos.length === 0) {
+      this.serverError = 'Adicione pelo menos uma parcela de pagamento antes de salvar.';
+      return;
+    }
+    if (this.contract.itens.length === 0) {
+      this.serverError = 'Adicione pelo menos um item antes de salvar.';
+      return;
+    }
+    // Require employee identification + PIN before persisting
+    this.employeeVerifyAction = 'save';
+    this.showEmployeeVerify = true;
+  }
+
+  private executeSave(employeeId: string): void {
+    // Capture employee ID for subsequent autosave requests
+    this.autosaveEmployeeId = employeeId;
+    const request = this.buildCreateRequest(employeeId);
+    this.isSaving = true;
+    this.serverError = '';
+    this.serverWarnings = [];
+
+    const saveContract$ = this.contractId
+      ? this.rentalContractService.update(this.contractId, request)
+      : this.rentalContractService.create(request);
+
+    saveContract$
+      .pipe(finalize(() => (this.isSaving = false)))
+      .subscribe({
+        next: (response) => {
+          this.contract.situacao = ContractStatus.DRAFT;
+          return this.mapResponseToContract(response);
+        },
+        error: (err: unknown) => {
+          this.serverError = err instanceof Error ? err.message : 'Erro ao salvar proposta.';
+        },
+      });
+  }
+
+  assinarContrato(): void {
+    if (this.contract.situacao !== ContractStatus.DRAFT) return;
+    if (!this.contract.cliente) {
+      this.serverError = 'Selecione um cliente antes de assinar.';
+      return;
+    }
+    if (this.contract.itens.length === 0) {
+      this.serverError = 'Adicione pelo menos um item.';
+      return;
+    }
+    if (!this.contractId) {
+      this.serverError = 'Salve a proposta antes de assinar.';
+      return;
+    }
+    this.employeeVerifyAction = 'sign';    
+    this.showEmployeeVerify = true;
+  }
+
+  finalizarLocacao(): void {
+    if (this.contract.situacao === ContractStatus.FINALIZED) return;
+    if (!this.contract.cliente) {
+      this.serverError = 'Selecione um cliente.';
+      return;
+    }
+    if (this.contract.itens.length === 0) {
+      this.serverError = 'Adicione pelo menos um item.';
+      return;
+    }
+    if (!this.contractId) {
+      this.serverError = 'Salve a proposta antes de finalizar.';
+      return;
+    }
+    this.employeeVerifyAction = 'finalize';
+    this.showEmployeeVerify = true;
+  }
+
+  onEmployeeConfirmed(event: EmployeeConfirmedEvent): void {
+    this.showEmployeeVerify = false;
+    const action = this.employeeVerifyAction;
+    this.employeeVerifyAction = null;
+
+    if (action === 'save') {
+      this.executeSave(event.employeeId);
+      return;
+    }
+
+    if (action === 'addItem') {
+      this.openItemModalExecute();
+      this.itemModalEmployee = event.employeeId;
+      return;
+    }
+
+    if (action === 'payment') {
+      this.pendingPaymentEmployeeId = event.employeeId;
+      this.confirmAddPayment();
+      return;
+    }
+
+    if (action === 'chargeBack') {
+      this.executeChargeBack(event.employeeId);
+      return;
+    }
+
+    if (action === 'addPayment') {
+      this.pendingPaymentEmployeeId = event.employeeId;
+      this.dividePayment();
+      return;
+    }
+
+    if (!this.contractId) return;
+
+    this.isSaving = true;
+    this.serverError = '';
+    this.serverWarnings = [];
+
+    const obs =
+      action === 'sign'
+        ? this.rentalContractService.sign(this.contractId)
+        : this.rentalContractService.finalize(this.contractId);
+
+    obs.pipe(finalize(() => (this.isSaving = false))).subscribe({
+      next: (response) => {
+        this.mapResponseToContract(response);
+        if (response.warnings?.length) {
+          this.serverWarnings = response.warnings;
+        }
+        console.log(`Contract ${action} confirmed by employee ${event.employeeName}`);
+      },
+      error: (err: Error) => {
+        this.serverError = err.message || `Erro ao ${action === 'sign' ? 'assinar' : 'finalizar'} contrato.`;
+      },
+    });
+  }
+
+  onEmployeeCancelled(): void {
+    this.showEmployeeVerify = false;
+    this.employeeVerifyAction = null;
+  }
+
+  duplicateContract(): void {
+    if (!this.contractId) {
+      // Offline duplicate (no backend contract yet)
+      this.contract = {
+        ...this.contract,
+        _id: undefined,
+        situacao: ContractStatus.DRAFT,
+        baixa: false,
+        pagamentos: [],
+        hoje: this.toDateString(new Date()),
+      };
+      this.contractId = null;
+      this.serverError = '';
+      this.serverWarnings = [];
+      this.recalculate();
+      return;
+    }
+
+    this.isSaving = true;
+    this.serverError = '';
+    this.rentalContractService
+      .duplicate(this.contractId)
+      .pipe(finalize(() => (this.isSaving = false)))
+      .subscribe({
+        next: (response) => {
+          this.contractId = response.id;
+          this.contract.situacao = ContractStatus.DRAFT;
+          this.contract.baixa = false;
+          this.contract.pagamentos = [];
+          this.serverWarnings = [];
+          this.recalculate();
+        },
+        error: (err: Error) => {
+          this.serverError = err.message || 'Erro ao duplicar contrato.';
+        },
+      });
+  }
+
+  activateStepperMode(): void {
+    if (!this.contractLoaded) {
+      this.contractLoaded = true;
+      this.contractLookupError = '';
+    }
+  }
+
+  clearProposal(): void {
+    this.contractId = null;
+    this.contractLoaded = false;
+    this.contractLookupLegacyId = '';
+    this.contractLookupLoading = false;
+    this.contractLookupError = '';
+
+    this.customerFound = false;
+    this.customerSearchQuery = '';
+    this.customerUuid = null;
+    this.customerLoading = false;
+    this.customerError = '';
+
+    this.contract = this.createEmptyContract();
+    this.autoFillDates();
+    this.itemRentalIds.clear();
+
+    this.total = 0;
+    this.totalPaid = 0;
+    this.subtotal = 0;
+    this.discount = 0;
+
+    this.serverError = '';
+    this.serverWarnings = [];
+
+    this.parentContractId = null;
+    this.replacedByContractId = null;
+  }
+
+  // ==================== Autosave ====================
+
+  /** Whether autosave is allowed: contract must exist and be DRAFT. */
+  private canAutosave(): boolean {
+    return !!this.contractId && this.contract.situacao === ContractStatus.DRAFT;
+  }
+
+  /**
+   * Trigger an autosave if eligible. Called after every mutation handler
+   * that constitutes a persistent change.
+   * Uses the employee ID captured during the first manual save.
+   */
+  private triggerAutosave(): void {
+    if (!this.canAutosave()) return;
+    if (!this.autosaveEmployeeId) return;
+
+    const employeeId = this.autosaveEmployeeId;
+    const contractId = this.contractId!;
+
+    this.autosaveService.schedule(
+      () => this.buildCreateRequest(employeeId),
+      (request) => this.rentalContractService.update(contractId, request),
+    );
+  }
+
+  // ==================== API mapping helpers ====================
+
+  private buildCreateRequest(createdByEmployeeId: string): IRentalContractCreateRequest {
+    const META_MAP: Record<'acessorio' | 'observacao', 'ACESSORIO' | 'OBSERVACAO'> = {
+      acessorio: 'ACESSORIO',
+      observacao: 'OBSERVACAO',
+    };
+
+    const items: IRentalContractItemRequest[] = this.contract.itens.map((item) => ({
+      rentalItemId: this.itemRentalIds.get(item.codigo) ?? null,
+      attendantEmployeeId: item.attendantEmployeeId,
+      legacyProductCode: item.codigo,
+      description: item.descricao,
+      value: item.valor,
+      metadata: item.sub.map<IItemMetaRequest>((m) => ({
+        type: META_MAP[m.tipo],
+        description: m.descricao,
+      })),
+    }));
+
+    return {
+      customerId: this.customerUuid!,
+      contractType: this.contract.tipo,
+      createdByEmployeeId,
+      pickupDate: this.contract.retirada,
+      eventDate: this.contract.usa,
+      returnDate: this.contract.devolucao,
+      notes: this.contract.comunicado || undefined,
+      items,
+      payments: this.contract.pagamentos.map((p) => this.buildPaymentRequest(p, createdByEmployeeId)),
+    };
+  }
+
+  private mapResponseToContract(response: IRentalContractResponse): void {
+    this.contractId = response.id;
+    this.contractLoaded = true;
+
+    const STATUS_FROM_API: Record<ContractStatusApi, ContractStatus> = {
+      0: ContractStatus.DRAFT,
+      1: ContractStatus.SIGNED,
+      2: ContractStatus.FINALIZED,
+      3: ContractStatus.REVISION,
+      4: ContractStatus.SUPERSEDED,
+      5: ContractStatus.CLOSED,
+    };
+
+    const METHOD_FROM_API: Record<PaymentMethodApi, PaymentMethod> = {
+      CASH: PaymentMethod.CASH,
+      PIX: PaymentMethod.PIX,
+      CREDIT_CARD: PaymentMethod.CREDIT_CARD,
+      DEBIT_CARD: PaymentMethod.DEBIT_CARD,
+      BANK_TRANSFER: PaymentMethod.BANK_TRANSFER,
+    };
+
+    const PAYMENT_STATUS_FROM_API: Record<PaymentStatusApi, PaymentStatus> = {
+      PENDING: PaymentStatus.PENDING,
+      PAID: PaymentStatus.PAID,
+      CANCELLED: PaymentStatus.CANCELLED,
+      MULTA: PaymentStatus.MULTA,
+    };
+
+    this.customerUuid = response.customerId;
+    this.customerFound = true;
+    this.customerSearchQuery = response.customerDocument;
+    this.customerError = '';
+
+    this.contract = {
+      ...this.contract,
+      tipo: response.contractType,
+      cliente: response.customerId ?? this.contract.cliente,
+      clienteNome: response.customerName,
+      clienteCpf: response.customerDocument,
+      retirada: response.pickupDate,
+      usa: response.eventDate,
+      devolucao: response.returnDate,
+      devolveu: response.actualReturnDate,
+      baixa: !!response.isReturned,
+      situacao: STATUS_FROM_API[response.status] ?? this.contract.situacao,
+      comunicado: response.notes ?? '',
+      itens: response.items.map((item) => ({
+        codigo: item.legacyProductCode,
+        descricao: item.description,
+        valor: item.value,
+        entregue: item.isDelivered,
+        attendantEmployeeId: item.attendantEmployeeId ?? '',
+        sub: item.metadata.map((meta) => ({
+          tipo: meta.type === 'ACESSORIO' ? 'acessorio' : 'observacao',
+          descricao: meta.description,
+        })),
+      })),
+      pagamentos: (response.payments ?? []).map((p) => ({
+        id: p.id,
+        parcela: p.installmentNumber,
+        data: p.paymentDate,
+        forma: METHOD_FROM_API[p.paymentMethod],
+        valor: p.value,
+        vezes: p.installments,
+        status: PAYMENT_STATUS_FROM_API[p.status] ?? PaymentStatus.PENDING,
+        processedByEmployeeId: p.processedByEmployeeId,
+      })),
+    };
+
+    this.itemRentalIds.clear();
+    response.items.forEach((item) => {
+      if (item.rentalItemId) {
+        this.itemRentalIds.set(item.legacyProductCode, item.rentalItemId);
+      }
+    });
+
+    this.total = response.totalValue;
+    this.totalPaid = response.paidValue;
+    this.parentContractId = response.parentContractId ?? null;
+    this.replacedByContractId = response.replacedByContractId ?? null;
+    this.recalculate();
+    // Reset autosave status after a successful server response
+    this.autosaveService.reset();
+  }
+
+  private createEmptyContract(): INewRentalContract {
+    return {
+      tipo: 1,
+      cliente: '',
+      retirada: '',
+      usa: '',
+      devolucao: '',
+      hoje: this.toDateString(new Date()),
+      criado_por: '',
+      baixa: false,
+      situacao: ContractStatus.INITIAL,
+      comunicado: '',
+      itens: [],
+      pagamentos: [],
+    };
+  }
+
+  private buildPaymentRequest(p: IRentalPayment, processedByEmployeeId: string): IRentalPaymentRequest {
+    return {
+      installmentNumber: p.parcela,
+      paymentDate: p.data,
+      paymentMethod: this.METHOD_MAP[p.forma],
+      value: p.valor,
+      installments: p.vezes,
+      status: this.STATUS_MAP[p.status],
+      processedByEmployeeId: p.status === PaymentStatus.PAID ? (processedByEmployeeId ?? "") : undefined,
+    };
+  }
+
+  formatCurrency(val: number): string {
+    return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  formatDate(s: string): string {
+    if (!s) return '';
+    const [y, m, d] = s.split('-');
+    return `${d}/${m}/${y}`;
+  }
+}

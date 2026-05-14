@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, ElementRef, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -28,6 +28,7 @@ export class Registration implements OnInit, OnDestroy {
   private service = inject(ProductService);
   private router = inject(Router);
   private destroy$ = new Subject<void>();
+  private el = inject(ElementRef);
 
   form: FormGroup;
   isReadOnly = signal(false);
@@ -57,6 +58,7 @@ export class Registration implements OnInit, OnDestroy {
       name: ['', [Validators.required, Validators.minLength(3)]],
       condition: ['', Validators.required],
       description: [''],
+      categoryId: [''],
       categoryName: ['', Validators.required],
       brand: [''],
       size: ['', Validators.required],
@@ -73,7 +75,7 @@ export class Registration implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Inicializa campos vazios para evitar undefined
     const initialData: Partial<IRentalItem> = {
-      name: '', categoryName: '', size: '', color: '', brand: '',
+      name: '', categoryId: '', categoryName: '', size: '', color: '', brand: '',
       value: 0, description: '', status: 'AVAILABLE', notes: '',
       condition: 'NEW', lastRentalDate: null, rentalCount: 0,
       createdAt: '', updatedAt: ''
@@ -95,7 +97,10 @@ export class Registration implements OnInit, OnDestroy {
   }
 
   onCategorySelected(category: ICategory): void {
-    this.form.patchValue({ categoryName: category.displayName || category.name });
+    this.form.patchValue({
+      categoryId: category.id ?? '',
+      categoryName: category.displayName || category.name,
+    });
     this.isCategoryModalOpen.set(false);
   }
 
@@ -157,7 +162,11 @@ export class Registration implements OnInit, OnDestroy {
   }
 
   save(): void {
-    if (this.form.invalid) return;
+    this.form.markAllAsTouched();
+    if (this.form.invalid) {
+      this.scrollToFirstInvalid();
+      return;
+    }
 
     const rentalItem: IRentalItem = this.form.getRawValue();
     this.service.saveRentalItem(rentalItem).pipe(takeUntil(this.destroy$)).subscribe({
@@ -172,7 +181,7 @@ export class Registration implements OnInit, OnDestroy {
 
   clear(): void {
     const initialData: Partial<IRentalItem> = {
-      name: '', categoryName: '', size: '', color: '', brand: '',
+      name: '', categoryId: '', categoryName: '', size: '', color: '', brand: '',
       value: 0, description: '', status: 'AVAILABLE', notes: '',
       condition: 'NEW', lastRentalDate: null, rentalCount: 0,
       createdAt: undefined, updatedAt: undefined, legacyId: ''
@@ -213,7 +222,17 @@ export class Registration implements OnInit, OnDestroy {
     this.errorMessage.set(null);
   }
 
-  private handleError(error: any): void {
+  private scrollToFirstInvalid(): void {
+    const el: HTMLElement | null = this.el.nativeElement.querySelector(
+      'input.ng-invalid, textarea.ng-invalid, select.ng-invalid'
+    );
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.focus();
+    }
+  }
+
+  private handleError(error: unknown): void {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 400) {
         this.errorMessage.set(

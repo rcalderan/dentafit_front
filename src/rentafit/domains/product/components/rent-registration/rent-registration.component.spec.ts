@@ -26,6 +26,7 @@ describe('Registration', () => {
   };
 
   beforeEach(async () => {
+    Element.prototype.scrollIntoView = () => {};
     productService = {
       saveRentalItem: vi.fn(),
       getRentalItemByLegacyId: vi.fn()
@@ -274,6 +275,58 @@ describe('Registration', () => {
     expect(component.errorMessage()).not.toBeNull();
   });
 
+  //  Scroll para o primeiro campo inválido 
+
+  it('marca todos os controles como touched ao salvar com formulário inválido', () => {
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => {});
+    component.save();
+
+    Object.values(component.form.controls).forEach(ctrl => {
+      expect(ctrl.touched).toBe(true);
+    });
+  });
+
+  it('rola e foca o primeiro campo inválido ao salvar formulário inválido', () => {
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const scrollSpy = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => {});
+    const focusSpy = vi.spyOn(HTMLElement.prototype, 'focus').mockImplementation(() => {});
+
+    component.save();
+
+    expect(scrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center' });
+    expect(focusSpy).toHaveBeenCalled();
+    expect(productService.saveRentalItem).not.toHaveBeenCalled();
+  });
+
+  it('não rola quando o formulário é válido', () => {
+    const saved: IRentalItem = {
+      id: 'p-1', legacyId: 'L-1001', name: 'Terno Azul', status: 'AVAILABLE',
+      value: 120, categoryName: 'Vestidos', size: 'M', color: 'Azul',
+      brand: '', description: '', notes: '', condition: 'NEW'
+    };
+    productService.saveRentalItem.mockReturnValue(of(saved));
+
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    buildValidForm(component);
+    fixture.detectChanges();
+
+    const scrollSpy = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => {});
+    component.save();
+
+    expect(scrollSpy).not.toHaveBeenCalled();
+    expect(productService.saveRentalItem).toHaveBeenCalled();
+  });
+
   //  Clear / enable editing / close 
 
   it('clears and resets the form', () => {
@@ -399,5 +452,56 @@ describe('Registration', () => {
 
     const modal = fixture.nativeElement.querySelector('rentafit-modal');
     expect(modal).not.toBeNull();
+  });
+
+  // BUG-2026-05-10-2 REGRESSION — ProductService deve relançar HttpErrorResponse original
+
+  it('BUG-2026-05-10-2: exibe mensagens de campo quando service relança HttpErrorResponse 400 diretamente', () => {
+    const error = new HttpErrorResponse({
+      status: 400,
+      error: { errors: [{ message: 'Name is required' }] }
+    });
+    productService.saveRentalItem.mockReturnValue(throwError(() => error));
+
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    buildValidForm(component);
+    component.save();
+
+    expect(component.errorMessage()).toEqual(['Name is required']);
+  });
+
+  it('BUG-2026-05-10-2: NÃO exibe falha silenciosa — errorMessage nunca fica null após erro 400', () => {
+    const error = new HttpErrorResponse({
+      status: 400,
+      error: { errors: [{ message: 'Size is required' }] }
+    });
+    productService.saveRentalItem.mockReturnValue(throwError(() => error));
+
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    buildValidForm(component);
+    component.save();
+
+    expect(component.errorMessage()).not.toBeNull();
+  });
+
+  it('BUG-2026-05-10-2: exibe mensagem genérica quando service relança HttpErrorResponse 500 diretamente', () => {
+    productService.saveRentalItem.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 500 }))
+    );
+
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    buildValidForm(component);
+    component.save();
+
+    expect(component.errorMessage()).toBe('Ocorreu um erro ao salvar os dados do produto.');
   });
 });

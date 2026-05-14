@@ -3,7 +3,7 @@ type UUID = string;
 
 export interface ICustomer {
   id?: UUID;
-  legacyId?: number;
+  legacyId?: string;
   name: string;
   document: string;
   isAuthenticated: boolean;

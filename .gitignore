@@ -27,7 +27,14 @@ yarn-error.log
 !.vscode/launch.json
 !.vscode/extensions.json
 .history/*
-.prompts/
+.copilot/*
+.copilot/agents
+.copilot/skills
+.github/copilot*
+.windsurf/*
+
+# QA artifacts
+.QA/
 
 # Miscellaneous
 /.angular/cache
