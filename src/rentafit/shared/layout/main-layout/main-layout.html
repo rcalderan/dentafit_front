@@ -20,8 +20,8 @@
                 @if (isCustomerSubmenuOpen()) {
                 <div class="submenu">
                     <a routerLink="/customer/registration" routerLinkActive="active" class="submenu-item"
-                        title="New Customer">
-                        <span>New Customer</span>
+                        title="Cadastro de Cliente" (click)="closeAllSubmenus()">
+                        <span>Cadastro de Cliente</span>
                     </a>
                     <!-- <a routerLink="/customer/legacy" routerLinkActive="active" class="submenu-item"
                         title="Legacy Customer">
@@ -37,26 +37,6 @@
             }
 
             @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
-            <div class="nav-item-container" [class.open]="isRentalSubmenuOpen()">
-                <button class="nav-item" (click)="toggleRentalSubmenu()" title="Rental">
-                    <i class="icon">📋</i>
-                </button>
-                @if (isRentalSubmenuOpen()) {
-                <div class="submenu">
-                    <a routerLink="/rental/management" routerLinkActive="active" class="submenu-item"
-                        title="Management">
-                        <span>Management</span>
-                    </a>
-                    <!-- <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item"
-                        title="Devolucao">
-                        <i class="icon">🔄</i>
-                    </a> -->
-                </div>
-                }
-            </div>
-            }
-
-            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
             <div class="nav-item-container" [class.open]="isProductSubmenuOpen()">
                 <button class="nav-item" (click)="toggleProductSubmenu()" title="Products">
                     <i class="icon">👗</i>
@@ -64,13 +44,37 @@
                 @if (isProductSubmenuOpen()) {
                 <div class="submenu">
                     <a routerLink="/product/registration" routerLinkActive="active" class="submenu-item"
-                        title="Cadastro Aluguel">
+                        title="Cadastro Aluguel" (click)="closeAllSubmenus()">
                         <span>Cadastro Aluguel</span>
                     </a>
                     <a routerLink="/product/retail-registration" routerLinkActive="active" class="submenu-item"
-                        title="Cadastro Varejo">
+                        title="Cadastro Varejo" (click)="closeAllSubmenus()">
                         <span>Cadastro Varejo</span>
                     </a>
+                </div>
+                }
+            </div>
+            }
+
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
+            <div class="nav-item-container" [class.open]="isRentalSubmenuOpen()">
+                <button class="nav-item" (click)="toggleRentalSubmenu()" title="Rental">
+                    <i class="icon">📋</i>
+                </button>
+                @if (isRentalSubmenuOpen()) {
+                <div class="submenu">
+                    <!-- <a routerLink="/rental/management" routerLinkActive="active" class="submenu-item"
+                        title="Management">
+                        <span>Management</span>
+                    </a> -->
+                    <a routerLink="/rental/new" routerLinkActive="active" class="submenu-item"
+                        title="Novo Contrato" (click)="closeAllSubmenus()">
+                        <span>Novo Contrato</span>
+                    </a>
+                    <!-- <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item"
+                        title="Devolucao">
+                        <i class="icon">🔄</i>
+                    </a> -->
                 </div>
                 }
             </div>
@@ -84,7 +88,7 @@
                 @if (isSalesSubmenuOpen()) {
                 <div class="submenu">
                     <a routerLink="/sales/management" routerLinkActive="active" class="submenu-item"
-                        title="Vendas">
+                        title="Vendas" (click)="closeAllSubmenus()">
                         <span>Vendas</span>
                     </a>
                 </div>
@@ -124,7 +128,7 @@
         </nav>
     </aside>
 
-    @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE]) && showFab()) {
+    <!-- @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE]) && showFab()) {
     <div class="floating-action">
         <button class="btn-new-contract" routerLink="/rental/new">
             <span class="plus-icon">+</span>
@@ -134,12 +138,12 @@
             <span class="plus-icon">🛒</span>
             <span class="btn-text">Nova Venda</span>
         </button>
-        <!-- <button class="btn-new-contract legacy" routerLink="/rental/legacy">
+         <button class="btn-new-contract legacy" routerLink="/rental/legacy">
             <span class="plus-icon">🏛️</span>
             <span class="btn-text">Novo Contrato (Legacy)</span>
-        </button> -->
+        </button>
     </div>
-    } 
+    }  -->
 
     <main class="main-content">
         <header class="top-bar">
@@ -149,7 +153,6 @@
                     <i>☰</i>
                 </button>
                 }
-                <h1>{{ pageTitle() }}</h1>
             </div>
         </header>
         <div class="content-area">
