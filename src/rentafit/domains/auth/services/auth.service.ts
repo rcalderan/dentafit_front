@@ -61,8 +61,10 @@ export class AuthService {
           email: response.email,
           name: response.name,
           legacyId: response.legacyId,
+          pin: response.pin ?? null,
           role: role,
           active: response.active,
+          passwordExpired: response.passwordExpired ?? false,
           createdAt: response.createdAt
         };
         
@@ -231,5 +233,58 @@ export class AuthService {
       default:
         this.router.navigate(['/finance/dashboard']);
     }
+  }
+
+  /**
+   * Checks if the user needs to complete first-access setup (PIN is null).
+   */
+  needsCredentialSetup(): boolean {
+    const user = this.currentUserSubject.value;
+    return user != null && user.pin == null;
+  }
+
+  /**
+   * Checks if the user's password has expired.
+   */
+  isPasswordExpired(): boolean {
+    const user = this.currentUserSubject.value;
+    return user?.passwordExpired === true;
+  }
+
+  /**
+   * First-access: sets password + PIN.
+   * Usage: `authService.setupCredentials('MyP@ss1', '1234')`
+   */
+  setupCredentials(newPassword: string, pin: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/setup-credentials`, { newPassword, pin }).pipe(
+      tap(() => {
+        const user = this.currentUserSubject.value;
+        if (user) {
+          user.pin = pin;
+          user.passwordExpired = false;
+          this.currentUserSubject.next(user);
+          localStorage.setItem('currentUser', JSON.stringify(user));
+        }
+      }),
+      catchError(this.handleError.bind(this))
+    );
+  }
+
+  /**
+   * Changes an expired password.
+   * Usage: `authService.changePassword('NewP@ss1')`
+   */
+  changePassword(newPassword: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/change-password`, { newPassword }).pipe(
+      tap(() => {
+        const user = this.currentUserSubject.value;
+        if (user) {
+          user.passwordExpired = false;
+          this.currentUserSubject.next(user);
+          localStorage.setItem('currentUser', JSON.stringify(user));
+        }
+      }),
+      catchError(this.handleError.bind(this))
+    );
   }
 }

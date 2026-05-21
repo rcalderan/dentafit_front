@@ -3,6 +3,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { User } from '../../data/user.model';
 import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 
 @Component({
@@ -45,9 +46,9 @@ export class Login implements OnInit {
 
     this.authService.login(this.username, this.password).subscribe({
       next: (user) => {
-        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/home/dashboard';
+        const destination = this.resolvePostLoginRoute(user);
 
-        this.router.navigate([returnUrl]).then(
+        this.router.navigate([destination]).then(
           (success) => {
             if (!success) {
               console.warn('Acesso negado, redirecionando...');
@@ -67,5 +68,15 @@ export class Login implements OnInit {
         console.error('Erro no login:', error);
       }
     });
+  }
+
+  private resolvePostLoginRoute(user: User): string {
+    if (user.pin == null) {
+      return '/auth/setup-credentials';
+    }
+    if (user.passwordExpired) {
+      return '/auth/change-password';
+    }
+    return this.route.snapshot.queryParams['returnUrl'] || '/home/dashboard';
   }
 }

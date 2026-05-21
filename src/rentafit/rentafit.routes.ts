@@ -9,6 +9,14 @@ export const routes: Routes = [
     { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
     { path: 'auth/login', component: Login },
     {
+        path: 'auth/setup-credentials',
+        loadComponent: () => import('./domains/auth/features/setup-credentials/setup-credentials.component').then(m => m.SetupCredentialsComponent)
+    },
+    {
+        path: 'auth/change-password',
+        loadComponent: () => import('./domains/auth/features/change-password/change-password.component').then(m => m.ChangePasswordComponent)
+    },
+    {
         path: '',
         component: MainLayout,
         canActivate: [authGuard],
