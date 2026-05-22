@@ -136,10 +136,10 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
   }
 
   get employeeVerifyRequirePin(): boolean {
-    return this.employeeVerifyAction === 'save'
+    return this.employeeVerifyAction === 'sign'
+      || this.employeeVerifyAction === 'finalize'
       || this.employeeVerifyAction === 'payment'
       || this.employeeVerifyAction === 'addPayment'
-      || this.employeeVerifyAction === 'addItem'
       || this.employeeVerifyAction === 'chargeBack';
   }
 
@@ -228,7 +228,10 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
   // ==================== Helpers ====================
 
   toDateString(d: Date): string {
-    return d.toISOString().slice(0, 10);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   parseDate(s: string): Date {
@@ -1183,17 +1186,22 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
       observacao: 'OBSERVACAO',
     };
 
-    const items: IRentalContractItemRequest[] = this.contract.itens.map((item) => ({
-      rentalItemId: this.itemRentalIds.get(item.codigo) ?? null,
-      attendantEmployeeId: item.attendantEmployeeId,
-      legacyProductCode: item.codigo,
-      description: item.descricao,
-      value: item.valor,
-      metadata: item.sub.map<IItemMetaRequest>((m) => ({
-        type: META_MAP[m.tipo],
-        description: m.descricao,
-      })),
-    }));
+    const items: IRentalContractItemRequest[] = this.contract.itens.map((item) => {
+      if (!item.attendantEmployeeId && createdByEmployeeId) {
+        item.attendantEmployeeId = createdByEmployeeId;
+      }
+      return {
+        rentalItemId: this.itemRentalIds.get(item.codigo) ?? null,
+        attendantEmployeeId: item.attendantEmployeeId,
+        legacyProductCode: item.codigo,
+        description: item.descricao,
+        value: item.valor,
+        metadata: item.sub.map<IItemMetaRequest>((m) => ({
+          type: META_MAP[m.tipo],
+          description: m.descricao,
+        })),
+      };
+    });
 
     return {
       customerId: this.customerUuid!,

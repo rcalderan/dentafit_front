@@ -281,7 +281,7 @@
                     🔒 Finalizar Locação
                 </button>
                 @if (!replacedByContractId) {
-                    <button class="btn btn-revise" (click)="reviseContrato()" [disabled]="isSaving">
+                    <button class="btn btn-revise" (click)="reviseContrato()" [disabled]="true">
                         {{ isSaving ? '⏳ Gerando…' : '✏️ Revisar Contrato' }}
                     </button>
                 }
