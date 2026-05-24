@@ -653,11 +653,6 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
       this.paymentModalError = 'Data não pode ser posterior à data de uso.';
       return;
     }
-    const today = this.toDateString(new Date());
-    if (this.paymentModalData < today) {
-      this.paymentModalError = 'Data do pagamento não pode ser anterior à data atual.';
-      return;
-    }
 
     const existing = this.contract.pagamentos[this.editingPaymentIndex!];
     const isReducingPersistedInstallment =

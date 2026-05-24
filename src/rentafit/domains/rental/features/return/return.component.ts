@@ -176,6 +176,13 @@ export class ReturnComponent implements OnInit {
     this.router.navigate(['/rental/management']);
   }
 
+  onContractIdClick(): void {
+    const s = this.summary();
+    if (s) {
+      this.router.navigate(['/rental/new'], { queryParams: { id: s.contractId } });
+    }
+  }
+
   formatCurrency(value: number): string {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
