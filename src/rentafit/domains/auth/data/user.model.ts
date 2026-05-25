@@ -19,8 +19,10 @@ export interface User {
   legacyId?: string;
   email?: string;
   name?: string;
+  pin?: string | null;
   role: UserRole;
   active: boolean;
+  passwordExpired?: boolean;
   createdAt?: string;
 }
 

@@ -65,6 +65,15 @@
   font-weight: 500;
 }
 
+.contract-id.clickable {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.contract-id.clickable:hover {
+  background: #283593;
+}
+
 .header-details {
   display: flex;
   align-items: center;

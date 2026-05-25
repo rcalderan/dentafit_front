@@ -21,7 +21,7 @@
       <header class="return-header">
         <div class="header-row">
           <h1 class="return-title">Devolução de Contrato</h1>
-          <span class="contract-id">#{{ s.legacyId }}</span>
+          <span class="contract-id clickable" (click)="onContractIdClick()" title="Abrir contrato">#{{ s.legacyId }}</span>
         </div>
         <div class="header-details">
           <span class="customer-name">{{ s.customerName }}</span>
