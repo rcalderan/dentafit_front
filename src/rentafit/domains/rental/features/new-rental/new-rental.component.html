@@ -324,12 +324,16 @@
             <div class="input-group">
                 <label>Código do Produto</label>
                 <div class="search-input">
-                    <input #itemCodeInput type="text" [(ngModel)]="itemModalCode" class="uppercase"
-                           placeholder="Código legado..." (keyup.enter)="searchItemByCode()"
-                           [disabled]="itemSearchLoading">
-                    <button class="icon-btn" (click)="searchItemByCode()" [disabled]="itemSearchLoading">
-                        {{ itemSearchLoading ? '⏳' : '🔍' }}
-                    </button>
+                    @if (editingItemIndex !== null) {
+                        <span class="readonly-value">{{ itemModalCode }}</span>
+                    } @else {
+                        <input #itemCodeInput type="text" [(ngModel)]="itemModalCode" class="uppercase"
+                               placeholder="Código legado..." (keyup.enter)="searchItemByCode()"
+                               [disabled]="itemSearchLoading">
+                        <button class="icon-btn" (click)="searchItemByCode()" [disabled]="itemSearchLoading">
+                            {{ itemSearchLoading ? '⏳' : '🔍' }}
+                        </button>
+                    }
                 </div>
             </div>
 
