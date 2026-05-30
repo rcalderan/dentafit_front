@@ -1,11 +1,13 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { signal, WritableSignal } from '@angular/core';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { ReturnComponent } from './return.component';
 import { ReturnFacadeService } from '../../service/return-facade.service';
 import { ReturnApiPort } from './data/return-api.port';
 import { Router, ActivatedRoute } from '@angular/router';
-import { ReturnSummaryModel } from './data/return.model';
+import { ReturnSummaryModel, ReturnFormState } from './data/return.model';
+import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 
 const buildReturnSummary = (overrides: Partial<ReturnSummaryModel> = {}): ReturnSummaryModel => ({
   contractId: 'contract-123',
@@ -21,29 +23,39 @@ const buildReturnSummary = (overrides: Partial<ReturnSummaryModel> = {}): Return
   ...overrides,
 });
 
+const defaultFormState: ReturnFormState = {
+  returnerName: '',
+  selectedItems: new Set<string>(),
+  selectedAccessories: new Map<string, Set<string>>(),
+  applyFine: false,
+  fineAmount: null,
+};
+
+interface MockFacade {
+  summary: WritableSignal<ReturnSummaryModel | null>;
+  loading: WritableSignal<boolean>;
+  error: WritableSignal<string | null>;
+  saving: WritableSignal<boolean>;
+  closing: WritableSignal<boolean>;
+  form: WritableSignal<ReturnFormState>;
+  canDirectClose: WritableSignal<boolean>;
+  hasChanges: WritableSignal<boolean>;
+  delayWarning: WritableSignal<string | null>;
+  unpaidPaymentsCount: WritableSignal<number>;
+  showConfirmButton: WritableSignal<boolean>;
+  loadContract: ReturnType<typeof vi.fn>;
+  setReturnerName: ReturnType<typeof vi.fn>;
+  toggleItem: ReturnType<typeof vi.fn>;
+  toggleAccessory: ReturnType<typeof vi.fn>;
+  setApplyFine: ReturnType<typeof vi.fn>;
+  setFineAmount: ReturnType<typeof vi.fn>;
+  saveMarkings: ReturnType<typeof vi.fn>;
+  closeContract: ReturnType<typeof vi.fn>;
+  clearError: ReturnType<typeof vi.fn>;
+}
+
 describe('ReturnComponent', () => {
-  let facade: {
-    summary: ReturnType<typeof vi.fn>;
-    loading: ReturnType<typeof vi.fn>;
-    error: ReturnType<typeof vi.fn>;
-    saving: ReturnType<typeof vi.fn>;
-    closing: ReturnType<typeof vi.fn>;
-    form: ReturnType<typeof vi.fn>;
-    canDirectClose: ReturnType<typeof vi.fn>;
-    hasChanges: ReturnType<typeof vi.fn>;
-    delayWarning: ReturnType<typeof vi.fn>;
-    unpaidPaymentsCount: ReturnType<typeof vi.fn>;
-    showConfirmButton: ReturnType<typeof vi.fn>;
-    loadContract: ReturnType<typeof vi.fn>;
-    setReturnerName: ReturnType<typeof vi.fn>;
-    toggleItem: ReturnType<typeof vi.fn>;
-    toggleAccessory: ReturnType<typeof vi.fn>;
-    setApplyFine: ReturnType<typeof vi.fn>;
-    setFineAmount: ReturnType<typeof vi.fn>;
-    saveMarkings: ReturnType<typeof vi.fn>;
-    closeContract: ReturnType<typeof vi.fn>;
-    clearError: ReturnType<typeof vi.fn>;
-  };
+  let facade: MockFacade;
   let router: { navigate: ReturnType<typeof vi.fn> };
   let route: { snapshot: { paramMap: { get: ReturnType<typeof vi.fn> } } };
 
@@ -51,23 +63,17 @@ describe('ReturnComponent', () => {
 
   beforeEach(async () => {
     facade = {
-      summary: vi.fn().mockReturnValue(null),
-      loading: vi.fn().mockReturnValue(false),
-      error: vi.fn().mockReturnValue(null),
-      saving: vi.fn().mockReturnValue(false),
-      closing: vi.fn().mockReturnValue(false),
-      form: vi.fn().mockReturnValue({
-        returnerName: '',
-        selectedItems: new Set<string>(),
-        selectedAccessories: new Map<string, Set<string>>(),
-        applyFine: false,
-        fineAmount: null,
-      }),
-      canDirectClose: vi.fn().mockReturnValue(false),
-      hasChanges: vi.fn().mockReturnValue(false),
-      delayWarning: vi.fn().mockReturnValue(null),
-      unpaidPaymentsCount: vi.fn().mockReturnValue(0),
-      showConfirmButton: vi.fn().mockReturnValue(false),
+      summary: signal<ReturnSummaryModel | null>(null),
+      loading: signal(false),
+      error: signal(null),
+      saving: signal(false),
+      closing: signal(false),
+      form: signal<ReturnFormState>(defaultFormState),
+      canDirectClose: signal(false),
+      hasChanges: signal(false),
+      delayWarning: signal(null),
+      unpaidPaymentsCount: signal(0),
+      showConfirmButton: signal(false),
       loadContract: vi.fn(),
       setReturnerName: vi.fn(),
       toggleItem: vi.fn(),
@@ -88,21 +94,39 @@ describe('ReturnComponent', () => {
       },
     };
 
-    await TestBed.configureTestingModule({
+    TestBed.configureTestingModule({
       imports: [ReturnComponent],
       providers: [
-        { provide: ReturnFacadeService, useValue: facade },
-        { provide: ReturnApiPort, useValue: {} },
         { provide: Router, useValue: router },
         { provide: ActivatedRoute, useValue: route },
+        {
+          provide: APP_CONFIG,
+          useValue: {
+            appName: 'RentAFit Test',
+            apiBaseUrl: '',
+            s3BucketUrl: 'https://test-bucket.s3.amazonaws.com',
+          },
+        },
       ],
-    }).compileComponents();
+    });
+
+    // Sobrescreve os providers do componente para usar mocks
+    TestBed.overrideComponent(ReturnComponent, {
+      set: {
+        providers: [
+          { provide: ReturnFacadeService, useValue: facade },
+          { provide: ReturnApiPort, useValue: {} },
+        ],
+      },
+    });
+
+    await TestBed.compileComponents();
   });
 
   describe('onContractIdClick', () => {
     it('navega para /rental/new com queryParam id quando summary tem contractId', () => {
       const summary = buildReturnSummary({ contractId: 'contract-456', legacyId: '2024-002' });
-      facade.summary.mockReturnValue(summary);
+      facade.summary.set(summary);
 
       const component = makeComponent();
       component.onContractIdClick();
@@ -114,7 +138,7 @@ describe('ReturnComponent', () => {
     });
 
     it('não navega quando summary é null', () => {
-      facade.summary.mockReturnValue(null);
+      facade.summary.set(null);
 
       const component = makeComponent();
       component.onContractIdClick();
@@ -124,7 +148,7 @@ describe('ReturnComponent', () => {
 
     it('usa o contractId correto do summary (não o legacyId)', () => {
       const summary = buildReturnSummary({ contractId: 'uuid-abc-123', legacyId: '2024-999' });
-      facade.summary.mockReturnValue(summary);
+      facade.summary.set(summary);
 
       const component = makeComponent();
       component.onContractIdClick();
