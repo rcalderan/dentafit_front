@@ -33,5 +33,8 @@
             [disabled]="isLoading()">
             {{ isLoading() ? 'Autenticando...' : 'Sign In' }}
         </button>
+        <p class="register-link">
+            Não tem conta? <a routerLink="/auth/register">Criar conta</a>
+        </p>
     </div>
 </div>

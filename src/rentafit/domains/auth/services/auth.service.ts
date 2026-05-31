@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CryptoService } from './crypto.service';
-import { User, UserRole, LoginRequest, LoginResponse, RefreshTokenRequest } from '../data/user.model';
+import { User, UserRole, LoginRequest, LoginResponse, RefreshTokenRequest, SignUpRequest } from '../data/user.model';
 import { ErrorMessages, HTTP_ERROR_MAP } from '../../../shared/data/error-messages';
 import { APP_CONFIG } from '../../../shared/data/app-config.token';
 
@@ -249,6 +249,19 @@ export class AuthService {
   isPasswordExpired(): boolean {
     const user = this.currentUserSubject.value;
     return user?.passwordExpired === true;
+  }
+
+  /**
+   * Public self-registration: creates Customer + UserAccount (CUSTOMER role) and returns tokens.
+   * The backend returns tokens for auto-login; the frontend routes to /auth/setup-credentials.
+   * Usage: `authService.signUp(payload)`
+   */
+  signUp(payload: SignUpRequest): Observable<User> {
+    return this.http.post<LoginResponse>(`${this.config.apiBaseUrl}/api/v1/customers/signup`, payload).pipe(
+      tap(response => this.storeTokens(response)),
+      switchMap(() => this.fetchUserProfile()),
+      catchError(this.handleError.bind(this))
+    );
   }
 
   /**

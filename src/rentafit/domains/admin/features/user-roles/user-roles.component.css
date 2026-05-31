@@ -1,0 +1,101 @@
+.roles-page {
+  padding: 1.5rem;
+}
+
+h2 {
+  margin: 0 0 1rem;
+  font-size: 1.4rem;
+}
+
+.alert {
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.alert-error {
+  background: #fff0f0;
+  border: 1px solid #ffcccc;
+  color: #c0392b;
+}
+
+.alert-success {
+  background: #f0fff4;
+  border: 1px solid #b2f5c8;
+  color: #276749;
+}
+
+.loading-text {
+  color: #888;
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.users-table th,
+.users-table td {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.users-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+  color: #555;
+}
+
+.users-table tr.inactive td {
+  opacity: 0.5;
+}
+
+.username {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #e0e0e0;
+  color: #333;
+}
+
+.badge[data-role="ADMIN"]    { background: #d63031; color: #fff; }
+.badge[data-role="MANAGER"]  { background: #6c5ce7; color: #fff; }
+.badge[data-role="EMPLOYEE"] { background: #0984e3; color: #fff; }
+.badge[data-role="CUSTOMER"] { background: #55efc4; color: #222; }
+
+.status { color: #c0392b; font-size: 0.85rem; }
+.status.active { color: #27ae60; }
+
+select {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.saving {
+  font-size: 0.78rem;
+  color: #888;
+  margin-left: 0.4rem;
+}
+
+.no-edit {
+  color: #ccc;
+}

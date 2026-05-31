@@ -9,6 +9,10 @@ export const routes: Routes = [
     { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
     { path: 'auth/login', component: Login },
     {
+        path: 'auth/register',
+        loadComponent: () => import('./domains/auth/features/register/register.component').then(m => m.RegisterComponent)
+    },
+    {
         path: 'auth/setup-credentials',
         loadComponent: () => import('./domains/auth/features/setup-credentials/setup-credentials.component').then(m => m.SetupCredentialsComponent)
     },
@@ -133,6 +137,12 @@ export const routes: Routes = [
                 loadComponent: () => import('./domains/admin/features/dashboard/dashboard').then(m => m.Dashboard),
                 canActivate: [roleGuard],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Administração' }
+            },
+            {
+                path: 'admin/user-roles',
+                loadComponent: () => import('./domains/admin/features/user-roles/user-roles.component').then(m => m.UserRolesComponent),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Papéis de Usuários' }
             }
         ]
     },
