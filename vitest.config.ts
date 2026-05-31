@@ -15,6 +15,16 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
       reportsDirectory: 'coverage',
+      include: [
+        'src/rentafit/domains/account/services/account.service.ts',
+        'src/rentafit/domains/account/features/profile/account-profile.component.ts',
+      ],
+      thresholds: {
+        lines: 90,
+        functions: 90,
+        branches: 85,
+        statements: 90,
+      },
     },
   },
 });

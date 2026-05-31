@@ -9,13 +9,17 @@ import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 describe('SetupCredentialsComponent', () => {
   let authService: {
     setupCredentials: ReturnType<typeof vi.fn>;
+    getCurrentUser: ReturnType<typeof vi.fn>;
   };
   let router: { navigate: ReturnType<typeof vi.fn> };
 
   const makeComponent = () => TestBed.createComponent(SetupCredentialsComponent).componentInstance;
 
   beforeEach(async () => {
-    authService = { setupCredentials: vi.fn() };
+    authService = {
+      setupCredentials: vi.fn(),
+      getCurrentUser: vi.fn().mockReturnValue({ role: 'CUSTOMER' }),
+    };
     router = { navigate: vi.fn() };
 
     await TestBed.configureTestingModule({
@@ -126,7 +130,7 @@ describe('SetupCredentialsComponent', () => {
       component.submit();
 
       expect(authService.setupCredentials).toHaveBeenCalledWith('ValidP@ss1', '1234');
-      expect(router.navigate).toHaveBeenCalledWith(['/home/dashboard']);
+      expect(router.navigate).toHaveBeenCalledWith(['/account/profile']);
       expect(component.isLoading()).toBe(false);
     });
 
