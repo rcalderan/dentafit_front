@@ -26,7 +26,13 @@ export class AccountService {
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {
-    const msg = error.error?.message || `Erro ${error.status}: não foi possível carregar os dados.`;
+    if (error.status === 404 || error.status === 0) {
+      return throwError(() => new Error('Serviço temporariamente indisponível. Tente novamente em instantes.'));
+    }
+    if (error.status === 403) {
+      return throwError(() => new Error('Você não tem permissão para acessar este recurso.'));
+    }
+    const msg = error.error?.message || 'Não foi possível carregar seus dados. Tente novamente.';
     return throwError(() => new Error(msg));
   }
 }
