@@ -26,6 +26,11 @@ export const routes: Routes = [
         canActivate: [authGuard],
         children: [
             {
+                path: 'account/profile',
+                loadComponent: () => import('./domains/account/features/profile/account-profile.component').then(m => m.AccountProfileComponent),
+                data: { title: 'Minha Conta' }
+            },
+            {
                 path: 'customer/registration',
                 loadComponent: () => import('./domains/customer/features/registration/registration.component').then(m => m.RegistrationComponent),
                 canActivate: [roleGuard],

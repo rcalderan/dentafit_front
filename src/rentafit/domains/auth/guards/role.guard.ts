@@ -12,7 +12,7 @@ function resolveFallbackRoute(role: UserRole | undefined): string {
     case UserRole.EMPLOYEE:
       return '/rental/management';
     case UserRole.CUSTOMER:
-      return '/product/search';
+      return '/account/profile';
     default:
       return '/auth/login';
   }
