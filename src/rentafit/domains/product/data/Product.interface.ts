@@ -53,6 +53,25 @@ export interface IRetailItem extends IProductBase {
 }
 
 /**
+ * Tipo de movimentação de estoque
+ * Espelha o campo `type` do StockMovementDTO do backend
+ */
+export type StockMovementType = 'ADD' | 'REMOVE' | 'RESERVE' | 'RELEASE';
+
+/**
+ * Interface para movimentação de estoque
+ * Baseada no StockMovementDTO do backend
+ */
+export interface IStockMovementDTO {
+  stockId?: UUID;
+  type: StockMovementType;
+  quantity: number;
+  movementDate?: string;
+  userId?: UUID;
+  notes?: string;
+}
+
+/**
  * Interface para dados de estoque
  * Baseada no StockDTO do Swagger
  */

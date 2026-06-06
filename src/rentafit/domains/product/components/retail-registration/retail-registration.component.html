@@ -115,43 +115,7 @@
         </div>
     </div>
 
-    <div class="section-card" formGroupName="stock">
-        <span class="section-title">Informações de Estoque</span>
-        <div class="form-grid">
-            <div class="input-group col-3">
-                <label>Qtde. Disponível</label>
-                <div class="input-wrapper">
-                    <input type="number" formControlName="quantityAvailable" readonly>
-                </div>
-            </div>
-            <div class="input-group col-3">
-                <label>Qtde. Reservada</label>
-                <div class="input-wrapper">
-                    <input type="number" formControlName="quantityReserved" readonly>
-                </div>
-            </div>
-            <div class="input-group col-3">
-                <label>Qtde. Total</label>
-                <div class="input-wrapper">
-                    <input type="number" formControlName="quantityTotal">
-                </div>
-            </div>
-            <div class="input-group col-3">
-                <label>Estoque Mínimo</label>
-                <div class="input-wrapper">
-                    <input type="number" formControlName="minStockLevel">
-                </div>
-            </div>
-        </div>
-        <div class="form-grid">
-            <div class="input-group col-6">
-                <label>Localização</label>
-                <div class="input-wrapper">
-                    <input type="text" formControlName="location" placeholder="Ex: Prateleira A3">
-                </div>
-            </div>
-        </div>
-    </div>
+    <rentafit-stock [productId]="form.get('id')?.value"></rentafit-stock>
 
     <div class="actions">
         <button class="btn btn-save" type="button" (click)="save()"
