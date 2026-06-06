@@ -26,6 +26,7 @@ export class RetailRegistration implements OnInit, OnDestroy {
     form: FormGroup;
     isReadOnly = signal(false);
     isCategoryModalOpen = signal(false);
+    isSkuSearching = signal(false);
     errorMessage = signal<string[] | string | null>(null);
 
     constructor() {
@@ -149,6 +150,31 @@ export class RetailRegistration implements OnInit, OnDestroy {
             categoryName: category.displayName || category.name,
         });
         this.isCategoryModalOpen.set(false);
+    }
+
+    searchBySku(): void {
+        const sku = this.form.get('sku')?.value?.trim();
+        if (!sku) {
+            this.errorMessage.set('Informe um SKU para realizar a busca.');
+            return;
+        }
+        this.isSkuSearching.set(true);
+        this.service.getRetailItemBySku(sku).pipe(takeUntil(this.destroy$)).subscribe({
+            next: (product) => {
+                this.form.patchValue(product);
+                this.isReadOnly.set(true);
+                this.form.disable();
+                this.isSkuSearching.set(false);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.isSkuSearching.set(false);
+                if (error.status === 404) {
+                    this.errorMessage.set(`Produto com SKU "${sku}" não encontrado.`);
+                } else {
+                    this.handleError(error);
+                }
+            }
+        });
     }
 
     clearError(): void {

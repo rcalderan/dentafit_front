@@ -14,6 +14,8 @@
                 <label>SKU</label>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                     <input type="text" formControlName="sku" placeholder="Auto" style="flex: 1;">
+                    <button class="category-search-btn" type="button" (click)="searchBySku()"
+                        [disabled]="isSkuSearching()" title="Buscar por SKU">🔍</button>
                     @if (isReadOnly()) {
                     <button class="header-btn btn-edit-trigger" type="button" (click)="enableEditing()"
                         title="Editar">✏️</button>
