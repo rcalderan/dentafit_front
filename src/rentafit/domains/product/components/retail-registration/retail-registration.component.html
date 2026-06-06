@@ -13,9 +13,9 @@
             <div class="input-group col-3">
                 <label>SKU</label>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <input type="text" formControlName="sku" placeholder="Auto" style="flex: 1;">
-                    <button class="category-search-btn" type="button" (click)="searchBySku()"
-                        [disabled]="isSkuSearching()" title="Buscar por SKU">🔍</button>
+                    <input type="text" formControlName="sku" placeholder="Auto" style="flex: 1;" 
+                    [disabled]="isSkuSearching()" (keydown.enter)="searchBySku()">
+                    <button class="category-search-btn" type="button" (click)="searchBySku()" title="Buscar por SKU">🔍</button>
                     @if (isReadOnly()) {
                     <button class="header-btn btn-edit-trigger" type="button" (click)="enableEditing()"
                         title="Editar">✏️</button>
@@ -40,7 +40,7 @@
                 <div class="input-wrapper">
                     <input type="text" class="uppercase" formControlName="categoryName" placeholder="Ex: Camisetas" readonly>
                     <button class="category-search-btn" type="button" (click)="openCategoryModal()"
-                        title="Buscar Categoria">🔍</button>
+                        [disabled]="isReadOnly()" title="Buscar Categoria">🔍</button>
                 </div>
                 @if (getControlError('categoryName')) {
                 <span class="field-error">{{ getControlError('categoryName') }}</span>
