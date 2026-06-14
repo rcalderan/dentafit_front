@@ -61,7 +61,7 @@ export class AuthService {
           email: response.email,
           name: response.name,
           legacyId: response.legacyId,
-          pin: response.pin ?? null,
+          pinConfigured: response.pinConfigured,
           role: role,
           active: response.active,
           passwordExpired: response.passwordExpired ?? false,
@@ -240,7 +240,7 @@ export class AuthService {
    */
   needsCredentialSetup(): boolean {
     const user = this.currentUserSubject.value;
-    return user != null && user.pin == null;
+    return user != null && !user.pinConfigured;
   }
 
   /**
@@ -273,7 +273,7 @@ export class AuthService {
       tap(() => {
         const user = this.currentUserSubject.value;
         if (user) {
-          user.pin = pin;
+          user.pinConfigured = true;
           user.passwordExpired = false;
           this.currentUserSubject.next(user);
           localStorage.setItem('currentUser', JSON.stringify(user));

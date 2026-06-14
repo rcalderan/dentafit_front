@@ -31,10 +31,22 @@ yarn-error.log
 .copilot/agents
 .copilot/skills
 .github/copilot*
-.devin/*
+.devin
+
+### Playwright ###
+.playwright*
+.claude
+test-results
 
 # QA artifacts
 .QA/
+
+# Graphify
+graphify-out/
+.kiro/
+.agents/
+CLAUDE.md
+graphify*
 
 # Miscellaneous
 /.angular/cache

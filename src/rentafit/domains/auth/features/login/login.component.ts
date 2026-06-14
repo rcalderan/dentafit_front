@@ -82,7 +82,7 @@ export class Login implements OnInit {
   }
 
   private resolvePostLoginRoute(user: User): string {
-    if (user.pin == null) {
+    if (!user.pinConfigured) {
       return '/auth/setup-credentials';
     }
     if (user.passwordExpired) {

@@ -270,16 +270,55 @@
   font-size: 0.9rem;
 }
 
+/* Per-item lines inside totals */
+.totals-items { margin-bottom: 0.2rem; }
+
+.total-row-item {
+  padding: 0.15rem 0;
+  font-size: 0.8rem;
+}
+
+.total-item-desc {
+  color: var(--text-secondary, #666);
+}
+
+.total-item-value {
+  color: var(--text-secondary, #666);
+  font-variant-numeric: tabular-nums;
+}
+
+.totals-divider {
+  border-top: 1px dashed var(--border-color, #ddd);
+  margin: 0.4rem 0;
+}
+
+.discount-label {
+  color: var(--error-color, #e53e3e);
+  font-size: 0.88rem;
+}
+
 .total-final {
-  border-top: 1px solid var(--border-color, #ddd);
-  padding-top: 0.5rem;
-  margin-top: 0.3rem;
-  font-size: 1rem;
+  border-top: 2px solid var(--border-color, #ddd);
+  padding-top: 0.6rem;
+  margin-top: 0.4rem;
+  font-size: 1.05rem;
+}
+
+.total-remaining {
+  border-top: 1px dashed var(--border-color, #ddd);
+  padding-top: 0.4rem;
+  margin-top: 0.2rem;
 }
 
 .discount-row label { font-size: 0.85rem; }
-.paid { color: #38a169; }
-.remaining { color: #d69e2e; }
+.paid { color: #38a169; font-weight: 600; }
+.remaining { color: #d69e2e; font-weight: 600; }
+
+/* Arrow separator between price and line total */
+.item-separator {
+  color: var(--text-secondary, #aaa);
+  font-size: 0.75rem;
+}
 
 /* ── Payments ───────────────────────────────────────── */
 

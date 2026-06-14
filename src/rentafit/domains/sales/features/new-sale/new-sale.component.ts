@@ -118,11 +118,23 @@ export class NewSale implements OnInit {
   protected readonly subtotal = computed(() => {
     const o = this.order();
     if (!o?.items) return 0;
-    return o.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity) - item.discountValue, 0);
+    return o.items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  });
+
+  /** Soma apenas dos descontos por item — exibido na linha "Desconto nos itens" */
+  protected readonly itemDiscountsTotal = computed(() => {
+    const o = this.order();
+    return o?.items?.reduce((sum, item) => sum + (item.discountValue ?? 0), 0) ?? 0;
+  });
+
+  /** Soma dos descontos por item + desconto geral do pedido */
+  protected readonly totalDiscountValue = computed(() => {
+    const o = this.order();
+    return this.itemDiscountsTotal() + (o?.discountValue ?? 0);
   });
 
   protected readonly totalValue = computed(() => {
-    return Math.max(0, this.subtotal() - (this.order()?.discountValue ?? 0));
+    return Math.max(0, this.subtotal() - this.totalDiscountValue());
   });
 
   protected readonly paidValue = computed(() => {
@@ -375,6 +387,7 @@ export class NewSale implements OnInit {
     const payments = [...current.payments];
     payments.splice(index, 1);
     this.order.set({ ...current, payments });
+    this.save();
   }
 
   // ─── Save (Create/Update) ──────────────────────────────────────────────────
