@@ -15,7 +15,7 @@ const buildUser = (overrides: Partial<User> = {}): User => ({
   name: 'João Silva',
   role: UserRole.CUSTOMER,
   active: true,
-  pin: '1234',
+  pinConfigured: true,
   passwordExpired: false,
   ...overrides,
 });

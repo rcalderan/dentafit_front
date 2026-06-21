@@ -35,6 +35,7 @@ yarn-error.log
 
 ### Playwright ###
 .playwright*
+playwright*
 .claude
 test-results
 

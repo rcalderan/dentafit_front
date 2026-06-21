@@ -29,6 +29,8 @@ import {
 } from '../employee-verify/employee-verify.component';
 import { RentalContractService } from '../../service/rental-contract.service';
 import { AutosaveService, AutosaveStatus } from '../../service/autosave.service';
+import { NfseEmissionComponent } from '../../../finance/features/nfse-emission/nfse-emission.component';
+import { IFiscalContext, IFiscalDocument } from '../../../finance/data/fiscal-document.types';
 
 export { ContractStatus, PaymentMethod, PaymentStatus };
 export type { IItemMeta, INewRentalContract, IProductCatalog, IRentalContractItem, IRentalPayment };
@@ -37,7 +39,7 @@ export type { IItemMeta, INewRentalContract, IProductCatalog, IRentalContractIte
 
 @Component({
   selector: 'rentafit-new-rental',
-  imports: [CommonModule, FormsModule, EmployeeVerifyComponent],
+  imports: [CommonModule, FormsModule, EmployeeVerifyComponent, NfseEmissionComponent],
   templateUrl: './new-rental.component.html',
   styleUrls: ['./new-rental.component.css'],
   providers: [AutosaveService],
@@ -566,6 +568,29 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
   /** Amount not yet covered by any parcela */
   get unplannedAmount(): number {
     return Math.max(0, this.total - this.totalPlanned);
+  }
+
+  // ── NFS-e (documento fiscal de serviço) ──
+
+  /** Documento fiscal mantido em sessão (fase mockada). */
+  fiscalDocument: IFiscalDocument | null = null;
+
+  /** Contexto repassado ao componente de emissão de NFS-e. */
+  get fiscalContext(): IFiscalContext {
+    return {
+      origin: 'RENTAL',
+      originId: this.contractId ?? undefined,
+      isPaid: this.total > 0 && this.remainingAmount === 0,
+      totalValue: this.total,
+      customerId: this.customerUuid ?? undefined,
+      customerName: this.contract.clienteNome,
+      customerDocument: this.contract.clienteCpf,
+      customerEmail: this.fiscalDocument?.customerEmail,
+    };
+  }
+
+  onInvoiceChanged(doc: IFiscalDocument): void {
+    this.fiscalDocument = doc;
   }
 
   openPaymentModal(): void {

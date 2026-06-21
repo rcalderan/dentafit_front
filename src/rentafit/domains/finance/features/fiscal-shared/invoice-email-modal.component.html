@@ -1,0 +1,39 @@
+<div class="modal-overlay" (click)="close.emit()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h3 class="modal-title">Enviar {{ documentLabel() }} por E-mail</h3>
+
+    <div class="info-box">
+      <div class="info-row">
+        <span>{{ documentLabel() }}:</span>
+        <strong>{{ invoiceNumber() || '—' }}@if (series()) { — Série {{ series() }} }</strong>
+      </div>
+      <div class="info-row">
+        <span>Cliente:</span>
+        <strong>{{ customerName() || '—' }}@if (customerEmail()) { — {{ customerEmail() }} }</strong>
+      </div>
+    </div>
+
+    <label class="field-label">E-mail alternativo (opcional)</label>
+    <input
+      class="input"
+      type="email"
+      [ngModel]="altEmail()"
+      (ngModelChange)="altEmail.set($event)"
+      placeholder="cliente@email.com"
+    />
+
+    <label class="checkbox-row">
+      <input type="checkbox" [ngModel]="includeDanfe()" (ngModelChange)="includeDanfe.set($event)" />
+      Incluir DANFE em PDF no anexo
+    </label>
+    <label class="checkbox-row">
+      <input type="checkbox" [ngModel]="includeXml()" (ngModelChange)="includeXml.set($event)" />
+      Incluir XML da nota no anexo
+    </label>
+
+    <div class="modal-actions">
+      <button class="btn" (click)="close.emit()">Voltar</button>
+      <button class="btn btn-primary" (click)="submit()">Enviar</button>
+    </div>
+  </div>
+</div>

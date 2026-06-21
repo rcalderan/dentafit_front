@@ -12,7 +12,7 @@ const buildUser = (overrides: Partial<User> = {}): User => ({
   username: 'admin',
   role: UserRole.ADMIN,
   active: true,
-  pin: '1234',
+  pinConfigured: true,
   passwordExpired: false,
   ...overrides,
 });
@@ -124,9 +124,9 @@ describe('Login', () => {
     expect(authService.login).not.toHaveBeenCalled();
   });
 
-  it('redireciona para setup-credentials quando pin é null', async () => {
+  it('redireciona para setup-credentials quando pinConfigured é false', async () => {
     const { fixture, component, authService, router } = await setupTestBed();
-    authService.login.mockReturnValue(of(buildUser({ pin: null })));
+    authService.login.mockReturnValue(of(buildUser({ pinConfigured: false })));
     fixture.detectChanges();
 
     component.username = 'admin';
@@ -139,7 +139,7 @@ describe('Login', () => {
 
   it('redireciona para change-password quando passwordExpired é true', async () => {
     const { fixture, component, authService, router } = await setupTestBed();
-    authService.login.mockReturnValue(of(buildUser({ pin: '1234', passwordExpired: true })));
+    authService.login.mockReturnValue(of(buildUser({ passwordExpired: true })));
     fixture.detectChanges();
 
     component.username = 'admin';

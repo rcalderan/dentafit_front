@@ -1,4 +1,5 @@
 ﻿import { ContractStatusApi, ItemMetaTypeApi, PaymentMethodApi, PaymentStatusApi } from './rental-api.types';
+import { InvoiceStatusApi } from '../../finance/data/fiscal-document.types';
 
 export interface IPageResponse<T> {
   content: T[];
@@ -80,6 +81,21 @@ export interface IRentalContractResponse {
   totalValue: number;
   paidValue: number;
   remainingValue: number;
+  // Dados fiscais da NFS-e (preenchidos após emissão)
+  invoiceStatus?: InvoiceStatusApi;
+  invoiceStatusDescription?: string;
+  invoiceId?: string;
+  invoiceNumber?: string;
+  invoiceSeries?: string;
+  invoiceAccessKey?: string;
+  invoiceEmissionDate?: string;
+  invoiceProtocol?: string;
+  invoiceCancelReason?: string;
+  invoiceCancelledAt?: string;
+  invoiceCancelProtocol?: string;
+  invoiceXmlUrl?: string;
+  invoiceDanfeUrl?: string;
+  invoiceCustomerEmail?: string;
   items: IRentalContractItemResponse[];
   payments?: IRentalPaymentResponse[];
   warnings?: string[];

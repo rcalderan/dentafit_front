@@ -299,6 +299,17 @@
         </div>
     }
 
+    <!-- ── NFS-e (emissão de nota fiscal de serviço) ── -->
+    @if (contractLoaded && contractId) {
+        <div class="section-card nfse-section">
+            <rentafit-nfse-emission
+                [context]="fiscalContext"
+                [initialDocument]="fiscalDocument"
+                (changed)="onInvoiceChanged($event)">
+            </rentafit-nfse-emission>
+        </div>
+    }
+
 </div>
 
 <!-- ══════════════ Employee Verify Modal ══════════════ -->

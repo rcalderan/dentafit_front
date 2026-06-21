@@ -26,9 +26,6 @@
       @if (canCancel()) {
         <button class="btn btn-danger" (click)="openCancelModal()">Cancelar</button>
       }
-      @if (order()?.status === 'PAID' && order()?.invoiceStatus !== 'EMITTED') {
-        <button class="btn btn-secondary" (click)="emitInvoice()">Emitir NFS-e</button>
-      }
     </div>
   </header>
 
@@ -237,16 +234,14 @@
     }
   </section>
 
-  <!-- Invoice Info -->
-  @if (order()?.invoiceStatus && order()!.invoiceStatus !== 'NONE') {
+  <!-- NF-e (emissão de nota fiscal de venda) -->
+  @if (order()?.id) {
     <section class="section">
-      <h3>NFS-e</h3>
-      <p>
-        Status: <strong>{{ order()!.invoiceStatusDescription || order()!.invoiceStatus }}</strong>
-        @if (order()!.invoiceId) {
-          <span> — ID: {{ order()!.invoiceId }}</span>
-        }
-      </p>
+      <rentafit-nfe-emission
+        [context]="fiscalContext()"
+        [initialDocument]="initialFiscalDocument()"
+        (changed)="onInvoiceChanged($event)"
+      />
     </section>
   }
 
@@ -366,7 +361,6 @@
     [title]="employeeVerifyAction === 'confirm' ? 'Identificar Atendente — Confirmação'
            : employeeVerifyAction === 'deliver' ? 'Identificar Atendente — Entrega'
            : employeeVerifyAction === 'ready'   ? 'Identificar Atendente — Pronto para Entrega'
-           : employeeVerifyAction === 'invoice' ? 'Identificar Atendente — Emissão NFS-e'
            : 'Identificar Atendente — Pagamento'"
     [requirePin]="true"
     (confirmed)="onEmployeeConfirmed($event)"

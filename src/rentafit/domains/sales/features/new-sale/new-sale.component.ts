@@ -23,6 +23,8 @@ import {
   EmployeeConfirmedEvent,
   EmployeeVerifyComponent,
 } from '../../../rental/features/employee-verify/employee-verify.component';
+import { NfeEmissionComponent } from '../../../finance/features/nfe-emission/nfe-emission.component';
+import { IFiscalContext, IFiscalDocument } from '../../../finance/data/fiscal-document.types';
 
 /** Métodos de pagamento e seus labels (reutilizados do rental) */
 const PAYMENT_METHOD_LABELS: Record<PaymentMethodApi, string> = {
@@ -36,7 +38,7 @@ const PAYMENT_METHOD_LABELS: Record<PaymentMethodApi, string> = {
 @Component({
   selector: 'rentafit-new-sale',
   standalone: true,
-  imports: [CommonModule, FormsModule, EmployeeVerifyComponent],
+  imports: [CommonModule, FormsModule, EmployeeVerifyComponent, NfeEmissionComponent],
   templateUrl: './new-sale.component.html',
   styleUrl: './new-sale.component.css',
 })
@@ -90,7 +92,7 @@ export class NewSale implements OnInit {
 
   // Employee verification
   protected readonly showEmployeeVerify = signal(false);
-  protected employeeVerifyAction: 'payment' | 'confirm' | 'deliver' | 'ready' | 'invoice' | null = null;
+  protected employeeVerifyAction: 'payment' | 'confirm' | 'deliver' | 'ready' | null = null;
   private pendingPaymentEmployeeId: string | null = null;
   private pendingItemId: string | null = null;
 
@@ -148,6 +150,70 @@ export class NewSale implements OnInit {
   protected readonly remainingValue = computed(() => {
     return Math.max(0, this.totalValue() - this.paidValue());
   });
+
+  // ─── NF-e (documento fiscal) ─────────────────────────────────────────────────
+
+  /** Contexto repassado ao componente de emissão de NF-e. */
+  protected readonly fiscalContext = computed<IFiscalContext>(() => {
+    const o = this.order();
+    return {
+      origin: 'SALES',
+      originId: o?.id,
+      isPaid: o?.status === 'PAID' || o?.status === 'COMPLETED',
+      totalValue: o?.totalValue ?? this.totalValue(),
+      customerId: o?.customerId ?? this.selectedCustomer()?.id,
+      customerName: o?.customerName ?? this.selectedCustomer()?.name,
+      customerDocument: o?.customerDocument ?? this.selectedCustomer()?.document,
+      customerEmail: o?.invoiceCustomerEmail,
+    };
+  });
+
+  /** Documento fiscal pré-existente (reidrata o componente ao carregar o pedido). */
+  protected readonly initialFiscalDocument = computed<IFiscalDocument | null>(() => {
+    const o = this.order();
+    if (!o || !o.invoiceStatus || o.invoiceStatus === 'NONE') return null;
+    return {
+      id: o.invoiceId ?? '',
+      type: 'NFE',
+      status: o.invoiceStatus,
+      number: o.invoiceNumber,
+      series: o.invoiceSeries,
+      accessKey: o.invoiceAccessKey,
+      emissionDate: o.invoiceEmissionDate,
+      protocol: o.invoiceProtocol,
+      value: o.totalValue,
+      natureOperation: o.invoiceNatureOperation,
+      cancelReason: o.invoiceCancelReason,
+      cancelledAt: o.invoiceCancelledAt,
+      cancelProtocol: o.invoiceCancelProtocol,
+      xmlUrl: o.invoiceXmlUrl,
+      danfeUrl: o.invoiceDanfeUrl,
+      customerEmail: o.invoiceCustomerEmail,
+    };
+  });
+
+  /** Persiste localmente as mudanças de estado fiscal emitidas pelo componente. */
+  protected onInvoiceChanged(doc: IFiscalDocument): void {
+    const o = this.order();
+    if (!o) return;
+    this.order.set({
+      ...o,
+      invoiceStatus: doc.status,
+      invoiceId: doc.id,
+      invoiceNumber: doc.number,
+      invoiceSeries: doc.series,
+      invoiceAccessKey: doc.accessKey,
+      invoiceEmissionDate: doc.emissionDate,
+      invoiceProtocol: doc.protocol,
+      invoiceNatureOperation: doc.natureOperation,
+      invoiceCancelReason: doc.cancelReason,
+      invoiceCancelledAt: doc.cancelledAt,
+      invoiceCancelProtocol: doc.cancelProtocol,
+      invoiceXmlUrl: doc.xmlUrl,
+      invoiceDanfeUrl: doc.danfeUrl,
+      invoiceCustomerEmail: doc.customerEmail,
+    });
+  }
 
   // ─── Enums for template ─────────────────────────────────────────────────────
 
@@ -591,23 +657,6 @@ export class NewSale implements OnInit {
     });
   }
 
-  protected emitInvoice(): void {
-    this.employeeVerifyAction = 'invoice';
-    this.showEmployeeVerify.set(true);
-  }
-
-  private executeEmitInvoice(): void {
-    const o = this.order();
-    if (!o?.id) return;
-    this.salesService.emitInvoice(o.id).subscribe({
-      next: (updated) => {
-        this.order.set(updated);
-        this.showSuccess('NFS-e emitida');
-      },
-      error: (err) => this.errorMsg.set(err.message),
-    });
-  }
-
   // ─── Employee Verify ────────────────────────────────────────────────────────
 
   protected onEmployeeConfirmed(event: EmployeeConfirmedEvent): void {
@@ -632,10 +681,6 @@ export class NewSale implements OnInit {
     if (action === 'ready' && this.pendingItemId) {
       this.executeMarkItemReady(this.pendingItemId);
       this.pendingItemId = null;
-      return;
-    }
-    if (action === 'invoice') {
-      this.executeEmitInvoice();
     }
   }
 
