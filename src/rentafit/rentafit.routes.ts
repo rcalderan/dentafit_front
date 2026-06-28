@@ -84,6 +84,12 @@ export const routes: Routes = [
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Devolução' }
             },
             {
+                path: 'rental/daily-report',
+                loadComponent: () => import('./domains/rental/features/daily-report/daily-report.component').then(m => m.DailyReportComponent),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Relatório Diário de Locação' }
+            },
+            {
                 path: 'rental/legacy',
                 loadComponent: () => import('./domains/rental/features/legacy/locacao/locacao').then(m => m.LocacaoComponent),
                 canActivate: [roleGuard],
