@@ -1,6 +1,6 @@
 import { Directive, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { finalize } from 'rxjs/operators';
-import { FiscalDocumentMockService } from '../../service/fiscal-document-mock.service';
+import { FiscalDocumentService } from '../../service/fiscal-document.service';
 import {
   FiscalDocumentType,
   ICancelInvoiceRequest,
@@ -22,7 +22,7 @@ import {
  */
 @Directive()
 export abstract class FiscalEmissionBase implements OnInit {
-  protected readonly fiscalService = inject(FiscalDocumentMockService);
+  protected readonly fiscalService = inject(FiscalDocumentService);
 
   /** Tipo do documento — definido pelo componente concreto. */
   abstract readonly fiscalType: FiscalDocumentType;
@@ -127,7 +127,7 @@ export abstract class FiscalEmissionBase implements OnInit {
   }
 
   /** Executa uma operação fiscal padrão (loading + atualização + change). */
-  private run(source: ReturnType<FiscalDocumentMockService['emit']>, okMsg: string): void {
+  private run(source: ReturnType<FiscalDocumentService['emit']>, okMsg: string): void {
     this.isProcessing.set(true);
     this.errorMsg.set(null);
     source.pipe(finalize(() => this.isProcessing.set(false))).subscribe({

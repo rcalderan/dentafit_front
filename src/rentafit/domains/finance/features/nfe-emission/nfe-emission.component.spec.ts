@@ -3,7 +3,7 @@ import { ComponentFixture } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NfeEmissionComponent } from './nfe-emission.component';
-import { FiscalDocumentMockService } from '../../service/fiscal-document-mock.service';
+import { FiscalDocumentService } from '../../service/fiscal-document.service';
 import { IFiscalContext, IFiscalDocument } from '../../data/fiscal-document.types';
 
 const paidContext: IFiscalContext = {
@@ -32,6 +32,8 @@ describe('NfeEmissionComponent', () => {
     cancel: ReturnType<typeof vi.fn>;
     reemit: ReturnType<typeof vi.fn>;
     sendEmail: ReturnType<typeof vi.fn>;
+    downloadXml: ReturnType<typeof vi.fn>;
+    downloadDanfe: ReturnType<typeof vi.fn>;
   };
 
   const build = (context: IFiscalContext): ComponentFixture<NfeEmissionComponent> => {
@@ -49,10 +51,12 @@ describe('NfeEmissionComponent', () => {
       cancel: vi.fn(),
       reemit: vi.fn(),
       sendEmail: vi.fn(),
+      downloadXml: vi.fn(),
+      downloadDanfe: vi.fn(),
     };
     await TestBed.configureTestingModule({
       imports: [NfeEmissionComponent],
-      providers: [{ provide: FiscalDocumentMockService, useValue: fiscalService }],
+      providers: [{ provide: FiscalDocumentService, useValue: fiscalService }],
     }).compileComponents();
   });
 

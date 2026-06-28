@@ -8,6 +8,7 @@ import {
   IEmitInvoiceRequest,
   IFiscalDocument,
 } from '../data/fiscal-document.types';
+import { FiscalDocumentService } from './fiscal-document.service';
 
 /**
  * Serviço MOCKADO de emissão de documentos fiscais (NF-e modelo 55 e NFS-e).
@@ -22,7 +23,7 @@ import {
  *  - GET  /api/billing/invoices/chave/{chave}/xml | /pdf
  */
 @Injectable({ providedIn: 'root' })
-export class FiscalDocumentMockService {
+export class FiscalDocumentMockService extends FiscalDocumentService {
   /** Latência simulada de rede/autorizador, em milissegundos. */
   private readonly latencyMs = 900;
 
@@ -82,6 +83,16 @@ export class FiscalDocumentMockService {
   /** Simula o envio do XML/DANFE por e-mail. */
   sendEmail(_id: string, _request: IEmailInvoiceRequest): Observable<boolean> {
     return of(true).pipe(delay(this.latencyMs));
+  }
+
+  /** Simula download do XML autorizado. */
+  downloadXml(_accessKey: string): Observable<Blob> {
+    return of(new Blob(['<nfe></nfe>'], { type: 'application/xml' })).pipe(delay(this.latencyMs));
+  }
+
+  /** Simula download do DANFE/PDF. */
+  downloadDanfe(_accessKey: string): Observable<Blob> {
+    return of(new Blob(['PDF'], { type: 'application/pdf' })).pipe(delay(this.latencyMs));
   }
 
   /** Gera os dados de autorização (número, chave, protocolo, links). */

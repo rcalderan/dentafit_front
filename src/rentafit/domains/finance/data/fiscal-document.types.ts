@@ -47,6 +47,7 @@ export interface IFiscalDocument {
   value?: number;
   natureOperation?: string;
   purpose?: InvoicePurposeApi;
+  serviceDescription?: string;
   cancelReason?: string;
   cancelledAt?: string;
   cancelProtocol?: string;

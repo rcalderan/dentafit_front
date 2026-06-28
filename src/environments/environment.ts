@@ -4,4 +4,22 @@ export const environment = {
   appName: 'RentAFit',
   apiBaseUrl: '',
   s3BucketUrl: 'https://placeholder.s3.amazonaws.com',
+  // Defaults para emissão fiscal — em homologação o backend não exige certificado
+  // e aceita quaisquer valores; em produção esses valores devem vir da configuração
+  // cadastral do emitente e do produto/serviço.
+  fiscalDefaults: {
+    nfse: {
+      nbsCode: '1.0101',
+      cityCode: '3550308',
+      serviceDescription: 'Locação de trajes e vestuário',
+      ibsRate: 0.025,
+      cbsRate: 0.015,
+      isqnRate: 0.0,
+    },
+    nfe: {
+      ncm: '99999999',
+      cfop: '5102',
+      unit: 'UN',
+    },
+  },
 };

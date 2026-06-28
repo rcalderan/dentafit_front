@@ -84,4 +84,14 @@ describe('FiscalDocumentMockService', () => {
     );
     expect(ok).toBe(true);
   });
+
+  it('downloadXml retorna um Blob XML', async () => {
+    const blob = await resolve(lastValueFrom(service.downloadXml('1234567890')));
+    expect(blob.type).toBe('application/xml');
+  });
+
+  it('downloadDanfe retorna um Blob PDF', async () => {
+    const blob = await resolve(lastValueFrom(service.downloadDanfe('1234567890')));
+    expect(blob.type).toBe('application/pdf');
+  });
 });

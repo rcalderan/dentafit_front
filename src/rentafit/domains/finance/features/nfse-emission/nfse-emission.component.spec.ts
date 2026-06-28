@@ -2,7 +2,7 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NfseEmissionComponent } from './nfse-emission.component';
-import { FiscalDocumentMockService } from '../../service/fiscal-document-mock.service';
+import { FiscalDocumentService } from '../../service/fiscal-document.service';
 import { IFiscalContext, IFiscalDocument } from '../../data/fiscal-document.types';
 
 const paidContext: IFiscalContext = {
@@ -23,7 +23,15 @@ const pendingDoc: IFiscalDocument = {
 };
 
 describe('NfseEmissionComponent', () => {
-  let fiscalService: { emit: ReturnType<typeof vi.fn> };
+  let fiscalService: {
+    emit: ReturnType<typeof vi.fn>;
+    checkStatus: ReturnType<typeof vi.fn>;
+    cancel: ReturnType<typeof vi.fn>;
+    reemit: ReturnType<typeof vi.fn>;
+    sendEmail: ReturnType<typeof vi.fn>;
+    downloadXml: ReturnType<typeof vi.fn>;
+    downloadDanfe: ReturnType<typeof vi.fn>;
+  };
 
   const build = (context: IFiscalContext): ComponentFixture<NfseEmissionComponent> => {
     const fixture = TestBed.createComponent(NfseEmissionComponent);
@@ -34,10 +42,18 @@ describe('NfseEmissionComponent', () => {
   };
 
   beforeEach(async () => {
-    fiscalService = { emit: vi.fn().mockReturnValue(of(pendingDoc)) };
+    fiscalService = {
+      emit: vi.fn().mockReturnValue(of(pendingDoc)),
+      checkStatus: vi.fn(),
+      cancel: vi.fn(),
+      reemit: vi.fn(),
+      sendEmail: vi.fn(),
+      downloadXml: vi.fn(),
+      downloadDanfe: vi.fn(),
+    };
     await TestBed.configureTestingModule({
       imports: [NfseEmissionComponent],
-      providers: [{ provide: FiscalDocumentMockService, useValue: fiscalService }],
+      providers: [{ provide: FiscalDocumentService, useValue: fiscalService }],
     }).compileComponents();
   });
 
