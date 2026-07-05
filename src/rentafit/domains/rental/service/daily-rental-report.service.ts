@@ -12,9 +12,12 @@ export class DailyRentalReportService {
 
   constructor(private readonly http: HttpClient) {}
 
-  /** Relatório diário de locação para a data do evento (YYYY-MM-DD). */
-  getDaily(eventDate: string): Observable<IDailyRentalReport> {
-    const params = new HttpParams().set('date', eventDate);
+  /** Relatório de locação por período (YYYY-MM-DD). Se endDate omitido, relatório de dia único. */
+  getByPeriod(startDate: string, endDate?: string): Observable<IDailyRentalReport> {
+    let params = new HttpParams().set('date', startDate);
+    if (endDate && endDate !== startDate) {
+      params = params.set('endDate', endDate);
+    }
     return this.http
       .get<IDailyRentalReport>(`${this.apiUrl}/daily`, { params })
       .pipe(catchError(this.handleError.bind(this)));

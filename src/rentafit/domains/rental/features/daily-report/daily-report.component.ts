@@ -14,10 +14,13 @@ import { IDailyRentalReport } from '../../data/daily-report.interface';
 export class DailyReportComponent implements OnInit {
   private readonly reportService = inject(DailyRentalReportService);
 
-  protected readonly reportDate = signal<string>(DailyReportComponent.today());
+  protected readonly startDate = signal<string>(DailyReportComponent.today());
+  protected readonly endDate = signal<string>(DailyReportComponent.today());
   protected readonly report = signal<IDailyRentalReport | null>(null);
   protected readonly isLoading = signal(false);
   protected readonly errorMsg = signal<string | null>(null);
+
+  protected readonly isPeriod = computed(() => this.startDate() !== this.endDate());
 
   protected readonly isEmpty = computed(() => {
     const current = this.report();
@@ -29,14 +32,19 @@ export class DailyReportComponent implements OnInit {
   }
 
   protected generate(): void {
-    const date = this.reportDate();
-    if (!date) {
-      this.errorMsg.set('Selecione uma data para gerar o relatório.');
+    const start = this.startDate();
+    const end = this.endDate();
+    if (!start || !end) {
+      this.errorMsg.set('Selecione o período para gerar o relatório.');
+      return;
+    }
+    if (end < start) {
+      this.errorMsg.set('A data final não pode ser anterior à data inicial.');
       return;
     }
     this.isLoading.set(true);
     this.errorMsg.set(null);
-    this.reportService.getDaily(date).subscribe({
+    this.reportService.getByPeriod(start, end).subscribe({
       next: (data) => {
         this.report.set(data);
         this.isLoading.set(false);
@@ -68,6 +76,11 @@ export class DailyReportComponent implements OnInit {
       month: '2-digit',
       year: 'numeric',
     });
+  }
+
+  protected periodLabel(start: string, end: string): string {
+    if (start === end) return this.formatLongDate(start);
+    return `${this.formatDate(start)} a ${this.formatDate(end)}`;
   }
 
   private static today(): string {

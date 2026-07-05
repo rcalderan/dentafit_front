@@ -26,7 +26,8 @@ export interface IClothingTypeGroup {
 }
 
 export interface IDailyRentalReport {
-  eventDate: string;
+  startDate: string;
+  endDate: string;
   generatedAt: string;
   contractCount: number;
   itemCount: number;
