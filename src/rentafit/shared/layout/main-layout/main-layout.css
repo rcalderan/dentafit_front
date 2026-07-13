@@ -34,10 +34,13 @@
 
 .nav-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
+  gap: 0.2rem;
+  width: 64px;
+  height: auto;
+  padding: 0.5rem 0;
   color: var(--text-muted);
   text-decoration: none;
   border-radius: 18px;
@@ -46,7 +49,6 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
 }
 
 .nav-item:hover {
@@ -140,6 +142,24 @@
   font-style: normal;
 }
 
+.nav-label {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.nav-item.active .nav-label,
+.nav-item:hover .nav-label {
+  color: var(--primary-color);
+}
+
+.nav-item-container.open .nav-item .nav-label {
+  color: var(--primary-color);
+}
+
 .floating-action {
   position: fixed;
   bottom: 2rem;
@@ -227,6 +247,17 @@
   padding: 1rem 3rem 6rem;
   flex: 1;
   overflow-y: auto;
+}
+
+/* Mobile: ocultar rótulos de texto da sidebar */
+.layout-container.mobile-view .nav-label {
+  display: none;
+}
+
+.layout-container.mobile-view .nav-item {
+  width: 50px;
+  height: 50px;
+  padding: 0;
 }
 
 /* Estilos para Mobile */
@@ -320,6 +351,13 @@
   font-size: 1.5rem;
   color: var(--text-color);
   font-weight: 600;
+}
+
+.page-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
 }
 
 .content-area {

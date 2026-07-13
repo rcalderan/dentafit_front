@@ -31,6 +31,7 @@ export class Login implements OnInit {
   password = '';
   errorMessage = signal<string | null>(null);
   isLoading = signal(false);
+  readonly showPassword = signal(false);
 
   constructor(
     private authService: AuthService,
@@ -79,6 +80,10 @@ export class Login implements OnInit {
         console.error('Erro no login:', error);
       }
     });
+  }
+
+  togglePassword(): void {
+    this.showPassword.update(v => !v);
   }
 
   private resolvePostLoginRoute(user: User): string {

@@ -18,19 +18,6 @@ type SearchResult =
   | { type: 'contract'; data: IRentalContractResponse }
   | { type: 'product';  data: IRentalItem };
 
-interface IOverduePickupMock {
-  legacyId: string;
-  customerName: string;
-  scheduledPickupDate: string;
-}
-
-interface ILateReturnMock {
-  legacyId: string;
-  customerName: string;
-  returnDate: string;
-  daysLate: number;
-}
-
 @Component({
   selector: 'rentafit-home-dashboard',
   standalone: true,
@@ -243,24 +230,6 @@ export class HomeDashboard implements OnInit {
 
   asContract(r: SearchResult): IRentalContractResponse { return (r as { type: 'contract'; data: IRentalContractResponse }).data; }
   asProduct(r: SearchResult):  IRentalItem             { return (r as { type: 'product';  data: IRentalItem }).data; }
-
-  // ── Mock data: pickup overdue (awaiting customer to collect) ──────────────
-  readonly overduePickupMock: IOverduePickupMock[] = [
-    { legacyId: '2024-112', customerName: 'ANA PAULA FERREIRA', scheduledPickupDate: '2026-04-25' },
-    { legacyId: '2024-118', customerName: 'MARCOS VINÍCIUS COSTA', scheduledPickupDate: '2026-04-26' },
-    { legacyId: '2024-121', customerName: 'BEATRIZ SOUSA LIMA', scheduledPickupDate: '2026-04-27' },
-  ];
-
-  // ── Mock data: late returns (items not yet returned) ──────────────────────
-  readonly lateReturnsMock: ILateReturnMock[] = [
-    { legacyId: '2024-089', customerName: 'CARLOS EDUARDO MELO', returnDate: '2026-04-22', daysLate: 7 },
-    { legacyId: '2024-095', customerName: 'PATRICIA ALMEIDA ROCHA', returnDate: '2026-04-23', daysLate: 6 },
-    { legacyId: '2024-101', customerName: 'RAFAEL SANTOS BRAGA', returnDate: '2026-04-24', daysLate: 5 },
-    { legacyId: '2024-107', customerName: 'FERNANDA OLIVEIRA DIAS', returnDate: '2026-04-25', daysLate: 4 },
-  ];
-
-  readonly totalOverduePickup = computed(() => this.overduePickupMock.length);
-  readonly totalLateReturns = computed(() => this.lateReturnsMock.length);
 
   ngOnInit(): void {
     this.isLoadingRecent.set(true);

@@ -11,8 +11,9 @@
                     placeholder="Informe o legacyId do contrato..."
                     [disabled]="contractLookupLoading"
                     (keyup.enter)="loadContractByLegacyId()">
-                <button class="icon-btn" (click)="loadContractByLegacyId()" [disabled]="contractLookupLoading">
-                    {{ contractLookupLoading ? '⏳' : '🔍' }}
+                <button class="icon-btn" (click)="loadContractByLegacyId()" [disabled]="contractLookupLoading"
+                        aria-label="Buscar contrato">
+                    <i aria-hidden="true">{{ contractLookupLoading ? '⏳' : '🔍' }}</i>
                 </button>
             </div>
             @if (contractLookupError) {
@@ -92,10 +93,12 @@
                         </div>
                     }
                     @if (customerFound) {
-                        <button class="icon-btn icon-btn-clear" (click)="clearCustomer()" [disabled]="!isEditable()">✕</button>
+                        <button class="icon-btn icon-btn-clear" (click)="clearCustomer()" [disabled]="!isEditable()"
+                            aria-label="Limpar cliente"><i aria-hidden="true">✕</i></button>
                     } @else {
-                        <button class="icon-btn" (click)="searchCustomer()" [disabled]="customerLoading">
-                            {{ customerLoading ? '⏳' : '🔍' }}
+                        <button class="icon-btn" (click)="searchCustomer()" [disabled]="customerLoading"
+                                aria-label="Buscar cliente">
+                            <i aria-hidden="true">{{ customerLoading ? '⏳' : '🔍' }}</i>
                         </button>
                     }
                 </div>
@@ -135,7 +138,7 @@
             <div class="section-header">
                 <span class="section-title">Itens da Locação</span>
                 @if (isEditable()) {
-                    <button class="btn-icon-labeled" (click)="openItemModal()">➕ Adicionar Item</button>
+                    <button class="btn-icon-labeled" (click)="openItemModal()" aria-label="Adicionar item"><i aria-hidden="true">➕</i> Adicionar Item</button>
                 }
             </div>
 
@@ -158,7 +161,7 @@
                         </div>
                         <span class="item-price">R$ {{ formatCurrency(item.valor) }}</span>
                         @if (isEditable()) {
-                            <button class="remove-btn" (click)="$event.stopPropagation(); removeItem(i)">✕</button>
+                            <button class="remove-btn" (click)="$event.stopPropagation(); removeItem(i)" aria-label="Remover item"><i aria-hidden="true">✕</i></button>
                         }
                     </div>
                 }
@@ -171,7 +174,7 @@
             <div class="section-header">
                 <span class="section-title">Pagamentos</span>
                 @if (canAddPayment && contract.pagamentos.length < 24 && unplannedAmount > 0.001) {
-                    <button class="btn-icon-labeled" (click)="openPaymentModal()">➕ Parcela</button>
+                    <button class="btn-icon-labeled" (click)="openPaymentModal()" aria-label="Adicionar parcela"><i aria-hidden="true">➕</i> Parcela</button>
                 }
             </div>
 
@@ -215,7 +218,7 @@
                         } @else if (p.status === PaymentStatus.PAID && contract.situacao === ContractStatus.SIGNED) {
                             <button class="btn-chargeback" (click)="$event.stopPropagation(); requestChargeBack(i)" title="Extornar parcela">↩</button>
                         } @else if (p.status !== PaymentStatus.PAID) {
-                            <button class="remove-btn" (click)="$event.stopPropagation(); removePayment(i)">✕</button>
+                            <button class="remove-btn" (click)="$event.stopPropagation(); removePayment(i)" aria-label="Remover parcela"><i aria-hidden="true">✕</i></button>
                         } @else {
                             <div class="payment-row-action">✅</div>
                         }
@@ -328,7 +331,7 @@
     <div class="modal">
         <div class="modal-header">
             <span class="modal-title">{{ editingItemIndex !== null ? 'Editar Item' : 'Adicionar Item' }}</span>
-            <button class="modal-close" (click)="closeItemModal()">✕</button>
+            <button class="modal-close" (click)="closeItemModal()" aria-label="Fechar"><i aria-hidden="true">✕</i></button>
         </div>
         <div class="modal-body">
 
@@ -341,8 +344,9 @@
                         <input #itemCodeInput type="text" [(ngModel)]="itemModalCode" class="uppercase"
                                placeholder="Código legado..." (keyup.enter)="searchItemByCode()"
                                [disabled]="itemSearchLoading">
-                        <button class="icon-btn" (click)="searchItemByCode()" [disabled]="itemSearchLoading">
-                            {{ itemSearchLoading ? '⏳' : '🔍' }}
+                        <button class="icon-btn" (click)="searchItemByCode()" [disabled]="itemSearchLoading"
+                                aria-label="Buscar produto">
+                            <i aria-hidden="true">{{ itemSearchLoading ? '⏳' : '🔍' }}</i>
                         </button>
                     }
                 </div>
@@ -371,7 +375,7 @@
                             <span class="item-meta-tag" [class.acessorio]="extra.tipo === 'acessorio'">
                                 {{ extra.tipo === 'acessorio' ? '🧩' : '📝' }} {{ extra.descricao }}
                             </span>
-                            <button class="remove-btn" (click)="removeItemModalExtra(ei)">✕</button>
+                            <button class="remove-btn" (click)="removeItemModalExtra(ei)" aria-label="Remover extra"><i aria-hidden="true">✕</i></button>
                         </div>
                     }
 
@@ -382,7 +386,7 @@
                         </select>
                         <input type="text" [(ngModel)]="itemModalNewExtraDesc"
                                placeholder="Descrição..." (keyup.enter)="addItemModalExtra()">
-                        <button class="icon-btn" (click)="addItemModalExtra()">➕</button>
+                        <button class="icon-btn" (click)="addItemModalExtra()" aria-label="Adicionar extra"><i aria-hidden="true">➕</i></button>
                     </div>
                 </div>
             }
@@ -404,7 +408,7 @@
             <span class="modal-title">
                 {{ editingPaymentIndex !== null ? 'Editar Parcela #' + contract.pagamentos[editingPaymentIndex].parcela : 'Parcela ' + nextParcela + ' de 24' }}
             </span>
-            <button class="modal-close" (click)="closePaymentModal()">✕</button>
+            <button class="modal-close" (click)="closePaymentModal()" aria-label="Fechar"><i aria-hidden="true">✕</i></button>
         </div>
         <div class="modal-body">
 

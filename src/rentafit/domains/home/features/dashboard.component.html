@@ -121,14 +121,6 @@
             <span class="summary-label">Últimos Contratos</span>
             <span class="summary-value">{{ recentContracts().length }}</span>
         </div>
-        <div class="summary-card overdue-pickup">
-            <span class="summary-label">Retiradas Vencidas</span>
-            <span class="summary-value">{{ totalOverduePickup() }}</span>
-        </div>
-        <div class="summary-card late-returns">
-            <span class="summary-label">Em Atraso</span>
-            <span class="summary-value">{{ totalLateReturns() }}</span>
-        </div>
         <div class="summary-card pending-returns">
             <span class="summary-label">Devoluções Pendentes</span>
             <span class="summary-value">{{ totalPendingReturns() }}</span>
@@ -186,39 +178,7 @@
             }
         </div>
 
-        <!-- Section 2: Overdue Pickup (mock) -->
-        <div class="section-card">
-            <span class="section-title">Retirada Vencida</span>
-            <div class="mock-banner">
-                ⚠️ Dados mockados — controle de retirada não implementado
-            </div>
-            @if (overduePickupMock.length === 0) {
-                <div class="empty-state">Nenhuma retirada vencida.</div>
-            } @else {
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nº</th>
-                                <th>Cliente</th>
-                                <th>Retirada Prevista</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @for (item of overduePickupMock; track item.legacyId) {
-                                <tr>
-                                    <td class="legacy-id">{{ item.legacyId }}</td>
-                                    <td>{{ item.customerName }}</td>
-                                    <td class="date-warning">{{ formatDate(item.scheduledPickupDate) }}</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </div>
-
-        <!-- Section 3: Pending Returns (Devoluções Pendentes) -->
+        <!-- Section 2: Pending Returns (Devoluções Pendentes) -->
         <div class="section-card pending-returns-card">
             <span class="section-title">Devoluções Pendentes</span>
             @if (isLoadingPendingReturns()) {
