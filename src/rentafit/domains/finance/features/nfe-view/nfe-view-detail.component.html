@@ -1,0 +1,76 @@
+<section class="fiscal-card">
+  <header class="fiscal-header">
+    <button class="btn-back" (click)="backToList()">← Voltar</button>
+    <h3>NF-e (Nota Fiscal Eletrônica)</h3>
+    @if (document(); as headerDoc) {
+      <span class="status-pill" [class]="'pill-' + headerDoc.status.toLowerCase()">
+        {{ statusLabel(headerDoc.status) }}
+      </span>
+    }
+  </header>
+
+  @if (isLoading()) {
+    <div class="loading">Carregando...</div>
+  }
+
+  @if (errorMsg()) {
+    <div class="msg msg-error">{{ errorMsg() }}</div>
+  }
+  @if (successMsg()) {
+    <div class="msg msg-success">{{ successMsg() }}</div>
+  }
+
+  @if (document(); as doc) {
+    <div class="info-grid">
+      <div class="info-row"><span>Número:</span><strong>{{ doc.number || '—' }}</strong></div>
+      <div class="info-row"><span>Série:</span><strong>{{ doc.series || '—' }}</strong></div>
+      <div class="info-row"><span>Cliente:</span><strong>{{ doc.customerName || '—' }}</strong></div>
+      <div class="info-row"><span>Chave de Acesso:</span><strong class="mono">{{ doc.accessKey || '—' }}</strong></div>
+      <div class="info-row"><span>Data de Emissão:</span><strong>{{ formatDateTime(doc.emissionDate) }}</strong></div>
+      <div class="info-row"><span>Valor:</span><strong>{{ formatCurrency(doc.value) }}</strong></div>
+      <div class="info-row"><span>Protocolo:</span><strong class="mono">{{ doc.protocol || '—' }}</strong></div>
+      @if (doc.status === 'CANCELLED') {
+        <div class="info-row"><span>Data Cancelamento:</span><strong>{{ formatDateTime(doc.cancelledAt) }}</strong></div>
+        <div class="info-row"><span>Motivo:</span><strong>{{ doc.cancelReason }}</strong></div>
+      }
+    </div>
+
+    <div class="actions actions-wrap">
+      @if (doc.xmlUrl) {
+        <button class="btn" (click)="downloadXml()">📄 Download XML</button>
+      }
+      @if (doc.danfeUrl) {
+        <button class="btn" (click)="downloadDanfe()">🖨️ Download DANFE (PDF)</button>
+      }
+      @if (doc.status === 'EMITTED') {
+        <button class="btn" (click)="showEmailModal.set(true)">✉️ Enviar por E-mail</button>
+        <button class="btn btn-danger" [disabled]="isProcessing()" (click)="showCancelModal.set(true)">
+          Cancelar NF-e
+        </button>
+      }
+    </div>
+  }
+</section>
+
+@if (showCancelModal()) {
+  <rentafit-invoice-cancel-modal
+    documentLabel="NF-e"
+    [invoiceNumber]="document()?.number ?? ''"
+    [accessKey]="document()?.accessKey ?? ''"
+    [value]="formatCurrency(document()?.value)"
+    (confirm)="confirmCancel($event)"
+    (close)="showCancelModal.set(false)"
+  />
+}
+
+@if (showEmailModal()) {
+  <rentafit-invoice-email-modal
+    documentLabel="NF-e"
+    [invoiceNumber]="document()?.number ?? ''"
+    [series]="document()?.series ?? ''"
+    [customerName]="document()?.customerName ?? ''"
+    [customerEmail]="document()?.customerEmail ?? ''"
+    (send)="confirmEmail($event)"
+    (close)="showEmailModal.set(false)"
+  />
+}
