@@ -9,7 +9,9 @@ import {
   IEmailInvoiceRequest,
   IEmitInvoiceRequest,
   IFiscalDocument,
+  IFiscalListParams,
   InvoiceStatusApi,
+  IPage,
 } from '../data/fiscal-document.types';
 import { FiscalDocumentService } from './fiscal-document.service';
 
@@ -160,6 +162,19 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
     return this.http.get(this.url(`/api/billing/invoices/chave/${accessKey}/pdf`), {
       responseType: 'blob',
     });
+  }
+
+  /**
+   * Listagem de notas fiscais ainda não disponível no backend (endpoint em
+   * definição conjunta com o time de backend). Fase 1 usa `FiscalDocumentMockService`.
+   */
+  list(_params: IFiscalListParams): Observable<IPage<IFiscalDocument>> {
+    return throwError(() => new Error('Listagem de notas fiscais ainda não disponível no backend.'));
+  }
+
+  /** Consulta de nota fiscal por id ainda não disponível no backend. */
+  findById(_id: string): Observable<IFiscalDocument> {
+    return throwError(() => new Error('Consulta de nota fiscal por id ainda não disponível no backend.'));
   }
 
   private url(path: string): string {

@@ -55,6 +55,9 @@ export interface IFiscalDocument {
   danfeUrl?: string;
   cancelXmlUrl?: string;
   customerEmail?: string;
+  customerName?: string;
+  origin?: FiscalOrigin;
+  originId?: string;
 }
 
 /** Contexto da origem (pedido de venda ou contrato de locação). */
@@ -95,4 +98,24 @@ export interface IEmailInvoiceRequest {
   email?: string;
   includeDanfe: boolean;
   includeXml: boolean;
+}
+
+/** Página genérica retornada por listagens do backend. */
+export interface IPage<T> {
+  content: T[];
+  number: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+/** Parâmetros de listagem de documentos fiscais. */
+export interface IFiscalListParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+  type?: FiscalDocumentType;
+  origin?: FiscalOrigin;
+  status?: InvoiceStatusApi;
+  customerDocument?: string;
 }

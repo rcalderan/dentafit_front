@@ -1,12 +1,15 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { delay, map } from 'rxjs/operators';
 import {
   FiscalDocumentType,
+  FiscalOrigin,
   ICancelInvoiceRequest,
   IEmailInvoiceRequest,
   IEmitInvoiceRequest,
   IFiscalDocument,
+  IFiscalListParams,
+  IPage,
 } from '../data/fiscal-document.types';
 import { FiscalDocumentService } from './fiscal-document.service';
 
@@ -27,6 +30,9 @@ export class FiscalDocumentMockService extends FiscalDocumentService {
   /** Latência simulada de rede/autorizador, em milissegundos. */
   private readonly latencyMs = 900;
 
+  /** Store em memória usado apenas pela listagem mockada (`list`/`findById`). */
+  private readonly store: IFiscalDocument[] = this.seedDocuments();
+
   /**
    * Inicia a emissão. Retorna o documento em `PENDING_EMISSION` com protocolo
    * de envio — a autorização final é obtida via `checkStatus`.
@@ -41,9 +47,12 @@ export class FiscalDocumentMockService extends FiscalDocumentService {
       natureOperation: request.natureOperation,
       purpose: request.purpose,
       customerEmail: request.customerEmail,
+      origin: request.origin,
+      originId: request.originId,
       sendProtocol: this.randomDigits(34),
       sentAt: now,
     };
+    this.upsert(doc);
     return of(doc).pipe(delay(this.latencyMs));
   }
 
@@ -52,6 +61,7 @@ export class FiscalDocumentMockService extends FiscalDocumentService {
     return of(current).pipe(
       delay(this.latencyMs),
       map(doc => this.authorize(doc)),
+      map(doc => this.upsert(doc)),
     );
   }
 
@@ -65,6 +75,7 @@ export class FiscalDocumentMockService extends FiscalDocumentService {
       cancelProtocol: this.randomDigits(15),
       cancelXmlUrl: `mock://fiscal/${current.id}/cancel.xml`,
     };
+    this.upsert(cancelled);
     return of(cancelled).pipe(delay(this.latencyMs));
   }
 
@@ -93,6 +104,78 @@ export class FiscalDocumentMockService extends FiscalDocumentService {
   /** Simula download do DANFE/PDF. */
   downloadDanfe(_accessKey: string): Observable<Blob> {
     return of(new Blob(['PDF'], { type: 'application/pdf' })).pipe(delay(this.latencyMs));
+  }
+
+  /** Lista documentos fiscais mockados, filtrando e paginando em memória. */
+  list(params: IFiscalListParams): Observable<IPage<IFiscalDocument>> {
+    const filtered = this.store.filter(doc => this.matchesFilter(doc, params));
+    const page = params.page ?? 0;
+    const size = params.size ?? 20;
+    const start = page * size;
+    const content = filtered.slice(start, start + size);
+    const result: IPage<IFiscalDocument> = {
+      content,
+      number: page,
+      size,
+      totalElements: filtered.length,
+      totalPages: Math.ceil(filtered.length / size) || 1,
+    };
+    return of(result).pipe(delay(this.latencyMs));
+  }
+
+  /** Busca um documento fiscal mockado pelo id. */
+  findById(id: string): Observable<IFiscalDocument> {
+    const found = this.store.find(doc => doc.id === id);
+    if (!found) {
+      return throwError(() => new Error(`Nota fiscal ${id} não encontrada.`));
+    }
+    return of(found).pipe(delay(this.latencyMs));
+  }
+
+  private matchesFilter(doc: IFiscalDocument, params: IFiscalListParams): boolean {
+    if (params.type && doc.type !== params.type) return false;
+    if (params.origin && doc.origin !== params.origin) return false;
+    if (params.status && doc.status !== params.status) return false;
+    return true;
+  }
+
+  /** Insere ou atualiza um documento no store mockado, mantendo-o listável. */
+  private upsert(doc: IFiscalDocument): IFiscalDocument {
+    const index = this.store.findIndex(d => d.id === doc.id);
+    if (index >= 0) {
+      this.store[index] = doc;
+    } else {
+      this.store.unshift(doc);
+    }
+    return doc;
+  }
+
+  /** Gera notas fiscais fictícias para popular a listagem mockada. */
+  private seedDocuments(): IFiscalDocument[] {
+    const seeds: Array<Partial<IFiscalDocument> & { type: FiscalDocumentType; origin: FiscalOrigin }> = [
+      { type: 'NFE', origin: 'SALES', status: 'EMITTED', customerName: 'Maria Souza', value: 350 },
+      { type: 'NFE', origin: 'SALES', status: 'CANCELLED', customerName: 'João Pereira', value: 120 },
+      { type: 'NFE', origin: 'SALES', status: 'PENDING_EMISSION', customerName: 'Ana Lima', value: 890 },
+      { type: 'NFSE', origin: 'RENTAL', status: 'EMITTED', customerName: 'Carlos Silva', value: 450 },
+      { type: 'NFSE', origin: 'RENTAL', status: 'DENIED', customerName: 'Beatriz Santos', value: 210 },
+      { type: 'NFSE', origin: 'RENTAL', status: 'EMITTED', customerName: 'Fernanda Costa', value: 680 },
+    ];
+    return seeds.map(seed => this.toSeededDocument(seed));
+  }
+
+  private toSeededDocument(
+    seed: Partial<IFiscalDocument> & { type: FiscalDocumentType; origin: FiscalOrigin },
+  ): IFiscalDocument {
+    const base: IFiscalDocument = {
+      id: this.randomId(seed.type),
+      type: seed.type,
+      origin: seed.origin,
+      status: seed.status ?? 'EMITTED',
+      customerName: seed.customerName,
+      value: seed.value,
+      emissionDate: new Date().toISOString(),
+    };
+    return base.status === 'EMITTED' ? this.authorize(base) : base;
   }
 
   /** Gera os dados de autorização (número, chave, protocolo, links). */

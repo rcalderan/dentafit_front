@@ -4,6 +4,8 @@ import {
   IEmailInvoiceRequest,
   IEmitInvoiceRequest,
   IFiscalDocument,
+  IFiscalListParams,
+  IPage,
 } from '../data/fiscal-document.types';
 
 /**
@@ -22,4 +24,8 @@ export abstract class FiscalDocumentService {
   abstract sendEmail(id: string, request: IEmailInvoiceRequest): Observable<boolean>;
   abstract downloadXml(accessKey: string): Observable<Blob>;
   abstract downloadDanfe(accessKey: string): Observable<Blob>;
+  /** Lista documentos fiscais paginados, filtrando por tipo/origem/status. */
+  abstract list(params: IFiscalListParams): Observable<IPage<IFiscalDocument>>;
+  /** Busca um único documento fiscal pelo id. */
+  abstract findById(id: string): Observable<IFiscalDocument>;
 }

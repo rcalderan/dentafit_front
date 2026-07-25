@@ -94,4 +94,42 @@ describe('FiscalDocumentMockService', () => {
     const blob = await resolve(lastValueFrom(service.downloadDanfe('1234567890')));
     expect(blob.type).toBe('application/pdf');
   });
+
+  it('list filtra por type e origin retornando apenas NF-e de vendas', async () => {
+    const page = await resolve(lastValueFrom(service.list({ type: 'NFE', origin: 'SALES' })));
+    expect(page.content.length).toBeGreaterThan(0);
+    expect(page.content.every(doc => doc.type === 'NFE' && doc.origin === 'SALES')).toBe(true);
+  });
+
+  it('list filtra por status', async () => {
+    const page = await resolve(lastValueFrom(service.list({ type: 'NFSE', status: 'DENIED' })));
+    expect(page.content).toHaveLength(1);
+    expect(page.content[0].status).toBe('DENIED');
+  });
+
+  it('list pagina os resultados respeitando page e size', async () => {
+    const page = await resolve(lastValueFrom(service.list({ page: 0, size: 2 })));
+    expect(page.content).toHaveLength(2);
+    expect(page.size).toBe(2);
+    expect(page.totalPages).toBeGreaterThan(1);
+  });
+
+  it('findById retorna o documento correspondente', async () => {
+    const page = await resolve(lastValueFrom(service.list({ type: 'NFE', origin: 'SALES' })));
+    const target = page.content[0];
+    const found = await resolve(lastValueFrom(service.findById(target.id)));
+    expect(found.id).toBe(target.id);
+  });
+
+  it('findById rejeita quando o id não existe', async () => {
+    await expect(resolve(lastValueFrom(service.findById('inexistente')))).rejects.toThrow(
+      'não encontrada',
+    );
+  });
+
+  it('emit registra o documento no store para ser listado em seguida', async () => {
+    const emitted = await resolve(lastValueFrom(service.emit(nfeRequest)));
+    const page = await resolve(lastValueFrom(service.list({ type: 'NFE', origin: 'SALES' })));
+    expect(page.content.some(doc => doc.id === emitted.id)).toBe(true);
+  });
 });

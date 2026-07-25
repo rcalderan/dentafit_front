@@ -186,4 +186,12 @@ describe('FiscalDocumentHttpService', () => {
       lastValueFrom(service.cancel({ id: 'x', type: 'NFE', status: 'EMITTED' }, { reason: 'Erro' })),
     ).rejects.toThrow('Cancelamento');
   });
+
+  it('list retorna erro pois endpoint de listagem ainda não existe no backend', async () => {
+    await expect(lastValueFrom(service.list({ type: 'NFE' }))).rejects.toThrow('Listagem');
+  });
+
+  it('findById retorna erro pois endpoint ainda não existe no backend', async () => {
+    await expect(lastValueFrom(service.findById('x'))).rejects.toThrow('Consulta de nota fiscal');
+  });
 });
