@@ -1,10 +1,11 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { APP_CONFIG } from '../../../shared/data/app-config.token';
 import {
   FiscalDocumentType,
+  FiscalOrigin,
   ICancelInvoiceRequest,
   IEmailInvoiceRequest,
   IEmitInvoiceRequest,
@@ -48,10 +49,28 @@ interface IBackendFiscalDocument {
   series?: string;
   authorizationDate?: string;
   issueDate?: string;
+  emissionDate?: string;
   totalValue?: number;
   rejectionReason?: string;
+  serviceDescription?: string;
+  cancelReason?: string;
+  cancelledAt?: string;
+  cancelProtocol?: string;
   signedXml?: string;
   authorizedXml?: string;
+  customerEmail?: string;
+  customerName?: string;
+  origin?: string;
+  originId?: string;
+}
+
+/** Página retornada pelo backend para listagens de documentos fiscais. */
+interface IBackendFiscalPage {
+  content: IBackendFiscalDocument[];
+  number: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 /**
@@ -98,7 +117,7 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
     };
     return this.http
       .post<INfeEmitResponse>(this.url('/api/nfe/emit'), body)
-      .pipe(map((res) => this.toFiscalDocument('NFE', res, request)));
+      .pipe(map((res) => this.toFiscalDocumentFromEmission('NFE', res, request)));
   }
 
   /** NFS-e: endpoint do Portal Nacional. Pode ser 201 (síncrona) ou 202 (assíncrona). */
@@ -121,7 +140,7 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
     };
     return this.http
       .post<INfseEmitResponse>(this.url('/api/billing/invoices/emit'), body)
-      .pipe(map((res) => this.toFiscalDocument('NFSE', res, request)));
+      .pipe(map((res) => this.toFiscalDocumentFromEmission('NFSE', res, request)));
   }
 
   /**
@@ -165,16 +184,48 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
   }
 
   /**
-   * Listagem de notas fiscais ainda não disponível no backend (endpoint em
-   * definição conjunta com o time de backend). Fase 1 usa `FiscalDocumentMockService`.
+   * Lista documentos fiscais paginados e filtrados no backend.
+   * O backend espera status no formato original (PENDING, AUTHORIZED, etc.).
    */
-  list(_params: IFiscalListParams): Observable<IPage<IFiscalDocument>> {
-    return throwError(() => new Error('Listagem de notas fiscais ainda não disponível no backend.'));
+  list(params: IFiscalListParams): Observable<IPage<IFiscalDocument>> {
+    const httpParams = this.buildListParams(params);
+    return this.http
+      .get<IBackendFiscalPage>(this.url('/api/fiscal-documents'), { params: httpParams })
+      .pipe(map((page) => this.toFiscalPage(page)));
   }
 
-  /** Consulta de nota fiscal por id ainda não disponível no backend. */
-  findById(_id: string): Observable<IFiscalDocument> {
-    return throwError(() => new Error('Consulta de nota fiscal por id ainda não disponível no backend.'));
+  private buildListParams(params: IFiscalListParams): HttpParams {
+    let httpParams = new HttpParams()
+      .set('page', (params.page ?? 0).toString())
+      .set('size', (params.size ?? 20).toString());
+
+    httpParams = this.setParamIfPresent(httpParams, 'sort', params.sort);
+    httpParams = this.setParamIfPresent(httpParams, 'type', params.type);
+    httpParams = this.setParamIfPresent(httpParams, 'origin', params.origin);
+    httpParams = this.setParamIfPresent(httpParams, 'status', params.status ? this.toBackendStatus(params.status) : null);
+    httpParams = this.setParamIfPresent(httpParams, 'customerDocument', params.customerDocument);
+    return httpParams;
+  }
+
+  private setParamIfPresent(params: HttpParams, key: string, value: string | null | undefined): HttpParams {
+    return value ? params.set(key, value) : params;
+  }
+
+  private toFiscalPage(page: IBackendFiscalPage): IPage<IFiscalDocument> {
+    return {
+      content: page.content.map((doc) => this.toFiscalDocument(doc)),
+      number: page.number,
+      size: page.size,
+      totalElements: page.totalElements,
+      totalPages: page.totalPages,
+    };
+  }
+
+  /** Busca um documento fiscal pelo id interno do backend. */
+  findById(id: string): Observable<IFiscalDocument> {
+    return this.http
+      .get<IBackendFiscalDocument>(this.url(`/api/fiscal-documents/${id}`))
+      .pipe(map((doc) => this.toFiscalDocument(doc)));
   }
 
   private url(path: string): string {
@@ -182,7 +233,7 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
     return `${base}${path}`;
   }
 
-  private toFiscalDocument(
+  private toFiscalDocumentFromEmission(
     type: FiscalDocumentType,
     response: INfeEmitResponse | INfseEmitResponse,
     request: IEmitInvoiceRequest,
@@ -228,9 +279,46 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
       protocol: doc.protocol ?? current.protocol,
       number: doc.number?.toString() ?? current.number,
       series: doc.series ?? current.series,
-      emissionDate: doc.authorizationDate ?? doc.issueDate ?? current.emissionDate,
+      emissionDate: doc.authorizationDate ?? doc.issueDate ?? doc.emissionDate ?? current.emissionDate,
       xmlUrl: doc.authorizedXml ?? doc.signedXml ?? current.xmlUrl,
     };
+  }
+
+  private toFiscalDocument(doc: IBackendFiscalDocument): IFiscalDocument {
+    return {
+      id: doc.id,
+      type: doc.type as FiscalDocumentType,
+      status: this.mapStatus(doc.status),
+      number: doc.number?.toString(),
+      series: doc.series,
+      accessKey: doc.accessKey,
+      emissionDate: doc.authorizationDate ?? doc.issueDate ?? doc.emissionDate,
+      protocol: doc.protocol,
+      value: doc.totalValue,
+      serviceDescription: doc.serviceDescription,
+      cancelReason: doc.cancelReason,
+      cancelledAt: doc.cancelledAt,
+      cancelProtocol: doc.cancelProtocol,
+      customerEmail: doc.customerEmail,
+      customerName: doc.customerName,
+      origin: doc.origin as FiscalOrigin,
+      originId: doc.originId,
+    };
+  }
+
+  private toBackendStatus(status: InvoiceStatusApi): string {
+    switch (status) {
+      case 'PENDING_EMISSION':
+        return 'PENDING';
+      case 'EMITTED':
+        return 'AUTHORIZED';
+      case 'DENIED':
+        return 'REJECTED';
+      case 'CANCELLED':
+        return 'CANCELLED';
+      default:
+        return 'PENDING';
+    }
   }
 
   private mapStatus(backendStatus: string): InvoiceStatusApi {

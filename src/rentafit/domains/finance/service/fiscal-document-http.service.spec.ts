@@ -187,11 +187,60 @@ describe('FiscalDocumentHttpService', () => {
     ).rejects.toThrow('Cancelamento');
   });
 
-  it('list retorna erro pois endpoint de listagem ainda não existe no backend', async () => {
-    await expect(lastValueFrom(service.list({ type: 'NFE' }))).rejects.toThrow('Listagem');
+  it('lista documentos fiscais via /api/fiscal-documents mapeando status e paginação', async () => {
+    const params = { type: 'NFE' as const, origin: 'SALES' as const, status: 'EMITTED' as const, page: 0, size: 20 };
+    const promise = lastValueFrom(service.list(params));
+    const req = httpMock.expectOne('/api/fiscal-documents?page=0&size=20&type=NFE&origin=SALES&status=AUTHORIZED');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      content: [
+        {
+          id: 'doc-1',
+          type: 'NFE',
+          status: 'AUTHORIZED',
+          accessKey: '12345678901234567890123456789012345678901234',
+          number: 123456,
+          series: '1',
+          issueDate: '2026-06-21T12:00:00-03:00',
+          totalValue: 1234.56,
+          customerName: 'Maria Souza',
+          origin: 'SALES',
+          originId: 'order-1',
+        },
+      ],
+      number: 0,
+      size: 20,
+      totalElements: 1,
+      totalPages: 1,
+    });
+
+    const page = await promise;
+    expect(page.content).toHaveLength(1);
+    expect(page.content[0].status).toBe('EMITTED');
+    expect(page.content[0].customerName).toBe('Maria Souza');
+    expect(page.totalElements).toBe(1);
   });
 
-  it('findById retorna erro pois endpoint ainda não existe no backend', async () => {
-    await expect(lastValueFrom(service.findById('x'))).rejects.toThrow('Consulta de nota fiscal');
+  it('busca documento por id via /api/fiscal-documents/{id}', async () => {
+    const promise = lastValueFrom(service.findById('doc-1'));
+    const req = httpMock.expectOne('/api/fiscal-documents/doc-1');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      id: 'doc-1',
+      type: 'NFSE',
+      status: 'AUTHORIZED',
+      accessKey: '12345678901234567890123456789012345678901234567890',
+      number: 654321,
+      issueDate: '2026-06-21T12:00:00-03:00',
+      totalValue: 800,
+      customerEmail: 'maria@example.com',
+      customerName: 'Maria Souza',
+      origin: 'RENTAL',
+      originId: 'contract-1',
+    });
+
+    const doc = await promise;
+    expect(doc.status).toBe('EMITTED');
+    expect(doc.customerEmail).toBe('maria@example.com');
   });
 });

@@ -4,8 +4,6 @@ import { MainLayout } from './shared/layout/main-layout/main-layout';
 import { authGuard } from './domains/auth/guards/auth.guard';
 import { roleGuard } from './domains/auth/guards/role.guard';
 import { UserRole } from './domains/auth/data/user.model';
-import { FiscalDocumentService } from './domains/finance/service/fiscal-document.service';
-import { FiscalDocumentMockService } from './domains/finance/service/fiscal-document-mock.service';
 
 export const routes: Routes = [
     { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
@@ -95,14 +93,12 @@ export const routes: Routes = [
                 path: 'rental/nfse-view',
                 loadComponent: () => import('./domains/finance/features/nfse-view/nfse-view.component').then(m => m.NfseViewComponent),
                 canActivate: [roleGuard],
-                providers: [{ provide: FiscalDocumentService, useExisting: FiscalDocumentMockService }],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'NFS-e de Locações' }
             },
             {
                 path: 'rental/nfse-view/:id',
                 loadComponent: () => import('./domains/finance/features/nfse-view/nfse-view-detail.component').then(m => m.NfseViewDetailComponent),
                 canActivate: [roleGuard],
-                providers: [{ provide: FiscalDocumentService, useExisting: FiscalDocumentMockService }],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Detalhe da NFS-e' }
             },
             {
@@ -145,14 +141,12 @@ export const routes: Routes = [
                 path: 'sales/nfe-view',
                 loadComponent: () => import('./domains/finance/features/nfe-view/nfe-view.component').then(m => m.NfeViewComponent),
                 canActivate: [roleGuard],
-                providers: [{ provide: FiscalDocumentService, useExisting: FiscalDocumentMockService }],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'NF-e de Vendas' }
             },
             {
                 path: 'sales/nfe-view/:id',
                 loadComponent: () => import('./domains/finance/features/nfe-view/nfe-view-detail.component').then(m => m.NfeViewDetailComponent),
                 canActivate: [roleGuard],
-                providers: [{ provide: FiscalDocumentService, useExisting: FiscalDocumentMockService }],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Detalhe da NF-e' }
             },
             {

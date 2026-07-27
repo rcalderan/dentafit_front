@@ -40,8 +40,7 @@ playwright*
 test-results
 
 # QA artifacts
-.QA/
-
+.QA/*
 # Graphify
 graphify-out/
 .kiro/

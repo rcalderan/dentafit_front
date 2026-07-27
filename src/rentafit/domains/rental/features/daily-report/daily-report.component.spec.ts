@@ -6,7 +6,8 @@ import { DailyRentalReportService } from '../../service/daily-rental-report.serv
 import { IDailyRentalReport } from '../../data/daily-report.interface';
 
 const buildReport = (overrides: Partial<IDailyRentalReport> = {}): IDailyRentalReport => ({
-  eventDate: '2026-06-28',
+  startDate: '2026-06-28',
+  endDate: '2026-06-28',
   generatedAt: '2026-06-27T23:00:00Z',
   contractCount: 1,
   itemCount: 1,
@@ -35,12 +36,12 @@ const buildReport = (overrides: Partial<IDailyRentalReport> = {}): IDailyRentalR
 });
 
 describe('DailyReportComponent', () => {
-  let service: { getDaily: ReturnType<typeof vi.fn> };
+  let service: { getByPeriod: ReturnType<typeof vi.fn> };
 
   const makeComponent = () => TestBed.createComponent(DailyReportComponent).componentInstance;
 
   beforeEach(async () => {
-    service = { getDaily: vi.fn().mockReturnValue(of(buildReport())) };
+    service = { getByPeriod: vi.fn().mockReturnValue(of(buildReport())) };
 
     TestBed.configureTestingModule({
       imports: [DailyReportComponent],
@@ -54,12 +55,12 @@ describe('DailyReportComponent', () => {
     const component = makeComponent();
     component.ngOnInit();
 
-    expect(service.getDaily).toHaveBeenCalledTimes(1);
+    expect(service.getByPeriod).toHaveBeenCalledTimes(1);
     expect(component['report']()?.groups[0].clothingType).toBe('Terno / Smoking');
   });
 
   it('marca isEmpty quando não há grupos', () => {
-    service.getDaily.mockReturnValue(of(buildReport({ groups: [], itemCount: 0, contractCount: 0 })));
+    service.getByPeriod.mockReturnValue(of(buildReport({ groups: [], itemCount: 0, contractCount: 0 })));
     const component = makeComponent();
     component.ngOnInit();
 
@@ -67,7 +68,7 @@ describe('DailyReportComponent', () => {
   });
 
   it('define mensagem de erro e limpa relatório em caso de falha', () => {
-    service.getDaily.mockReturnValue(throwError(() => new Error('Falha de rede')));
+    service.getByPeriod.mockReturnValue(throwError(() => new Error('Falha de rede')));
     const component = makeComponent();
     component.ngOnInit();
 
@@ -77,10 +78,10 @@ describe('DailyReportComponent', () => {
 
   it('não chama o serviço quando a data está vazia', () => {
     const component = makeComponent();
-    component['reportDate'].set('');
+    component['startDate'].set('');
     component['generate']();
 
-    expect(service.getDaily).not.toHaveBeenCalled();
-    expect(component['errorMsg']()).toContain('Selecione uma data');
+    expect(service.getByPeriod).not.toHaveBeenCalled();
+    expect(component['errorMsg']()).toContain('Selecione o período');
   });
 });
