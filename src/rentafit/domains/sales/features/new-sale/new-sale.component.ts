@@ -168,10 +168,17 @@ export class NewSale implements OnInit {
     };
   });
 
-  /** Documento fiscal pré-existente (reidrata o componente ao carregar o pedido). */
+  /**
+   * Documento fiscal pré-existente (reidrata o componente ao carregar o pedido).
+   *
+   * Backend `PENDING_EMISSION` significa "aguardando emissão manual" (auto-emit
+   * desabilitado), e não "enviada ao autorizador". O frontend trata
+   * `PENDING_EMISSION` como "Em processamento / Verificar Status", então
+   * mapeamos para `null` (= `NONE`) para exibir o botão "Emitir NF-e".
+   */
   protected readonly initialFiscalDocument = computed<IFiscalDocument | null>(() => {
     const o = this.order();
-    if (!o || !o.invoiceStatus || o.invoiceStatus === 'NONE') return null;
+    if (!o || !o.invoiceStatus || o.invoiceStatus === 'NONE' || o.invoiceStatus === 'PENDING_EMISSION') return null;
     return {
       id: o.invoiceId ?? '',
       type: 'NFE',

@@ -2,7 +2,7 @@
   <header class="fiscal-header">
     <h3>NF-e (Nota Fiscal Eletrônica)</h3>
     <span class="status-pill" [class]="'pill-' + status().toLowerCase()">
-      {{ statusLabels[status()] }}
+      {{ statusLabel(status()) }}
     </span>
   </header>
 

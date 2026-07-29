@@ -45,7 +45,7 @@ export abstract class FiscalListBase implements OnInit {
       .list({
         page,
         size: 20,
-        sort: 'emissionDate,desc',
+        sort: 'issueDate,desc',
         type: this.fiscalType,
         origin: this.origin,
         status: this.filterStatus() ?? undefined,

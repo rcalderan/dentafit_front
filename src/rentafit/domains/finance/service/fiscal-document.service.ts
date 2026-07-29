@@ -22,8 +22,8 @@ export abstract class FiscalDocumentService {
   ): Observable<IFiscalDocument>;
   abstract reemit(current: IFiscalDocument): Observable<IFiscalDocument>;
   abstract sendEmail(id: string, request: IEmailInvoiceRequest): Observable<boolean>;
-  abstract downloadXml(accessKey: string): Observable<Blob>;
-  abstract downloadDanfe(accessKey: string): Observable<Blob>;
+  abstract downloadXml(documentId: string): Observable<Blob>;
+  abstract downloadDanfe(documentId: string): Observable<Blob>;
   /** Lista documentos fiscais paginados, filtrando por tipo/origem/status. */
   abstract list(params: IFiscalListParams): Observable<IPage<IFiscalDocument>>;
   /** Busca um único documento fiscal pelo id. */

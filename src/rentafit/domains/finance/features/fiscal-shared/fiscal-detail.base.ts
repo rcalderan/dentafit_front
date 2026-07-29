@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { Directive, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
@@ -19,6 +20,7 @@ import { formatFiscalCurrency, formatFiscalDateTime } from './fiscal-format.util
 @Directive()
 export abstract class FiscalDetailBase implements OnInit {
   protected readonly fiscalService = inject(FiscalDocumentService);
+  protected readonly htmlDocument = inject(DOCUMENT);
   protected readonly route = inject(ActivatedRoute);
   protected readonly router = inject(Router);
 
@@ -58,14 +60,31 @@ export abstract class FiscalDetailBase implements OnInit {
     this.router.navigate([this.listRoute]);
   }
 
+  protected canDownloadXml(): boolean {
+    return this.document()?.status === 'EMITTED';
+  }
+
   protected downloadXml(): void {
-    if (!this.document()?.xmlUrl) return;
-    this.flashSuccess('Download do XML iniciado (mock).');
+    const current = this.document();
+    if (!current || !this.canDownloadXml()) return;
+    this.fiscalService.downloadXml(current.id).subscribe({
+      next: blob => this.saveBlob(blob, `fiscal-document-${current.id}.xml`),
+      error: (err: Error) => this.errorMsg.set(err.message),
+    });
   }
 
   protected downloadDanfe(): void {
-    if (!this.document()?.danfeUrl) return;
-    this.flashSuccess('Download do documento iniciado (mock).');
+    this.errorMsg.set('DANF-e local ainda não está disponível.');
+  }
+
+  private saveBlob(blob: Blob, filename: string): void {
+    const anchor = this.htmlDocument.createElement('a');
+    const objectUrl = URL.createObjectURL(blob);
+    anchor.href = objectUrl;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(objectUrl);
+    this.flashSuccess('Download do XML iniciado.');
   }
 
   protected confirmEmail(request: IEmailInvoiceRequest): void {

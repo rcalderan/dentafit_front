@@ -37,11 +37,8 @@
     </div>
 
     <div class="actions actions-wrap">
-      @if (doc.xmlUrl) {
-        <button class="btn" (click)="downloadXml()">📄 Download XML</button>
-      }
-      @if (doc.danfeUrl) {
-        <button class="btn" (click)="downloadDanfe()">🖨️ Download NFS-e (PDF)</button>
+      @if (canDownloadXml()) {
+        <button class="btn" (click)="downloadXml()">� Download XML</button>
       }
       @if (doc.status === 'EMITTED') {
         <button class="btn" (click)="showEmailModal.set(true)">✉️ Enviar por E-mail</button>

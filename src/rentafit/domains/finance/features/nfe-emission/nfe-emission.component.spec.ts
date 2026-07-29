@@ -95,4 +95,10 @@ describe('NfeEmissionComponent', () => {
     fixture.detectChanges();
     expect((fixture.componentInstance as any).status()).toBe('EMITTED');
   });
+
+  it('regressão: initialDocument=null (backend PENDING_EMISSION mapeado) mostra botão Emitir', () => {
+    const comp = build(paidContext).componentInstance as any;
+    expect(comp.status()).toBe('NONE');
+    expect(comp.canEmit()).toBe(true);
+  });
 });

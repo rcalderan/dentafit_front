@@ -8,6 +8,18 @@ export type FiscalDocumentType = 'NFE' | 'NFSE';
 
 export type FiscalOrigin = 'SALES' | 'RENTAL' | 'MANUAL';
 
+export type FiscalDocumentSort =
+  | 'issueDate,asc'
+  | 'issueDate,desc'
+  | 'number,asc'
+  | 'number,desc'
+  | 'status,asc'
+  | 'status,desc'
+  | 'totalValue,asc'
+  | 'totalValue,desc'
+  | 'createdAt,asc'
+  | 'createdAt,desc';
+
 export type InvoiceStatusApi =
   | 'NONE' // Nenhuma nota emitida
   | 'PENDING_EMISSION' // Em processamento (aguardando autorizador)
@@ -113,9 +125,10 @@ export interface IPage<T> {
 export interface IFiscalListParams {
   page?: number;
   size?: number;
-  sort?: string;
+  sort?: FiscalDocumentSort;
   type?: FiscalDocumentType;
   origin?: FiscalOrigin;
   status?: InvoiceStatusApi;
   customerDocument?: string;
+  accessKey?: string;
 }

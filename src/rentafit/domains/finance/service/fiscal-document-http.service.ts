@@ -75,7 +75,7 @@ interface IBackendFiscalPage {
 
 /**
  * Serviço HTTP real de emissão de documentos fiscais. Consome os endpoints do
- * backend Rentafit: `/api/nfe/emit` (NF-e) e `/api/billing/invoices/*` (NFS-e).
+ * backend Rentafit: `/api/nfe/emit`, `/api/nfse/emit` e `/api/fiscal-documents/*`.
  *
  * O ambiente é controlado por `APP_CONFIG.apiBaseUrl` (vazio em dev => proxy).
  * A aplicação deve ser configurada para apontar para homologação, nunca
@@ -139,20 +139,13 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
       originId: request.originId,
     };
     return this.http
-      .post<INfseEmitResponse>(this.url('/api/billing/invoices/emit'), body)
+      .post<INfseEmitResponse>(this.url('/api/nfse/emit'), body)
       .pipe(map((res) => this.toFiscalDocumentFromEmission('NFSE', res, request)));
   }
 
-  /**
-   * Consulta status no backend. Para NFS-e, usa `/api/billing/invoices/{id}`.
-   * Para NF-e, não existe endpoint de consulta ainda — mantém o documento atual.
-   */
   checkStatus(current: IFiscalDocument): Observable<IFiscalDocument> {
-    if (current.type === 'NFE') {
-      return throwError(() => new Error('Consulta de status de NF-e ainda não disponível no backend.'));
-    }
     return this.http
-      .get<IBackendFiscalDocument>(this.url(`/api/billing/invoices/${current.id}`))
+      .get<IBackendFiscalDocument>(this.url(`/api/fiscal-documents/${current.id}`))
       .pipe(map((doc) => this.mergeBackendDocument(current, doc)));
   }
 
@@ -171,16 +164,14 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
     return throwError(() => new Error('Envio de e-mail de nota fiscal ainda não disponível no backend.'));
   }
 
-  downloadXml(accessKey: string): Observable<Blob> {
-    return this.http.get(this.url(`/api/billing/invoices/chave/${accessKey}/xml`), {
+  downloadXml(documentId: string): Observable<Blob> {
+    return this.http.get(this.url(`/api/fiscal-documents/${documentId}/xml`), {
       responseType: 'blob',
     });
   }
 
-  downloadDanfe(accessKey: string): Observable<Blob> {
-    return this.http.get(this.url(`/api/billing/invoices/chave/${accessKey}/pdf`), {
-      responseType: 'blob',
-    });
+  downloadDanfe(_documentId: string): Observable<Blob> {
+    return throwError(() => new Error('DANF-e local ainda não está disponível no backend.'));
   }
 
   /**
@@ -204,6 +195,7 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
     httpParams = this.setParamIfPresent(httpParams, 'origin', params.origin);
     httpParams = this.setParamIfPresent(httpParams, 'status', params.status ? this.toBackendStatus(params.status) : null);
     httpParams = this.setParamIfPresent(httpParams, 'customerDocument', params.customerDocument);
+    httpParams = this.setParamIfPresent(httpParams, 'accessKey', params.accessKey);
     return httpParams;
   }
 

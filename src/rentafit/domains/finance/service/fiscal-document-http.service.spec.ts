@@ -97,9 +97,9 @@ describe('FiscalDocumentHttpService', () => {
     expect(doc.accessKey).toHaveLength(44);
   });
 
-  it('emite NFS-e para /api/billing/invoices/emit com defaults fiscais', async () => {
+  it('emite NFS-e para /api/nfse/emit com defaults fiscais', async () => {
     const promise = lastValueFrom(service.emit(nfseRequest));
-    const req = httpMock.expectOne('/api/billing/invoices/emit');
+    const req = httpMock.expectOne('/api/nfse/emit');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toMatchObject({
       customerId: 'cust-1',
@@ -130,10 +130,10 @@ describe('FiscalDocumentHttpService', () => {
     expect(doc.number).toBe('123456');
   });
 
-  it('consulta status de NFS-e via /api/billing/invoices/{id}', async () => {
+  it('consulta status pelo documento fiscal unificado', async () => {
     const current = { id: 'nfse-uuid', type: 'NFSE' as const, status: 'PENDING_EMISSION' as const, value: 800 };
     const promise = lastValueFrom(service.checkStatus(current));
-    const req = httpMock.expectOne('/api/billing/invoices/nfse-uuid');
+    const req = httpMock.expectOne('/api/fiscal-documents/nfse-uuid');
     expect(req.request.method).toBe('GET');
     req.flush({
       id: 'nfse-uuid',
@@ -161,9 +161,9 @@ describe('FiscalDocumentHttpService', () => {
     expect(doc.status).toBe('DENIED');
   });
 
-  it('downloadXml busca blob em /api/billing/invoices/chave/{accessKey}/xml', async () => {
-    const promise = lastValueFrom(service.downloadXml('CHAVE-50'));
-    const req = httpMock.expectOne('/api/billing/invoices/chave/CHAVE-50/xml');
+  it('downloadXml busca blob autorizado por id interno', async () => {
+    const promise = lastValueFrom(service.downloadXml('document-id'));
+    const req = httpMock.expectOne('/api/fiscal-documents/document-id/xml');
     expect(req.request.method).toBe('GET');
     req.flush(new Blob(['<xml/>'], { type: 'application/xml' }));
 
@@ -171,14 +171,8 @@ describe('FiscalDocumentHttpService', () => {
     expect(blob.type).toBe('application/xml');
   });
 
-  it('downloadDanfe busca blob em /api/billing/invoices/chave/{accessKey}/pdf', async () => {
-    const promise = lastValueFrom(service.downloadDanfe('CHAVE-50'));
-    const req = httpMock.expectOne('/api/billing/invoices/chave/CHAVE-50/pdf');
-    expect(req.request.method).toBe('GET');
-    req.flush(new Blob(['PDF'], { type: 'application/pdf' }));
-
-    const blob = await promise;
-    expect(blob.type).toBe('application/pdf');
+  it('downloadDanfe informa indisponibilidade até o renderer local estar disponível', async () => {
+    await expect(lastValueFrom(service.downloadDanfe('document-id'))).rejects.toThrow('DANF-e local');
   });
 
   it('cancel retorna erro pois endpoint não existe no backend', async () => {

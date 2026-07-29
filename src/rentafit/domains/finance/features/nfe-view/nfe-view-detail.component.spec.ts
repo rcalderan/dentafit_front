@@ -40,7 +40,8 @@ describe('NfeViewDetailComponent', () => {
     findById: ReturnType<typeof vi.fn>;
     cancel: ReturnType<typeof vi.fn>;
     sendEmail: ReturnType<typeof vi.fn>;
-  };
+    downloadXml: ReturnType<typeof vi.fn>;
+  }; 
   let router: Router;
 
   const configure = async (id: string | null): Promise<void> => {
@@ -48,6 +49,7 @@ describe('NfeViewDetailComponent', () => {
       findById: vi.fn().mockReturnValue(of(emittedDoc)),
       cancel: vi.fn(),
       sendEmail: vi.fn().mockReturnValue(of(true)),
+      downloadXml: vi.fn().mockReturnValue(throwError(() => new Error('XML indisponível'))),
     };
     await TestBed.configureTestingModule({
       imports: [NfeViewDetailComponent],
@@ -113,14 +115,14 @@ describe('NfeViewDetailComponent', () => {
     expect(comp.successMsg()).toBe('E-mail enviado.');
   });
 
-  it('inicia os downloads disponíveis no documento mockado', async () => {
+  it('baixa XML autorizado pelo id interno e informa DANF-e indisponível', async () => {
     await configure('NFE-1');
     const fixture = build();
     const comp = fixture.componentInstance as unknown as NfeDetailTestApi;
     comp.downloadXml();
-    expect(comp.successMsg()).toContain('XML');
+    expect(fiscalService.downloadXml).toHaveBeenCalledWith('NFE-1');
     comp.downloadDanfe();
-    expect(comp.successMsg()).toContain('documento');
+    expect(comp.errorMsg()).toContain('DANF-e local');
   });
 
   it('navega de volta para a listagem', async () => {

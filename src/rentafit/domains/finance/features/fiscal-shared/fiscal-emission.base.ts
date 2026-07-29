@@ -44,8 +44,6 @@ export abstract class FiscalEmissionBase implements OnInit {
   protected readonly showCancelModal = signal(false);
   protected readonly showEmailModal = signal(false);
 
-  protected readonly statusLabels = INVOICE_STATUS_LABELS;
-
   protected readonly status = computed<InvoiceStatusApi>(
     () => this.document()?.status ?? 'NONE',
   );
@@ -115,6 +113,10 @@ export abstract class FiscalEmissionBase implements OnInit {
   protected downloadDanfe(): void {
     if (!this.document()?.danfeUrl) return;
     this.flashSuccess('Download do DANFE iniciado (mock).');
+  }
+
+  protected statusLabel(status: InvoiceStatusApi): string {
+    return INVOICE_STATUS_LABELS[status];
   }
 
   protected formatCurrency(value: number | undefined): string {
