@@ -17,7 +17,9 @@ export const environment = {
       isqnRate: 0.0,
     },
     nfe: {
-      ncm: '99999999',
+      // NCM 9505.90.00: "Artigos para festas, carnaval ou outros divertimentos,
+      // incluindo os artigos de magia e artigos-surpresa - Outros" (cobre fantasias/costumes).
+      ncm: '95059000',
       cfop: '5102',
       unit: 'UN',
     },

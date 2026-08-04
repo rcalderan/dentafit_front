@@ -21,7 +21,7 @@ const appConfig = {
       isqnRate: 0.0,
     },
     nfe: {
-      ncm: '99999999',
+      ncm: '95059000',
       cfop: '5102',
       unit: 'UN',
     },
@@ -76,7 +76,7 @@ describe('FiscalDocumentHttpService', () => {
         {
           productCode: 'order-1',
           description: 'Venda de mercadoria',
-          ncm: '99999999',
+          ncm: '95059000',
           cfop: '5102',
           unit: 'UN',
           quantity: 1,

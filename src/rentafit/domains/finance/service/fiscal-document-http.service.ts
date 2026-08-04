@@ -1,7 +1,7 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { APP_CONFIG } from '../../../shared/data/app-config.token';
 import {
   FiscalDocumentType,
@@ -96,7 +96,7 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
   private emitNfe(request: IEmitInvoiceRequest): Observable<IFiscalDocument> {
     const defaults = this.config.fiscalDefaults?.nfe;
     if (!defaults) {
-      return throwError(() => new Error('Configuração fiscal de NF-e ausente em APP_CONFIG.'));
+      return throwError(() => this.criarErroAmigavel(0, 'Configuração fiscal de NF-e ausente em APP_CONFIG.'));
     }
     const body = {
       customerId: request.customerId,
@@ -117,14 +117,17 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
     };
     return this.http
       .post<INfeEmitResponse>(this.url('/api/nfe/emit'), body)
-      .pipe(map((res) => this.toFiscalDocumentFromEmission('NFE', res, request)));
+      .pipe(
+        map((res) => this.toFiscalDocumentFromEmission('NFE', res, request)),
+        catchError((err: HttpErrorResponse) => throwError(() => this.mapearErroHttp(err))),
+      );
   }
 
   /** NFS-e: endpoint do Portal Nacional. Pode ser 201 (síncrona) ou 202 (assíncrona). */
   private emitNfse(request: IEmitInvoiceRequest): Observable<IFiscalDocument> {
     const defaults = this.config.fiscalDefaults?.nfse;
     if (!defaults) {
-      return throwError(() => new Error('Configuração fiscal de NFS-e ausente em APP_CONFIG.'));
+      return throwError(() => this.criarErroAmigavel(0, 'Configuração fiscal de NFS-e ausente em APP_CONFIG.'));
     }
     const body = {
       customerId: request.customerId,
@@ -140,7 +143,10 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
     };
     return this.http
       .post<INfseEmitResponse>(this.url('/api/nfse/emit'), body)
-      .pipe(map((res) => this.toFiscalDocumentFromEmission('NFSE', res, request)));
+      .pipe(
+        map((res) => this.toFiscalDocumentFromEmission('NFSE', res, request)),
+        catchError((err: HttpErrorResponse) => throwError(() => this.mapearErroHttp(err))),
+      );
   }
 
   checkStatus(current: IFiscalDocument): Observable<IFiscalDocument> {
@@ -223,6 +229,54 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
   private url(path: string): string {
     const base = this.config.apiBaseUrl.replace(/\/$/, '');
     return `${base}${path}`;
+  }
+
+  /**
+   * Converte uma resposta HTTP de erro em um Error amigável para o usuário.
+   * HTTP 500 só é usado para falhas técnicas inesperadas; rejeições fiscais
+   * esperadas (400/422) devolvem mensagem legível com o motivo da SEFAZ.
+   */
+  private mapearErroHttp(error: HttpErrorResponse): Error {
+    if (error.error instanceof ErrorEvent) {
+      return this.criarErroAmigavel(0, 'Falha de conectividade. Verifique a internet e tente novamente.');
+    }
+
+    const status = error.status;
+    const backendMessage = typeof error.error === 'string' ? error.error : error.message;
+
+    if (status === 400 || status === 422) {
+      const motivo = backendMessage || 'Requisição rejeitada pela SEFAZ/Sistema fiscal.';
+      return this.criarErroAmigavel(status, motivo);
+    }
+
+    if (status === 401 || status === 403) {
+      return this.criarErroAmigavel(
+        status,
+        'Autenticação ou certificado digital inválido. Verifique as credenciais fiscais.',
+      );
+    }
+
+    if (status === 404) {
+      return this.criarErroAmigavel(status, 'Endpoint fiscal não encontrado. Verifique a configuração da API.');
+    }
+
+    if (status === 408 || status === 0) {
+      return this.criarErroAmigavel(status, 'Tempo de resposta excedido. A SEFAZ pode estar indisponível.');
+    }
+
+    if (status >= 502 && status <= 504) {
+      return this.criarErroAmigavel(status, 'Serviço fiscal indisponível no momento. Tente novamente mais tarde.');
+    }
+
+    // Falha técnica não esperada: 500 ou outro status desconhecido.
+    const mensagem = backendMessage || `Falha técnica inesperada (HTTP ${status}).`;
+    return this.criarErroAmigavel(status, mensagem);
+  }
+
+  private criarErroAmigavel(status: number, message: string): Error {
+    const erro = new Error(message);
+    (erro as any).status = status;
+    return erro;
   }
 
   private toFiscalDocumentFromEmission(
