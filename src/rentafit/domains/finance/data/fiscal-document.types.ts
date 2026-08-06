@@ -69,6 +69,7 @@ export interface IFiscalDocument {
   cancelXmlUrl?: string;
   customerEmail?: string;
   customerName?: string;
+  customerDocument?: string;
   origin?: FiscalOrigin;
   originId?: string;
 }
@@ -120,6 +121,8 @@ export interface IEmitInvoiceRequest {
   originId?: string;
   customerId?: string;
   customerEmail?: string;
+  customerName?: string;
+  customerDocument?: string;
   value: number;
   // NF-e (modelo 55)
   natureOperation?: string;

@@ -39,9 +39,14 @@
       @if (canDownloadXml()) {
         <button class="btn" (click)="downloadXml()">📄 Download XML</button>
       }
-      @if (doc.status === 'EMITTED') {
+      @if (canCancel()) {
         <button class="btn btn-danger" [disabled]="isProcessing()" (click)="showCancelModal.set(true)">
           Cancelar NF-e
+        </button>
+      }
+      @if (canReemit()) {
+        <button class="btn btn-primary" [disabled]="isProcessing()" (click)="reemit()">
+          Reemitir NF-e
         </button>
       }
     </div>

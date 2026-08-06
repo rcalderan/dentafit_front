@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Directive, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs/operators';
+import { finalize, switchMap } from 'rxjs/operators';
 import { FiscalDocumentService } from '../../service/fiscal-document.service';
 import {
   ICancelInvoiceRequest,
@@ -61,7 +61,17 @@ export abstract class FiscalDetailBase implements OnInit {
   }
 
   protected canDownloadXml(): boolean {
+    const status = this.document()?.status;
+    return status === 'EMITTED' || status === 'CANCELLED';
+  }
+
+  protected canCancel(): boolean {
     return this.document()?.status === 'EMITTED';
+  }
+
+  protected canReemit(): boolean {
+    const status = this.document()?.status;
+    return status === 'CANCELLED' || status === 'DENIED';
   }
 
   protected downloadXml(): void {
@@ -111,12 +121,29 @@ export abstract class FiscalDetailBase implements OnInit {
     this.errorMsg.set(null);
     this.fiscalService
       .cancel(current, request)
-      .pipe(finalize(() => this.isProcessing.set(false)))
+      .pipe(
+        switchMap((doc: IFiscalDocument) => this.fiscalService.save(doc)),
+        finalize(() => this.isProcessing.set(false)),
+      )
       .subscribe({
         next: doc => {
           this.document.set(doc);
           this.flashSuccess('Nota cancelada.');
         },
+        error: (err: Error) => this.errorMsg.set(err.message),
+      });
+  }
+
+  protected reemit(): void {
+    const current = this.document();
+    if (!current) return;
+    this.isProcessing.set(true);
+    this.errorMsg.set(null);
+    this.fiscalService
+      .reemit(current)
+      .pipe(finalize(() => this.isProcessing.set(false)))
+      .subscribe({
+        next: () => this.flashSuccess('Reemissão iniciada.'),
         error: (err: Error) => this.errorMsg.set(err.message),
       });
   }

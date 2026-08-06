@@ -1,9 +1,21 @@
 <section class="fiscal-card">
   <header class="fiscal-header">
     <h3>NF-e (Nota Fiscal Eletrônica)</h3>
-    <span class="status-pill" [class]="'pill-' + status().toLowerCase()">
-      {{ statusLabel(status()) }}
-    </span>
+    <div class="header-pills">
+      <button
+        type="button"
+        class="xml-pill"
+        [class]="xmlPillClass()"
+        [disabled]="!hasXml()"
+        (click)="downloadXml()"
+        title="Baixar XML"
+      >
+        XML
+      </button>
+      <span class="status-pill" [class]="'pill-' + status().toLowerCase()">
+        {{ statusLabel(status()) }}
+      </span>
+    </div>
   </header>
 
   @if (errorMsg()) {
@@ -101,7 +113,10 @@
       <div class="info-row"><span>Protocolo:</span><strong class="mono">{{ document()?.cancelProtocol }}</strong></div>
       <div class="info-row"><span>Motivo:</span><strong>{{ document()?.cancelReason }}</strong></div>
     </div>
-    <div class="actions">
+    <div class="actions" style="justify-content: space-between;">
+      <button class="btn btn-primary" [disabled]="isProcessing()" (click)="reemit()">
+        {{ isProcessing() ? 'Processando...' : 'Reemitir NF-e' }}
+      </button>
       <button class="btn" (click)="downloadXml()">📄 Download XML de Cancelamento</button>
     </div>
   }

@@ -18,13 +18,45 @@
   font-size: 1.05rem;
 }
 
-.status-pill {
+.header-pills {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-pill,
+.xml-pill {
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0.25rem 0.65rem;
   border-radius: 999px;
   background: #f3f4f6;
   color: #374151;
+}
+
+.xml-pill {
+  border: none;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.xml-pill:enabled {
+  opacity: 1;
+}
+
+.xml-pill:enabled:hover {
+  opacity: 0.85;
+}
+
+.pill-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.pill-success {
+  background: #dcfce7;
+  color: #166534;
 }
 
 .pill-pending_emission {

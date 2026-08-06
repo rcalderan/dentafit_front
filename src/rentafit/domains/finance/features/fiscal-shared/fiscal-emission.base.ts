@@ -44,6 +44,7 @@ export abstract class FiscalEmissionBase implements OnInit {
   protected readonly isProcessing = signal(false);
   protected readonly errorMsg = signal<string | null>(null);
   protected readonly successMsg = signal<string | null>(null);
+  protected readonly errorXml = signal<string | null>(null);
   protected readonly showCancelModal = signal(false);
   protected readonly showEmailModal = signal(false);
 
@@ -73,9 +74,11 @@ export abstract class FiscalEmissionBase implements OnInit {
     try {
       const request = this.buildEmitRequest();
       this.errorMsg.set(null);
+      this.errorXml.set(null);
       this.run(this.fiscalService.emit(request), 'Emissão iniciada — aguardando autorizador.');
     } catch (err: any) {
       this.errorMsg.set(err?.message ?? 'Erro ao preparar a emissão da nota fiscal.');
+      this.errorXml.set(err?.xml ?? null);
     }
   }
 
@@ -115,13 +118,27 @@ export abstract class FiscalEmissionBase implements OnInit {
   }
 
   protected downloadXml(): void {
-    if (!this.document()?.xmlUrl) return;
-    this.flashSuccess('Download do XML iniciado (mock).');
+    const xml = this.errorXml() ?? this.document()?.xmlUrl;
+    if (!xml) return;
+    this.triggerXmlDownload(xml, `${this.fiscalType.toLowerCase()}-${Date.now()}.xml`);
   }
 
   protected downloadDanfe(): void {
     if (!this.document()?.danfeUrl) return;
     this.flashSuccess('Download do DANFE iniciado (mock).');
+  }
+
+  private triggerXmlDownload(xml: string, filename: string): void {
+    const blob = new Blob([xml], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    this.flashSuccess('Download do XML iniciado.');
   }
 
   protected statusLabel(status: InvoiceStatusApi): string {
@@ -141,6 +158,7 @@ export abstract class FiscalEmissionBase implements OnInit {
   private run(source: ReturnType<FiscalDocumentService['emit']>, okMsg: string): void {
     this.isProcessing.set(true);
     this.errorMsg.set(null);
+    this.errorXml.set(null);
     source
       .pipe(
         switchMap((doc: IFiscalDocument) => this.persistIfNeeded(doc)),
@@ -149,10 +167,14 @@ export abstract class FiscalEmissionBase implements OnInit {
       .subscribe({
         next: (doc: IFiscalDocument) => {
           this.document.set(doc);
+          this.errorXml.set(null);
           this.changed.emit(doc);
           this.flashSuccess(okMsg);
         },
-        error: (err: Error) => this.errorMsg.set(err.message),
+        error: (err: Error) => {
+          this.errorMsg.set(err.message);
+          this.errorXml.set((err as any).xml ?? null);
+        },
       });
   }
 

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { catchError, finalize, of, switchMap } from 'rxjs';
 import { FiscalEmissionBase } from '../fiscal-shared/fiscal-emission.base';
@@ -44,6 +44,14 @@ export class NfeEmissionComponent extends FiscalEmissionBase implements OnInit {
     { value: 'RETURN', label: 'Devolução' },
   ];
 
+  /** Cor do pill de XML: amarelo em falha, verde claro quando autorizado. */
+  protected readonly xmlPillClass = computed(() =>
+    this.errorXml() ? 'pill-warning' : this.document()?.xmlUrl ? 'pill-success' : '',
+  );
+
+  /** XML disponível para download (erro assinado ou XML autorizado). */
+  protected readonly hasXml = computed(() => !!this.errorXml() || !!this.document()?.xmlUrl);
+
   constructor() {
     super();
     effect(() => {
@@ -79,6 +87,8 @@ export class NfeEmissionComponent extends FiscalEmissionBase implements OnInit {
       originId: ctx.originId,
       customerId: ctx.customerId,
       customerEmail: ctx.customerEmail,
+      customerName: ctx.customerName,
+      customerDocument: ctx.customerDocument,
       value: ctx.totalValue,
       natureOperation: this.natureOperation(),
       purpose: this.purpose(),

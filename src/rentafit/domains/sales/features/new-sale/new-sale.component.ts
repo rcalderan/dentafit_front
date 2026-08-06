@@ -205,6 +205,8 @@ export class NewSale implements OnInit {
       xmlUrl: o.invoiceXmlUrl,
       danfeUrl: o.invoiceDanfeUrl,
       customerEmail: o.invoiceCustomerEmail,
+      customerName: o.customerName,
+      customerDocument: o.customerDocument,
     };
   });
 

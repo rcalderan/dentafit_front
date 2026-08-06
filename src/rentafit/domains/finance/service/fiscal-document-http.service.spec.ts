@@ -194,6 +194,22 @@ describe('FiscalDocumentHttpService', () => {
     expect(doc.status).toBe('DENIED');
   });
 
+  it('erro 422 expõe mensagem do campo error e XML do campo data', async () => {
+    const promise = lastValueFrom(service.emit(nfeRequest));
+    const req = httpMock.expectOne('/nfe-api/emit');
+    req.flush(
+      { error: 'Erro na validação do XML', data: '<nfe>assinado</nfe>' },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+
+    await expect(promise).rejects.toThrow('Erro na validação do XML');
+    try {
+      await promise;
+    } catch (err: any) {
+      expect(err.xml).toBe('<nfe>assinado</nfe>');
+    }
+  });
+
   it('downloadXml busca blob autorizado por id interno', async () => {
     const promise = lastValueFrom(service.downloadXml('document-id'));
     const req = httpMock.expectOne('/api/fiscal-documents/document-id/xml');

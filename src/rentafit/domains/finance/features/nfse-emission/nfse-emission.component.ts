@@ -32,6 +32,8 @@ export class NfseEmissionComponent extends FiscalEmissionBase {
       originId: ctx.originId,
       customerId: ctx.customerId,
       customerEmail: ctx.customerEmail,
+      customerName: ctx.customerName,
+      customerDocument: ctx.customerDocument,
       value: ctx.totalValue,
       nbsCode: this.nbsCode(),
       serviceDescription: this.serviceDescription(),

@@ -4,6 +4,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/rentafit-spec",
+    "rootDir": "./src",
     "types": [
       "vitest/globals"
     ]

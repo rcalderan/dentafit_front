@@ -33,6 +33,8 @@ interface INfseEmitResponse {
 /** Resposta do backend para emissão de NF-e (NfeResponse). */
 interface INfeEmitResponse {
   accessKey: string;
+  number?: string;
+  series?: string;
   protocol?: string;
   receiptNumber?: string;
   cStat?: string;
@@ -73,6 +75,7 @@ interface IBackendFiscalDocument {
   authorizedXml?: string;
   customerEmail?: string;
   customerName?: string;
+  customerDocument?: string;
   origin?: string;
   originId?: string;
 }
@@ -209,7 +212,7 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
       return this.http
         .post<INfeEventResponse>(this.url(`/nfe-api/${current.accessKey}/cancelar`), body)
         .pipe(
-          map((res) => this.toFiscalDocumentFromNfeEvent(current, res)),
+          map((res) => this.toFiscalDocumentFromNfeEvent(current, res, request.reason)),
           catchError((err: HttpErrorResponse) => throwError(() => this.mapearErroHttp(err))),
         );
     }
@@ -289,6 +292,8 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
    * Converte uma resposta HTTP de erro em um Error amigável para o usuário.
    * HTTP 500 só é usado para falhas técnicas inesperadas; rejeições fiscais
    * esperadas (400/422) devolvem mensagem legível com o motivo da SEFAZ.
+   * Quando o backend incluir `data`, o XML gerado é anexado ao erro para
+   * permitir diagnóstico/download no frontend.
    */
   private mapearErroHttp(error: HttpErrorResponse): Error {
     if (error.error instanceof ErrorEvent) {
@@ -296,11 +301,26 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
     }
 
     const status = error.status;
-    const backendMessage = typeof error.error === 'string' ? error.error : error.message;
+    const body = error.error;
+    let backendMessage: string;
+    let xml: string | undefined;
+
+    if (body && typeof body === 'object') {
+      backendMessage =
+        (typeof body.statusMessage === 'string' ? body.statusMessage : undefined) ??
+        (typeof body.error === 'string' ? body.error : undefined) ??
+        (typeof body.message === 'string' ? body.message : undefined) ??
+        error.message;
+      xml = typeof body.data === 'string' ? body.data : undefined;
+    } else if (typeof body === 'string') {
+      backendMessage = body;
+    } else {
+      backendMessage = error.message;
+    }
 
     if (status === 400 || status === 422) {
       const motivo = backendMessage || 'Requisição rejeitada pela SEFAZ/Sistema fiscal.';
-      return this.criarErroAmigavel(status, motivo);
+      return this.criarErroAmigavel(status, motivo, xml);
     }
 
     if (status === 401 || status === 403) {
@@ -324,12 +344,15 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
 
     // Falha técnica não esperada: 500 ou outro status desconhecido.
     const mensagem = backendMessage || `Falha técnica inesperada (HTTP ${status}).`;
-    return this.criarErroAmigavel(status, mensagem);
+    return this.criarErroAmigavel(status, mensagem, xml);
   }
 
-  private criarErroAmigavel(status: number, message: string): Error {
+  private criarErroAmigavel(status: number, message: string, xml?: string): Error {
     const erro = new Error(message);
     (erro as any).status = status;
+    if (xml) {
+      (erro as any).xml = xml;
+    }
     return erro;
   }
 
@@ -344,14 +367,19 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
         id: `NFE-${nfe.accessKey.slice(0, 12)}`,
         type: 'NFE',
         status: this.mapStatus(nfe.status),
+        number: nfe.number,
+        series: nfe.series,
         accessKey: nfe.accessKey,
         protocol: nfe.protocol,
         receiptNumber: nfe.receiptNumber,
         value: request.value,
         natureOperation: request.natureOperation,
         purpose: request.purpose,
-        customerName: request.customer?.name,
+        customerName: request.customerName ?? request.customer?.name,
         customerEmail: request.customerEmail,
+        customerDocument: request.customerDocument ?? request.customer?.document,
+        origin: request.origin,
+        originId: request.originId,
         emissionDate: new Date().toISOString(),
         xmlUrl: nfe.authorizedXml,
       };
@@ -367,6 +395,11 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
       protocol: nfse.protocol,
       value: request.value,
       serviceDescription: request.serviceDescription,
+      customerName: request.customerName,
+      customerEmail: request.customerEmail,
+      customerDocument: request.customerDocument,
+      origin: request.origin,
+      originId: request.originId,
       emissionDate: nfse.issueDate ?? nfse.processingDate ?? new Date().toISOString(),
     };
   }
@@ -378,6 +411,8 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
     return {
       ...current,
       status: this.mapStatus(response.status),
+      number: response.number ?? current.number,
+      series: response.series ?? current.series,
       accessKey: response.accessKey ?? current.accessKey,
       protocol: response.protocol ?? current.protocol,
       receiptNumber: response.receiptNumber ?? current.receiptNumber,
@@ -388,13 +423,19 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
   private toFiscalDocumentFromNfeEvent(
     current: IFiscalDocument,
     response: INfeEventResponse,
+    cancelReason?: string,
   ): IFiscalDocument {
+    const isConfirmedCancel = response.protocol != null;
     return {
       ...current,
       status: this.mapStatus(response.status),
       accessKey: response.accessKey ?? current.accessKey,
       protocol: response.protocol ?? current.protocol,
       cancelProtocol: response.protocol ?? current.cancelProtocol,
+      cancelReason: isConfirmedCancel
+        ? (cancelReason ?? current.cancelReason)
+        : (response.statusMessage ?? current.cancelReason),
+      cancelledAt: new Date().toISOString(),
       xmlUrl: response.eventXml ?? current.xmlUrl,
     };
   }
@@ -411,9 +452,13 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
       status: this.toBackendStatus(document.status ?? 'PENDING_EMISSION'),
       totalValue: document.value,
       customerName: document.customerName,
+      customerDocument: document.customerDocument,
       customerEmail: document.customerEmail,
       issueDate: document.emissionDate,
       authorizedXml: document.xmlUrl,
+      cancelReason: document.cancelReason,
+      cancelledAt: document.cancelledAt,
+      cancelProtocol: document.cancelProtocol,
     };
   }
 
@@ -453,6 +498,7 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
       cancelProtocol: doc.cancelProtocol,
       customerEmail: doc.customerEmail,
       customerName: doc.customerName,
+      customerDocument: doc.customerDocument,
       origin: doc.origin as FiscalOrigin,
       originId: doc.originId,
     };

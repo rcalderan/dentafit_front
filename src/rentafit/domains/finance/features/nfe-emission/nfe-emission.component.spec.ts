@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NfeEmissionComponent } from './nfe-emission.component';
 import { FiscalDocumentService } from '../../service/fiscal-document.service';
@@ -193,5 +193,21 @@ describe('NfeEmissionComponent', () => {
     const comp = build(paidContextWithItems).componentInstance as any;
     expect(comp.status()).toBe('NONE');
     expect(comp.canEmit()).toBe(true);
+  });
+
+  it('armazena XML e ativa pill amarela quando emissão retorna erro com data', () => {
+    const emitError = new Error('Erro na validação do XML');
+    (emitError as any).xml = '<nfe>assinado</nfe>';
+    fiscalService.emit.mockReturnValue(throwError(() => emitError));
+
+    const fixture = build(paidContextWithItems);
+    const comp = fixture.componentInstance as any;
+    comp.emit();
+    fixture.detectChanges();
+
+    expect(comp.errorMsg()).toBe('Erro na validação do XML');
+    expect(comp.errorXml()).toBe('<nfe>assinado</nfe>');
+    expect(comp.hasXml()).toBe(true);
+    expect(comp.xmlPillClass()).toBe('pill-warning');
   });
 });
