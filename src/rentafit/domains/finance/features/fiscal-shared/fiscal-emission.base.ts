@@ -1,5 +1,7 @@
 import { Directive, OnInit, computed, inject, input, output, signal } from '@angular/core';
-import { finalize } from 'rxjs/operators';
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, finalize, switchMap } from 'rxjs/operators';
+import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 import { FiscalDocumentService } from '../../service/fiscal-document.service';
 import {
   FiscalDocumentType,
@@ -23,6 +25,7 @@ import {
 @Directive()
 export abstract class FiscalEmissionBase implements OnInit {
   protected readonly fiscalService = inject(FiscalDocumentService);
+  protected readonly config = inject(APP_CONFIG);
 
   /** Tipo do documento — definido pelo componente concreto. */
   abstract readonly fiscalType: FiscalDocumentType;
@@ -67,7 +70,13 @@ export abstract class FiscalEmissionBase implements OnInit {
       this.errorMsg.set('O pedido precisa estar pago para emitir a nota fiscal.');
       return;
     }
-    this.run(this.fiscalService.emit(this.buildEmitRequest()), 'Emissão iniciada — aguardando autorizador.');
+    try {
+      const request = this.buildEmitRequest();
+      this.errorMsg.set(null);
+      this.run(this.fiscalService.emit(request), 'Emissão iniciada — aguardando autorizador.');
+    } catch (err: any) {
+      this.errorMsg.set(err?.message ?? 'Erro ao preparar a emissão da nota fiscal.');
+    }
   }
 
   protected checkStatus(): void {
@@ -132,14 +141,32 @@ export abstract class FiscalEmissionBase implements OnInit {
   private run(source: ReturnType<FiscalDocumentService['emit']>, okMsg: string): void {
     this.isProcessing.set(true);
     this.errorMsg.set(null);
-    source.pipe(finalize(() => this.isProcessing.set(false))).subscribe({
-      next: (doc: IFiscalDocument) => {
-        this.document.set(doc);
-        this.changed.emit(doc);
-        this.flashSuccess(okMsg);
-      },
-      error: (err: Error) => this.errorMsg.set(err.message),
-    });
+    source
+      .pipe(
+        switchMap((doc: IFiscalDocument) => this.persistIfNeeded(doc)),
+        finalize(() => this.isProcessing.set(false)),
+      )
+      .subscribe({
+        next: (doc: IFiscalDocument) => {
+          this.document.set(doc);
+          this.changed.emit(doc);
+          this.flashSuccess(okMsg);
+        },
+        error: (err: Error) => this.errorMsg.set(err.message),
+      });
+  }
+
+  /** Persiste o documento fiscal emitido no Rentafit. */
+  private persistIfNeeded(doc: IFiscalDocument): Observable<IFiscalDocument> {
+    if (doc.status === 'NONE') {
+      return of(doc);
+    }
+    return this.fiscalService.save(doc).pipe(
+      catchError((err: Error) => {
+        const wrapped = new Error(`Emissão ok, mas falha ao salvar no Rentafit: ${err.message}`);
+        return throwError(() => wrapped);
+      }),
+    );
   }
 
   private flashSuccess(msg: string): void {

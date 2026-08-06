@@ -37,10 +37,9 @@
 
     <div class="actions actions-wrap">
       @if (canDownloadXml()) {
-        <button class="btn" (click)="downloadXml()">� Download XML</button>
+        <button class="btn" (click)="downloadXml()">📄 Download XML</button>
       }
       @if (doc.status === 'EMITTED') {
-        <button class="btn" (click)="showEmailModal.set(true)">✉️ Enviar por E-mail</button>
         <button class="btn btn-danger" [disabled]="isProcessing()" (click)="showCancelModal.set(true)">
           Cancelar NF-e
         </button>

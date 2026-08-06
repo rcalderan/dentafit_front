@@ -15,6 +15,8 @@ import {
  */
 export abstract class FiscalDocumentService {
   abstract emit(request: IEmitInvoiceRequest): Observable<IFiscalDocument>;
+  /** Persiste/atualiza um documento fiscal já emitido no backend unificado. */
+  abstract save(document: IFiscalDocument): Observable<IFiscalDocument>;
   abstract checkStatus(current: IFiscalDocument): Observable<IFiscalDocument>;
   abstract cancel(
     current: IFiscalDocument,

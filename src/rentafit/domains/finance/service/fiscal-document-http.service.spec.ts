@@ -28,27 +28,51 @@ const appConfig = {
   },
 };
 
+const nfeCustomer = {
+  name: 'Cliente Teste',
+  document: '12345678901',
+  street: 'Rua do Cliente',
+  number: '100',
+  neighborhood: 'Centro',
+  cityName: 'Sao Carlos',
+  state: 'SP',
+  zipCode: '13560000',
+};
+
+const nfeItem = {
+  productCode: 'SKU-001',
+  description: 'Fantasia',
+  ncm: '95059000',
+  cfop: '5102',
+  unit: 'UN',
+  quantity: 1,
+  unitValue: 1234.56,
+};
+
+const nfeRequest: IEmitInvoiceRequest = {
+  fiscalDocumentType: 'NFE',
+  origin: 'SALES',
+  originId: 'order-1',
+  customerId: 'cust-1',
+  customerEmail: 'teste@example.com',
+  value: 1234.56,
+  natureOperation: 'Venda de mercadoria',
+  purpose: 'NORMAL',
+  customer: nfeCustomer,
+  items: [nfeItem],
+};
+
+const nfseRequest: IEmitInvoiceRequest = {
+  fiscalDocumentType: 'NFSE',
+  origin: 'RENTAL',
+  originId: 'contract-1',
+  customerId: 'cust-1',
+  value: 800.0,
+};
+
 describe('FiscalDocumentHttpService', () => {
   let service: FiscalDocumentHttpService;
   let httpMock: HttpTestingController;
-
-  const nfeRequest: IEmitInvoiceRequest = {
-    fiscalDocumentType: 'NFE',
-    origin: 'SALES',
-    originId: 'order-1',
-    customerId: 'cust-1',
-    value: 1234.56,
-    natureOperation: 'Venda de mercadoria',
-    purpose: 'NORMAL',
-  };
-
-  const nfseRequest: IEmitInvoiceRequest = {
-    fiscalDocumentType: 'NFSE',
-    origin: 'RENTAL',
-    originId: 'contract-1',
-    customerId: 'cust-1',
-    value: 800.0,
-  };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -63,28 +87,19 @@ describe('FiscalDocumentHttpService', () => {
     httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('emite NF-e para /api/nfe/emit mapeando AUTHORIZED para EMITTED', async () => {
+  it('emite NF-e para /nfe-api/emit e persiste em /api/fiscal-documents', async () => {
     const promise = lastValueFrom(service.emit(nfeRequest));
-    const req = httpMock.expectOne('/api/nfe/emit');
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toMatchObject({
+    const emitReq = httpMock.expectOne('/nfe-api/emit');
+    expect(emitReq.request.method).toBe('POST');
+    expect(emitReq.request.body).toMatchObject({
       customerId: 'cust-1',
       natureOperation: 'Venda de mercadoria',
       origin: 'SALES',
       originId: 'order-1',
-      items: [
-        {
-          productCode: 'order-1',
-          description: 'Venda de mercadoria',
-          ncm: '95059000',
-          cfop: '5102',
-          unit: 'UN',
-          quantity: 1,
-          unitValue: 1234.56,
-        },
-      ],
+      customer: nfeCustomer,
+      items: [nfeItem],
     });
-    req.flush({
+    emitReq.flush({
       accessKey: '12345678901234567890123456789012345678901234',
       protocol: '123456789012345',
       status: 'AUTHORIZED',
@@ -97,9 +112,9 @@ describe('FiscalDocumentHttpService', () => {
     expect(doc.accessKey).toHaveLength(44);
   });
 
-  it('emite NFS-e para /api/nfse/emit com defaults fiscais', async () => {
+  it('emite NFS-e para /api/billing/invoices/emit com defaults fiscais', async () => {
     const promise = lastValueFrom(service.emit(nfseRequest));
-    const req = httpMock.expectOne('/api/nfse/emit');
+    const req = httpMock.expectOne('/api/billing/invoices/emit');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toMatchObject({
       customerId: 'cust-1',
@@ -127,10 +142,26 @@ describe('FiscalDocumentHttpService', () => {
     expect(doc.type).toBe('NFSE');
     expect(doc.status).toBe('EMITTED');
     expect(doc.id).toBe('nfse-uuid');
-    expect(doc.number).toBe('123456');
   });
 
-  it('consulta status pelo documento fiscal unificado', async () => {
+  it('consulta status NF-e pela chave de acesso', async () => {
+    const current = { id: 'nfe-id', type: 'NFE' as const, status: 'PENDING_EMISSION' as const, value: 100, accessKey: '12345678901234567890123456789012345678901234' };
+    const promise = lastValueFrom(service.checkStatus(current));
+    const req = httpMock.expectOne('/nfe-api/12345678901234567890123456789012345678901234');
+    expect(req.request.method).toBe('GET');
+    req.flush({
+      accessKey: '12345678901234567890123456789012345678901234',
+      protocol: '123456789012345',
+      status: 'AUTHORIZED',
+      authorizedXml: '<nfe/>',
+    });
+
+    const doc = await promise;
+    expect(doc.status).toBe('EMITTED');
+    expect(doc.protocol).toBe('123456789012345');
+  });
+
+  it('consulta status NFS-e pelo id interno do Rentafit', async () => {
     const current = { id: 'nfse-uuid', type: 'NFSE' as const, status: 'PENDING_EMISSION' as const, value: 800 };
     const promise = lastValueFrom(service.checkStatus(current));
     const req = httpMock.expectOne('/api/fiscal-documents/nfse-uuid');
@@ -153,9 +184,11 @@ describe('FiscalDocumentHttpService', () => {
 
   it('rejeitado no backend mapeia para DENIED', async () => {
     const promise = lastValueFrom(service.emit(nfeRequest));
-    httpMock
-      .expectOne('/api/nfe/emit')
-      .flush({ accessKey: '12345678901234567890123456789012345678901234', status: 'REJECTED' });
+    httpMock.expectOne('/nfe-api/emit').flush({
+      accessKey: '12345678901234567890123456789012345678901234',
+      status: 'REJECTED',
+      xMotivo: 'Rejeição de teste',
+    });
 
     const doc = await promise;
     expect(doc.status).toBe('DENIED');
@@ -175,10 +208,31 @@ describe('FiscalDocumentHttpService', () => {
     await expect(lastValueFrom(service.downloadDanfe('document-id'))).rejects.toThrow('DANF-e local');
   });
 
-  it('cancel retorna erro pois endpoint não existe no backend', async () => {
-    await expect(
-      lastValueFrom(service.cancel({ id: 'x', type: 'NFE', status: 'EMITTED' }, { reason: 'Erro' })),
-    ).rejects.toThrow('Cancelamento');
+  it('cancela NF-e via /nfe-api/{chave}/cancelar', async () => {
+    const current = {
+      id: 'doc-uuid',
+      type: 'NFE' as const,
+      status: 'EMITTED' as const,
+      accessKey: '12345678901234567890123456789012345678901234',
+      protocol: '123456789012345',
+      value: 100,
+    };
+    const promise = lastValueFrom(service.cancel(current, { reason: 'Erro de teste', sequence: '1' }));
+    const req = httpMock.expectOne('/nfe-api/12345678901234567890123456789012345678901234/cancelar');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toMatchObject({
+      protocol: '123456789012345',
+      justification: 'Erro de teste',
+      sequence: '1',
+    });
+    req.flush({
+      accessKey: '12345678901234567890123456789012345678901234',
+      protocol: 'CANCEL-PROTOCOL',
+      status: 'AUTHORIZED',
+    });
+
+    const doc = await promise;
+    expect(doc.status).toBe('EMITTED');
   });
 
   it('lista documentos fiscais via /api/fiscal-documents mapeando status e paginação', async () => {

@@ -33,6 +33,12 @@ export class FiscalDocumentMockService extends FiscalDocumentService {
   /** Store em memória usado apenas pela listagem mockada (`list`/`findById`). */
   private readonly store: IFiscalDocument[] = this.seedDocuments();
 
+  /** Persiste o documento fiscal retornado pela emissão. */
+  save(doc: IFiscalDocument): Observable<IFiscalDocument> {
+    this.upsert(doc);
+    return of(doc).pipe(delay(this.latencyMs));
+  }
+
   /**
    * Inicia a emissão. Retorna o documento em `PENDING_EMISSION` com protocolo
    * de envio — a autorização final é obtida via `checkStatus`.

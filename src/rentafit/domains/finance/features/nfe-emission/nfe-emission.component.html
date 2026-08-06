@@ -85,8 +85,6 @@
 
     <div class="actions actions-wrap">
       <button class="btn" (click)="downloadXml()">📄 Download XML</button>
-      <button class="btn" (click)="downloadDanfe()">🖨️ Download DANFE (PDF)</button>
-      <button class="btn" (click)="showEmailModal.set(true)">✉️ Enviar por E-mail</button>
       <button class="btn btn-danger" [disabled]="isProcessing()" (click)="showCancelModal.set(true)">
         Cancelar NF-e
       </button>
@@ -105,7 +103,6 @@
     </div>
     <div class="actions">
       <button class="btn" (click)="downloadXml()">📄 Download XML de Cancelamento</button>
-      <button class="btn btn-primary" [disabled]="isProcessing()" (click)="reemit()">Reemitir NF-e</button>
     </div>
   }
 

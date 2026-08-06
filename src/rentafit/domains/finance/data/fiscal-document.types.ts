@@ -54,6 +54,7 @@ export interface IFiscalDocument {
   accessKey?: string; // 44 dígitos (NF-e) / 50 (NFS-e)
   emissionDate?: string;
   sendProtocol?: string; // Protocolo de envio (enquanto PENDING_EMISSION)
+  receiptNumber?: string; // Número do recibo de envio (NF-e assíncrona)
   sentAt?: string;
   protocol?: string; // Protocolo de autorização
   value?: number;
@@ -82,6 +83,34 @@ export interface IFiscalContext {
   customerName?: string;
   customerDocument?: string;
   customerEmail?: string;
+  /** Itens do pedido/contrato para composição da NF-e modelo 55. */
+  items?: INfeItem[];
+}
+
+/** Dados do destinatário para NF-e modelo 55. */
+export interface INfeCustomerInfo {
+  name: string;
+  document: string;
+  ie?: string;
+  street: string;
+  number: string;
+  complement?: string;
+  neighborhood: string;
+  cityName: string;
+  state: string;
+  zipCode: string;
+  phone?: string;
+}
+
+/** Item de NF-e modelo 55. */
+export interface INfeItem {
+  productCode: string;
+  description: string;
+  ncm: string;
+  cfop: string;
+  unit: string;
+  quantity: number;
+  unitValue: number;
 }
 
 /** Requisição de emissão — espelha InvoiceEmissionRequestDTO/NfeEmissionRequest. */
@@ -96,6 +125,8 @@ export interface IEmitInvoiceRequest {
   natureOperation?: string;
   purpose?: InvoicePurposeApi;
   cfop?: string;
+  customer?: INfeCustomerInfo;
+  items?: INfeItem[];
   // NFS-e (serviço)
   nbsCode?: string;
   serviceDescription?: string;
@@ -104,6 +135,7 @@ export interface IEmitInvoiceRequest {
 
 export interface ICancelInvoiceRequest {
   reason: string;
+  sequence?: string;
 }
 
 export interface IEmailInvoiceRequest {

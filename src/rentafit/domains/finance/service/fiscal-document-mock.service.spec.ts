@@ -37,6 +37,19 @@ describe('FiscalDocumentMockService', () => {
     expect(doc.sendProtocol).toMatch(/^\d{34}$/);
   });
 
+  it('save persiste o documento e o torna listável', async () => {
+    const doc: IFiscalDocument = {
+      id: 'NFE-SAVE-1',
+      type: 'NFE',
+      status: 'EMITTED',
+      accessKey: '12345678901234567890123456789012345678901234',
+      value: 100,
+    };
+    await resolve(lastValueFrom(service.save(doc)));
+    const page = await resolve(lastValueFrom(service.list({ type: 'NFE' })));
+    expect(page.content.some((d) => d.id === doc.id)).toBe(true);
+  });
+
   it('autoriza para EMITTED com chave de 44 dígitos (NF-e)', async () => {
     const pending = await resolve(lastValueFrom(service.emit(nfeRequest)));
     const emitted = await resolve(lastValueFrom(service.checkStatus(pending)));

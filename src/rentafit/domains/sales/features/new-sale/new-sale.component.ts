@@ -165,6 +165,15 @@ export class NewSale implements OnInit {
       customerName: o?.customerName ?? this.selectedCustomer()?.name,
       customerDocument: o?.customerDocument ?? this.selectedCustomer()?.document,
       customerEmail: o?.invoiceCustomerEmail,
+      items: o?.items.map((item) => ({
+        productCode: item.sku,
+        description: item.description,
+        ncm: '',
+        cfop: '',
+        unit: 'UN',
+        quantity: item.quantity,
+        unitValue: item.unitPrice,
+      })),
     };
   });
 
