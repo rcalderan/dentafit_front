@@ -39,6 +39,7 @@ describe('NfeViewDetailComponent', () => {
   let fiscalService: {
     findById: ReturnType<typeof vi.fn>;
     cancel: ReturnType<typeof vi.fn>;
+    save: ReturnType<typeof vi.fn>;
     sendEmail: ReturnType<typeof vi.fn>;
     downloadXml: ReturnType<typeof vi.fn>;
   }; 
@@ -47,7 +48,8 @@ describe('NfeViewDetailComponent', () => {
   const configure = async (id: string | null): Promise<void> => {
     fiscalService = {
       findById: vi.fn().mockReturnValue(of(emittedDoc)),
-      cancel: vi.fn(),
+      cancel: vi.fn().mockReturnValue(of({ ...emittedDoc, status: 'CANCELLED' as const })),
+      save: vi.fn().mockReturnValue(of({ ...emittedDoc, status: 'CANCELLED' as const })),
       sendEmail: vi.fn().mockReturnValue(of(true)),
       downloadXml: vi.fn().mockReturnValue(throwError(() => new Error('XML indisponível'))),
     };
