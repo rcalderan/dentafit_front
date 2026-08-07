@@ -196,6 +196,11 @@
     </rentafit-modal>
     }
 
+    @if (successMessage()) {
+    <rentafit-modal title="Sucesso" [message]="successMessage() ?? ''" type="info" (close)="clearSuccess()">
+    </rentafit-modal>
+    }
+
     @if (isCategoryModalOpen()) {
     <rentafit-category-modal productType="RENTAL" (closed)="closeCategoryModal()"
         (categorySelected)="onCategorySelected($event)">

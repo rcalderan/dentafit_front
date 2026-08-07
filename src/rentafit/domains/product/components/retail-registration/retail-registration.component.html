@@ -13,7 +13,9 @@
             <div class="input-group col-3">
                 <label>SKU</label>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <input type="text" formControlName="sku" placeholder="Auto" style="flex: 1;">
+                    <input type="text" formControlName="sku" placeholder="Auto" style="flex: 1;" 
+                    [disabled]="isSkuSearching()" (keydown.enter)="searchBySku()">
+                    <button class="category-search-btn" type="button" (click)="searchBySku()" title="Buscar por SKU">🔍</button>
                     @if (isReadOnly()) {
                     <button class="header-btn btn-edit-trigger" type="button" (click)="enableEditing()"
                         title="Editar">✏️</button>
@@ -38,7 +40,7 @@
                 <div class="input-wrapper">
                     <input type="text" class="uppercase" formControlName="categoryName" placeholder="Ex: Camisetas" readonly>
                     <button class="category-search-btn" type="button" (click)="openCategoryModal()"
-                        title="Buscar Categoria">🔍</button>
+                        [disabled]="isReadOnly()" title="Buscar Categoria">🔍</button>
                 </div>
                 @if (getControlError('categoryName')) {
                 <span class="field-error">{{ getControlError('categoryName') }}</span>
@@ -113,43 +115,7 @@
         </div>
     </div>
 
-    <div class="section-card" formGroupName="stock">
-        <span class="section-title">Informações de Estoque</span>
-        <div class="form-grid">
-            <div class="input-group col-3">
-                <label>Qtde. Disponível</label>
-                <div class="input-wrapper">
-                    <input type="number" formControlName="quantityAvailable" readonly>
-                </div>
-            </div>
-            <div class="input-group col-3">
-                <label>Qtde. Reservada</label>
-                <div class="input-wrapper">
-                    <input type="number" formControlName="quantityReserved" readonly>
-                </div>
-            </div>
-            <div class="input-group col-3">
-                <label>Qtde. Total</label>
-                <div class="input-wrapper">
-                    <input type="number" formControlName="quantityTotal">
-                </div>
-            </div>
-            <div class="input-group col-3">
-                <label>Estoque Mínimo</label>
-                <div class="input-wrapper">
-                    <input type="number" formControlName="minStockLevel">
-                </div>
-            </div>
-        </div>
-        <div class="form-grid">
-            <div class="input-group col-6">
-                <label>Localização</label>
-                <div class="input-wrapper">
-                    <input type="text" formControlName="location" placeholder="Ex: Prateleira A3">
-                </div>
-            </div>
-        </div>
-    </div>
+    <rentafit-stock [productId]="form.get('id')?.value"></rentafit-stock>
 
     <div class="actions">
         <button class="btn btn-save" type="button" (click)="save()"

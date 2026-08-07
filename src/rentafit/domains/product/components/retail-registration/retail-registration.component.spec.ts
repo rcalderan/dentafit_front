@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { RetailRegistration } from './retail-registration.component';
@@ -7,6 +8,7 @@ import { ProductService } from '../../service/product.service';
 import { CategoryService } from '../../service/category.service';
 import { Router } from '@angular/router';
 import { IRetailItem, ICategory } from '../../data/Product.interface';
+import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 
 describe('RetailRegistration', () => {
   let productService: { saveRetailItem: ReturnType<typeof vi.fn> };
@@ -48,7 +50,11 @@ describe('RetailRegistration', () => {
       providers: [
         { provide: ProductService, useValue: productService },
         { provide: CategoryService, useValue: { getByType: vi.fn().mockReturnValue(of([])) } },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        // Stock (child) injeta StockService/AuthService que dependem de HttpClient + APP_CONFIG
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: APP_CONFIG, useValue: { appName: 'RentAFit Test', apiBaseUrl: '', s3BucketUrl: '' } }
       ]
     }).compileComponents();
   });
@@ -302,7 +308,6 @@ describe('RetailRegistration', () => {
 
     expect(component.isReadOnly()).toBe(false);
     expect(component.form.get('id')?.disabled).toBe(true);
-    expect(component.form.get('stock.quantityAvailable')?.disabled).toBe(true);
     expect(component.form.get('createdAt')?.disabled).toBe(true);
   });
 
@@ -315,7 +320,6 @@ describe('RetailRegistration', () => {
 
     expect(component.isReadOnly()).toBe(false);
     expect(component.form.get('id')?.disabled).toBe(true);
-    expect(component.form.get('stock.quantityAvailable')?.disabled).toBe(true);
     expect(component.form.get('createdAt')?.disabled).toBe(true);
     expect(component.form.get('name')?.enabled).toBe(true);
   });

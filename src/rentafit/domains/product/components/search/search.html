@@ -1,65 +1,11 @@
 <div class="search-container">
-    <h1>Pesquisa de Produtos</h1>
+    <h2>Pesquisa de Produtos</h2>
 
-    <!-- Search Filters -->
-    <div class="section-card search-card">
-        <div class="form-grid">
-            <div class="input-group col-4">
-                <label>Nome do Produto</label>
-                <input type="text" placeholder="Pesquisar por nome..." class="uppercase">
-            </div>
-            <div class="input-group col-3">
-                <label>Categoria</label>
-                <select>
-                    <option value="">Todas</option>
-                    <option value="1">Traje Masculino</option>
-                    <option value="2">Traje Feminino</option>
-                </select>
-            </div>
-            <div class="input-group col-2">
-                <label>Tamanho</label>
-                <input type="text" class="uppercase">
-            </div>
-            <div class="input-group col-3" style="display: flex; flex-direction: row; align-items: flex-end;">
-                <button class="btn btn-save flex-grow">Pesquisar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Results Table -->
-    <div class="section-card table-card">
-        <span class="section-title">Produtos Encontrados</span>
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Cód</th>
-                        <th>Produto</th>
-                        <th>Cor</th>
-                        <th>Tam</th>
-                        <th>Preço</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>101</td>
-                        <td>SMOKING PRETO CLASSIC</td>
-                        <td>PRETO</td>
-                        <td>42</td>
-                        <td>R$ 250,00</td>
-                        <td><span class="status-badge status-available">Disponível</span></td>
-                        <td>
-                            <div class="table-actions">
-                                <button class="action-btn">✏️</button>
-                                <button class="action-btn">📦</button>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="section-card">
+        <div class="empty-state">
+            Funcionalidade em desenvolvimento.
+            Para buscar produtos, use a aba <strong>Roupa</strong> no
+            <a routerLink="/home/dashboard">Painel Geral</a>.
         </div>
     </div>
 </div>
-Riverside

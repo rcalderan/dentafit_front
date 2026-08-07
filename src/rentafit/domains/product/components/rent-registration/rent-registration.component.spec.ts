@@ -15,6 +15,7 @@ describe('Registration', () => {
   const buildValidForm = (component: Registration) => {
     component.form.patchValue({
       name: 'Terno Azul',
+      categoryId: 'cat-1',
       categoryName: 'Vestidos',
       condition: 'NEW',
       size: 'M',
@@ -241,6 +242,42 @@ describe('Registration', () => {
     expect(component.isReadOnly()).toBe(true);
     expect(component.form.disabled).toBe(true);
     expect(component.form.get('id')?.value).toBe('p-1');
+  });
+
+  it('does not save when categoryId is empty even if categoryName is set', () => {
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    component.form.patchValue({
+      name: 'Terno Azul',
+      categoryName: 'Vestidos',
+      condition: 'NEW',
+      size: 'M',
+      color: 'Azul',
+      value: 120,
+    });
+    component.save();
+
+    expect(productService.saveRentalItem).not.toHaveBeenCalled();
+  });
+
+  it('exibe mensagem de sucesso apos salvar produto', () => {
+    const saved: IRentalItem = {
+      id: 'p-1', legacyId: 'L-1001', name: 'Terno Azul', status: 'AVAILABLE',
+      value: 120, categoryName: 'Vestidos', size: 'M', color: 'Azul',
+      brand: '', description: '', notes: '', condition: 'NEW'
+    };
+    productService.saveRentalItem.mockReturnValue(of(saved));
+
+    const fixture = TestBed.createComponent(Registration);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    buildValidForm(component);
+    component.save();
+
+    expect(component.successMessage()).toBe('Produto salvo com sucesso!');
   });
 
   it('stores validation errors from 400 responses', () => {

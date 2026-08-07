@@ -1,14 +1,24 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { User } from '../../data/user.model';
+import { User, UserRole } from '../../data/user.model';
 import { APP_CONFIG } from '../../../../shared/data/app-config.token';
+
+function resolveHomeRoute(role: UserRole | undefined): string {
+  switch (role) {
+    case UserRole.ADMIN:
+    case UserRole.MANAGER:  return '/finance/dashboard';
+    case UserRole.EMPLOYEE: return '/rental/management';
+    case UserRole.CUSTOMER: return '/account/profile';
+    default:                return '/auth/login';
+  }
+}
 
 @Component({
   selector: 'rentafit-login',
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
@@ -21,6 +31,7 @@ export class Login implements OnInit {
   password = '';
   errorMessage = signal<string | null>(null);
   isLoading = signal(false);
+  readonly showPassword = signal(false);
 
   constructor(
     private authService: AuthService,
@@ -30,8 +41,9 @@ export class Login implements OnInit {
 
   ngOnInit(): void {
     if (this.authService.isAuthenticated()) {
-      const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/home/dashboard';
-      this.router.navigate([returnUrl]);
+      const user = this.authService.getCurrentUser();
+      const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+      this.router.navigate([returnUrl || resolveHomeRoute(user?.role)]);
     }
   }
 
@@ -52,7 +64,7 @@ export class Login implements OnInit {
           (success) => {
             if (!success) {
               console.warn('Acesso negado, redirecionando...');
-              this.router.navigate(['/customer/search']);
+              this.router.navigate([resolveHomeRoute(user.role)]);
             }
             this.isLoading.set(false);
           },
@@ -70,13 +82,17 @@ export class Login implements OnInit {
     });
   }
 
+  togglePassword(): void {
+    this.showPassword.update(v => !v);
+  }
+
   private resolvePostLoginRoute(user: User): string {
-    if (user.pin == null) {
+    if (!user.pinConfigured) {
       return '/auth/setup-credentials';
     }
     if (user.passwordExpired) {
       return '/auth/change-password';
     }
-    return this.route.snapshot.queryParams['returnUrl'] || '/home/dashboard';
+    return this.route.snapshot.queryParams['returnUrl'] || resolveHomeRoute(user.role);
   }
 }

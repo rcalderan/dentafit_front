@@ -34,6 +34,7 @@ export class Registration implements OnInit, OnDestroy {
   isReadOnly = signal(false);
   isCategoryModalOpen = signal(false);
   errorMessage = signal<string[] | string | null>(null);
+  successMessage = signal<string | null>(null);
 
   conditionOptions: { value: ProductCondition; label: string }[] = [
     { value: 'NEW', label: 'Novo' },
@@ -58,7 +59,7 @@ export class Registration implements OnInit, OnDestroy {
       name: ['', [Validators.required, Validators.minLength(3)]],
       condition: ['', Validators.required],
       description: [''],
-      categoryId: [''],
+      categoryId: ['', Validators.required],
       categoryName: ['', Validators.required],
       brand: [''],
       size: ['', Validators.required],
@@ -174,6 +175,7 @@ export class Registration implements OnInit, OnDestroy {
         this.form.patchValue(saved);
         this.isReadOnly.set(true);
         this.form.disable();
+        this.successMessage.set('Produto salvo com sucesso!');
       },
       error: (error) => this.handleError(error)
     });
@@ -220,6 +222,10 @@ export class Registration implements OnInit, OnDestroy {
 
   clearError(): void {
     this.errorMessage.set(null);
+  }
+
+  clearSuccess(): void {
+    this.successMessage.set(null);
   }
 
   private scrollToFirstInvalid(): void {

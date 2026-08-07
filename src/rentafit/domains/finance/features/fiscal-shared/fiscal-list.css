@@ -1,0 +1,141 @@
+.fiscal-list {
+  padding: 1rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.page-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: var(--text-primary, #1a1a2e);
+}
+
+.filters {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.filter-btn {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 16px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.15s;
+}
+
+.filter-btn.active {
+  background: var(--accent-primary, #6c63ff);
+  color: #fff;
+  border-color: var(--accent-primary, #6c63ff);
+}
+
+.loading,
+.error-msg,
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary, #666);
+}
+
+.error-msg {
+  color: var(--error-color, #e53e3e);
+}
+
+.documents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.document-card {
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: box-shadow 0.15s, border-color 0.15s;
+  background: #fff;
+}
+
+.document-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-color: var(--accent-primary, #6c63ff);
+}
+
+.document-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+}
+
+.document-number {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-primary, #1a1a2e);
+}
+
+.status-badge {
+  padding: 0.15rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: var(--accent-secondary, #e0e0e0);
+  color: var(--text-primary, #333);
+}
+
+.status-pending_emission .status-badge { background: #fef3c7; color: #92400e; }
+.status-emitted .status-badge { background: #dcfce7; color: #166534; }
+.status-cancelled .status-badge,
+.status-denied .status-badge { background: #fee2e2; color: #991b1b; }
+
+.customer-name {
+  font-size: 0.85rem;
+  color: var(--text-primary, #333);
+  margin-bottom: 0.2rem;
+}
+
+.document-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-secondary, #666);
+}
+
+.total-value {
+  font-weight: 700;
+  color: var(--text-primary, #1a1a2e);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.pagination button {
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--border-color, #ddd);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

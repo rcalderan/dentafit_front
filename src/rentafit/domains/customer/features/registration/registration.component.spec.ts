@@ -290,6 +290,21 @@ describe('RegistrationComponent', () => {
     expect(component.form.disabled).toBe(true);
   });
 
+  it('exibe mensagem de sucesso e carrega cliente salvo após criar', () => {
+    const saved = buildSavedCustomer();
+    customerService.saveCustomer.mockReturnValue(of(saved));
+
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    buildValidForm(component);
+    component.save();
+
+    expect(component.successMessage()).toBe('Cliente salvo com sucesso!');
+    expect(component.form.getRawValue().legacyId).toBe(saved.legacyId);
+  });
+
   it('armazena erros de validação de respostas 400', () => {
     const error = new HttpErrorResponse({
       status: 400,

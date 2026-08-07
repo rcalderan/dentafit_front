@@ -6,8 +6,8 @@
         <div class="section-header">
             <span class="section-title">Informações Pessoais</span>
             <div class="header-actions">
-                <button class="header-btn" (click)="clear()" title="Limpar">🧹</button>
-                <button class="header-btn" (click)="close()" title="Fechar">❌</button>
+                <button class="header-btn" (click)="clear()" title="Limpar" aria-label="Limpar formulário"><i aria-hidden="true">🧹</i></button>
+                <button class="header-btn" (click)="close()" title="Fechar" aria-label="Fechar"><i aria-hidden="true">❌</i></button>
             </div>
         </div>
         <div class="form-grid">
@@ -191,11 +191,20 @@
     </div>
 
     @if (errorMessage()) {
-        <rentafit-modal 
-            title="Atenção" 
-            [message]="errorMessage() ?? ''" 
-            type="error" 
+        <rentafit-modal
+            title="Atenção"
+            [message]="errorMessage() ?? ''"
+            type="error"
             (close)="clearError()">
+        </rentafit-modal>
+    }
+
+    @if (successMessage()) {
+        <rentafit-modal
+            title="Sucesso"
+            [message]="successMessage() ?? ''"
+            type="info"
+            (close)="clearSuccess()">
         </rentafit-modal>
     }
 </div>

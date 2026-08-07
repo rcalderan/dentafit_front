@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { CategoryModalComponent } from '../categories/category-modal.component';
+import { Stock } from '../stock/stock';
 import { IRetailItem, ICategory } from '../../data/Product.interface';
 import { ProductService } from '../../service/product.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -12,7 +13,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 @Component({
     selector: 'rentafit-retail-registration',
     standalone: true,
-    imports: [ReactiveFormsModule, ModalComponent, CategoryModalComponent],
+    imports: [ReactiveFormsModule, ModalComponent, CategoryModalComponent, Stock],
     templateUrl: './retail-registration.component.html',
     styleUrl: './retail-registration.component.css',
 })
@@ -26,6 +27,7 @@ export class RetailRegistration implements OnInit, OnDestroy {
     form: FormGroup;
     isReadOnly = signal(false);
     isCategoryModalOpen = signal(false);
+    isSkuSearching = signal(false);
     errorMessage = signal<string[] | string | null>(null);
 
     constructor() {
@@ -41,13 +43,6 @@ export class RetailRegistration implements OnInit, OnDestroy {
             value: [null, [Validators.required, Validators.min(0.01)]],
             description: [''],
             details: [''],
-            stock: this.fb.group({
-                quantityAvailable: [{ value: 0, disabled: true }],
-                quantityReserved: [{ value: 0, disabled: true }],
-                quantityTotal: [0],
-                minStockLevel: [0],
-                location: [''],
-            }),
             createdAt: [{ value: '', disabled: true }],
             updatedAt: [{ value: '', disabled: true }]
         });
@@ -114,8 +109,6 @@ export class RetailRegistration implements OnInit, OnDestroy {
         this.form.enable();
         this.isReadOnly.set(false);
         this.form.get('id')?.disable();
-        this.form.get('stock.quantityAvailable')?.disable();
-        this.form.get('stock.quantityReserved')?.disable();
         this.form.get('createdAt')?.disable();
         this.form.get('updatedAt')?.disable();
     }
@@ -129,8 +122,6 @@ export class RetailRegistration implements OnInit, OnDestroy {
         this.isReadOnly.set(false);
         this.form.enable();
         this.form.get('id')?.disable();
-        this.form.get('stock.quantityAvailable')?.disable();
-        this.form.get('stock.quantityReserved')?.disable();
         this.form.get('createdAt')?.disable();
         this.form.get('updatedAt')?.disable();
     }
@@ -149,6 +140,31 @@ export class RetailRegistration implements OnInit, OnDestroy {
             categoryName: category.displayName || category.name,
         });
         this.isCategoryModalOpen.set(false);
+    }
+
+    searchBySku(): void {
+        const sku = this.form.get('sku')?.value?.trim();
+        if (!sku) {
+            this.errorMessage.set('Informe um SKU para realizar a busca.');
+            return;
+        }
+        this.isSkuSearching.set(true);
+        this.service.getRetailItemBySku(sku).pipe(takeUntil(this.destroy$)).subscribe({
+            next: (product) => {
+                this.form.patchValue(product);
+                this.isReadOnly.set(true);
+                this.form.disable();
+                this.isSkuSearching.set(false);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.isSkuSearching.set(false);
+                if (error.status === 404) {
+                    this.errorMessage.set(`Produto com SKU "${sku}" não encontrado.`);
+                } else {
+                    this.handleError(error);
+                }
+            }
+        });
     }
 
     clearError(): void {

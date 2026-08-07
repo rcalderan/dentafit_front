@@ -31,10 +31,22 @@ yarn-error.log
 .copilot/agents
 .copilot/skills
 .github/copilot*
-.windsurf/*
+.devin
+
+### Playwright ###
+.playwright*
+playwright*
+.claude
+test-results
 
 # QA artifacts
-.QA/
+.QA/*
+# Graphify
+graphify-out/
+.kiro/
+.agents/
+CLAUDE.md
+graphify*
 
 # Miscellaneous
 /.angular/cache
@@ -52,3 +64,7 @@ Thumbs.db
 # Environment secrets — generated at build time from .env.template
 .env
 src/environments/environment.prod.ts
+
+*.pfx
+*.p12
+*.jks

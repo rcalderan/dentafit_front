@@ -19,7 +19,7 @@ export interface User {
   legacyId?: string;
   email?: string;
   name?: string;
-  pin?: string | null;
+  pinConfigured?: boolean;
   role: UserRole;
   active: boolean;
   passwordExpired?: boolean;
@@ -39,4 +39,22 @@ export interface LoginResponse {
 
 export interface RefreshTokenRequest {
   refreshToken: string;
+}
+
+export interface ISignUpAddress {
+  zipCode: string;
+  street: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+}
+
+export interface SignUpRequest {
+  name: string;
+  email: string;
+  document: string;
+  phones: string[];
+  address: ISignUpAddress;
+  number?: string;
+  complement?: string;
 }

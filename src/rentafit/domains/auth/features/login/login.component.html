@@ -1,6 +1,6 @@
 <div class="login-container">
     <div class="login-card">
-        <h2>Bem vindo a {{ title() }}</h2>
+        <h1>Bem-vindo ao {{ title() }}</h1>
         
         @if (errorMessage()) {
         <div class="error-message">
@@ -9,29 +9,39 @@
         }
 
         <div class="form-group">
-            <label for="username">Username</label>
-            <input 
-                type="text" 
-                id="username" 
+            <label for="username">Usuário</label>
+            <input
+                type="text"
+                id="username"
                 [(ngModel)]="username"
-                placeholder="Enter username (admin)"
+                placeholder="Digite seu usuário"
                 [disabled]="isLoading()"
                 (keyup.enter)="login()">
         </div>
         <div class="form-group">
-            <label for="password">Password</label>
-            <input 
-                type="password" 
-                id="password" 
-                [(ngModel)]="password"
-                placeholder="Enter password"
-                [disabled]="isLoading()"
-                (keyup.enter)="login()">
+            <label for="password">Senha</label>
+            <div class="password-wrapper">
+                <input
+                    [type]="showPassword() ? 'text' : 'password'"
+                    id="password"
+                    [(ngModel)]="password"
+                    placeholder="Digite sua senha"
+                    [disabled]="isLoading()"
+                    (keyup.enter)="login()">
+                <button type="button" class="toggle-password"
+                        (click)="togglePassword()"
+                        [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'">
+                    <i aria-hidden="true">{{ showPassword() ? '🙈' : '👁️' }}</i>
+                </button>
+            </div>
         </div>
-        <button 
-            (click)="login()" 
+        <button
+            (click)="login()"
             [disabled]="isLoading()">
-            {{ isLoading() ? 'Autenticando...' : 'Sign In' }}
+            {{ isLoading() ? 'Entrando...' : 'Entrar' }}
         </button>
+        <p class="register-link">
+            Não tem conta? <a routerLink="/auth/register">Criar conta</a>
+        </p>
     </div>
 </div>

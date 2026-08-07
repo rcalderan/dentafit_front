@@ -1,48 +1,120 @@
 <div class="stock-container">
-    <h1>Controle de Estoque</h1>
 
-    <!-- Stock Summary Cards -->
+    @if (!productId()) {
+    <p class="no-product-msg">Selecione ou salve um produto para gerenciar o estoque.</p>
+    } @else {
+
+    @if (isLoading()) {
+    <div class="loading-bar"></div>
+    }
+
+    <!-- Summary cards -->
+    @if (stock(); as s) {
     <div class="summary-grid">
-        <div class="summary-card">
-            <span class="summary-label">Total em Estoque</span>
-            <span class="summary-value">452</span>
+        <div class="summary-card" [class]="stockStatusClass(s)">
+            <span class="summary-label">Disponível</span>
+            <span class="summary-value">{{ s.quantityAvailable ?? 0 }}</span>
         </div>
-        <div class="summary-card rented">
-            <span class="summary-label">Locados Atualmente</span>
-            <span class="summary-value">128</span>
+        <div class="summary-card reserved">
+            <span class="summary-label">Reservado</span>
+            <span class="summary-value">{{ s.quantityReserved ?? 0 }}</span>
         </div>
-        <div class="summary-card available">
-            <span class="summary-label">Disponíveis</span>
-            <span class="summary-value">324</span>
+        <div class="summary-card total">
+            <span class="summary-label">Total</span>
+            <span class="summary-value">{{ s.quantityTotal ?? 0 }}</span>
+        </div>
+        <div class="summary-card minimum">
+            <span class="summary-label">Estoque Mín.</span>
+            <span class="summary-value">{{ s.minStockLevel ?? 0 }}</span>
         </div>
     </div>
 
-    <!-- Inventory Details Table -->
+    @if (s.location) {
+    <p class="location-info">📍 Localização: <strong>{{ s.location }}</strong></p>
+    }
+    }
+
+    <!-- Movement operation panel -->
+    <div class="section-card">
+        <div class="section-header">
+            <span class="section-title">Movimentação de Estoque</span>
+        </div>
+
+        <div class="op-tabs">
+            <button class="op-tab" [class.active]="activeOp() === 'add'" type="button"
+                (click)="setOp('add')">➕ Entrada</button>
+            <button class="op-tab" [class.active]="activeOp() === 'remove'" type="button"
+                (click)="setOp('remove')">➖ Baixa</button>
+        </div>
+
+        <form [formGroup]="movementForm" (ngSubmit)="submit()" class="movement-form">
+            <div class="form-grid">
+                <div class="input-group col-3">
+                    <label>Quantidade</label>
+                    <div class="input-wrapper">
+                        <input type="number" formControlName="quantity" min="1">
+                    </div>
+                    @if (movementForm.get('quantity')?.invalid && movementForm.get('quantity')?.touched) {
+                    <span class="field-error">Informe uma quantidade válida (mín. 1)</span>
+                    }
+                </div>
+                <div class="input-group col-9">
+                    <label>Observação</label>
+                    <div class="input-wrapper">
+                        <input type="text" formControlName="notes" placeholder="Opcional">
+                    </div>
+                </div>
+            </div>
+
+            @if (successMessage()) {
+            <p class="success-msg">✅ {{ successMessage() }}</p>
+            }
+
+            <div class="actions">
+                <button class="btn btn-save" type="submit" [disabled]="isSaving()">
+                    {{ isSaving() ? 'Salvando...' : (activeOp() === 'add' ? 'Confirmar Entrada' : 'Confirmar Baixa') }}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Movements history -->
+    @if (movements().length > 0) {
     <div class="section-card table-card">
-        <span class="section-title">Movimentação e Status</span>
+        <span class="section-title">Histórico de Movimentações</span>
         <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
-                        <th>Produto</th>
-                        <th>Cor</th>
-                        <th>Tam</th>
-                        <th>Total</th>
-                        <th>Locados</th>
-                        <th>Status</th>
+                        <th>Tipo</th>
+                        <th>Qtde.</th>
+                        <th>Data</th>
+                        <th>Observação</th>
                     </tr>
                 </thead>
                 <tbody>
+                    @for (mv of movements(); track $index) {
                     <tr>
-                        <td>VESTIDO DE GALA AZUL</td>
-                        <td>AZUL</td>
-                        <td>38</td>
-                        <td>5</td>
-                        <td>2</td>
-                        <td><span class="status-badge status-available">OK</span></td>
+                        <td>
+                            <span class="mv-badge" [class]="movementClass(mv.type)">
+                                {{ movementLabel(mv.type) }}
+                            </span>
+                        </td>
+                        <td>{{ mv.quantity }}</td>
+                        <td>{{ mv.movementDate | date:'dd/MM/yyyy HH:mm' }}</td>
+                        <td>{{ mv.notes ?? '—' }}</td>
                     </tr>
+                    }
                 </tbody>
             </table>
         </div>
     </div>
+    }
+
+    }
+
+    @if (errorMessage()) {
+    <rentafit-modal title="Atenção" [message]="errorMessage() ?? ''" type="error"
+        (close)="clearError()"></rentafit-modal>
+    }
 </div>

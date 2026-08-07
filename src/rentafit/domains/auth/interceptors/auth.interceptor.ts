@@ -30,7 +30,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       // Se receber 401 e não for a rota de refresh, tenta renovar o token
-      if ((error.status === 401 || error.status === 403) && !req.url.includes('/auth/refresh')) {
+      if (error.status === 401 && !req.url.includes('/auth/refresh')) {
         return authService.refreshToken().pipe(
           switchMap(() => {
             // Reexecuta a requisição original com o novo token

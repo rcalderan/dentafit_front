@@ -31,6 +31,52 @@
             <button class="btn-link">Ver todos os logs →</button>
         </div>
 
+        <!-- Digital Certificate -->
+        <div class="section-card certificate-section">
+            <span class="section-title">Certificado Digital</span>
+            @if (errorMessage() && !showUploadModal()) {
+                <div class="error-text">{{ errorMessage() }}</div>
+            }
+            @if (details(); as d) {
+                <div class="certificate-status">
+                    <div class="status-row">
+                        <span>CNPJ/CPF</span>
+                        <strong [class.text-danger]="!d.valido">{{ d.cnpjCpf ? d.cnpjCpf : 'Não disponível' }}</strong>
+                    </div>
+                    <div class="status-row">
+                        <span>Vencimento</span>
+                        <strong [class.text-danger]="!d.valido">{{ d.vencimento ? d.vencimento : '-' }}</strong>
+                    </div>
+                    <div class="status-row">
+                        <span>Dias Restantes</span>
+                        <strong [class.text-danger]="!d.valido">{{ d.diasRestantes }}</strong>
+                    </div>
+                    <div class="status-row">
+                        <span>Status</span>
+                        <strong [class.text-danger]="!d.valido">{{ d.valido ? 'Válido' : 'Inválido' }}</strong>
+                    </div>
+                    @if (d.erro) {
+                        <div class="error-text">{{ d.erro }}</div>
+                    }
+                </div>
+            }
+            @if (showUploadControls()) {
+                <div class="drop-zone" (click)="certInput.click()">
+                    <input type="file" #certInput (change)="onFileSelected($event)" hidden accept=".pfx" />
+                    @if (selectedFile(); as file) {
+                        <div>{{ file.name }}</div>
+                    } @else {
+                        <div>Clique ou arraste o arquivo .pfx aqui</div>
+                    }
+                </div>
+                <button class="btn btn-update"
+                        [disabled]="!selectedFile()"
+                        (click)="openUploadModal()">
+                    {{ uploadButtonLabel() }}
+                </button>
+            }
+        </div>
+
         <!-- System Stats -->
         <div class="section-card stats-section">
             <span class="section-title">Estatísticas de Uso</span>
@@ -68,4 +114,28 @@
             <button class="btn btn-update" style="width: 100%; margin-top: 1rem;">Editar Preços</button>
         </div>
     </div>
+
+    @if (showUploadModal()) {
+        <div class="modal-overlay" (click)="closeUploadModal()">
+            <div class="modal-content" (click)="$event.stopPropagation()">
+                <h3>Enviar certificado digital</h3>
+                <input type="password"
+                       class="cert-input"
+                       placeholder="Senha do certificado"
+                       [value]="password()"
+                       (input)="password.set($any($event).target.value)" />
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" (click)="closeUploadModal()">Cancelar</button>
+                    <button class="btn btn-update"
+                            [disabled]="!password() || isUploading()"
+                            (click)="upload()">
+                        {{ isUploading() ? 'Enviando...' : 'Enviar' }}
+                    </button>
+                </div>
+                @if (errorMessage()) {
+                    <div class="error-text">{{ errorMessage() }}</div>
+                }
+            </div>
+        </div>
+    }
 </div>

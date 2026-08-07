@@ -3,6 +3,21 @@ import { CanActivateFn, Router, ActivatedRouteSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { UserRole } from '../data/user.model';
 
+/** Returns the home route for each role so the guard never creates a redirect loop. */
+function resolveFallbackRoute(role: UserRole | undefined): string {
+  switch (role) {
+    case UserRole.ADMIN:
+    case UserRole.MANAGER:
+      return '/finance/dashboard';
+    case UserRole.EMPLOYEE:
+      return '/rental/management';
+    case UserRole.CUSTOMER:
+      return '/account/profile';
+    default:
+      return '/auth/login';
+  }
+}
+
 /**
  * Guard funcional para controle de acesso baseado em roles.
  * Utiliza a propriedade 'roles' na configuração da rota.
@@ -24,7 +39,9 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
     return true;
   }
 
-  // Redireciona para página de acesso negado ou dashboard
-  router.navigate(['/finance/dashboard']);
+  // Redireciona para a rota padrão da role atual (evita loop entre rotas restritas)
+  const user = authService.getCurrentUser();
+  const fallback = resolveFallbackRoute(user?.role);
+  router.navigate([fallback]);
   return false;
 };

@@ -1,0 +1,32 @@
+<div class="modal-overlay" (click)="close.emit()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h3 class="modal-title danger">⚠️ Cancelar {{ documentLabel() }}</h3>
+
+    <div class="info-box">
+      <div class="info-row"><span>Número {{ documentLabel() }}:</span><strong>{{ invoiceNumber() || '—' }}</strong></div>
+      <div class="info-row"><span>Chave de Acesso:</span><strong class="mono">{{ accessKey() || '—' }}</strong></div>
+      <div class="info-row"><span>Valor:</span><strong>{{ value() }}</strong></div>
+    </div>
+
+    <label class="field-label">Motivo do Cancelamento *</label>
+    <textarea
+      class="input textarea"
+      rows="3"
+      [ngModel]="reason()"
+      (ngModelChange)="reason.set($event)"
+      placeholder="Informe o motivo do cancelamento (mín. 15 caracteres)..."
+    ></textarea>
+
+    <div class="warn-box">
+      ⚠️ O cancelamento só é permitido em até 24h após a emissão. Após este prazo,
+      é necessário emitir uma nota de devolução.
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" (click)="close.emit()">Voltar</button>
+      <button class="btn btn-danger" [disabled]="reason().trim().length < 15" (click)="submit()">
+        Confirmar Cancelamento
+      </button>
+    </div>
+  </div>
+</div>

@@ -26,9 +26,6 @@
       @if (canCancel()) {
         <button class="btn btn-danger" (click)="openCancelModal()">Cancelar</button>
       }
-      @if (order()?.status === 'PAID' && order()?.invoiceStatus !== 'EMITTED') {
-        <button class="btn btn-secondary" (click)="emitInvoice()">Emitir NFS-e</button>
-      }
     </div>
   </header>
 
@@ -103,6 +100,7 @@
                 @if (item.discountValue > 0) {
                   <span class="discount">-{{ formatCurrency(item.discountValue) }}</span>
                 }
+                <span class="item-separator">→</span>
                 <span class="line-total">{{ formatCurrency((item.unitPrice * item.quantity) - item.discountValue) }}</span>
               </div>
             </div>
@@ -131,31 +129,59 @@
 
   <!-- Totals -->
   <section class="section totals">
+
+    <!-- Linha de cada produto -->
+    @if ((order()?.items?.length ?? 0) > 0) {
+      <div class="totals-items">
+        @for (item of order()!.items; track $index) {
+          <div class="total-row total-row-item">
+            <span class="total-item-desc">{{ item.sku }}</span>
+            <span class="total-item-value">{{ item.quantity }}x {{ formatCurrency(item.unitPrice) }}   =   {{ formatCurrency(item.unitPrice * item.quantity) }}</span>
+          </div>
+        }
+      </div>
+      <div class="totals-divider"></div>
+    }
+
+    <!-- Subtotal bruto -->
     <div class="total-row">
       <span>Subtotal</span>
       <span>{{ formatCurrency(subtotal()) }}</span>
     </div>
+
+    <!-- Descontos por item -->
+    @if (itemDiscountsTotal() > 0) {
+      <div class="total-row">
+        <span class="discount-label">Desconto nos itens</span>
+        <span class="discount">-{{ formatCurrency(itemDiscountsTotal()) }}</span>
+      </div>
+    }
+
+    <!-- Desconto geral da ordem -->
     @if (isDraft()) {
       <div class="total-row discount-row">
-        <label>Desconto geral</label>
+        <label>Desconto adicional</label>
         <input type="number" [(ngModel)]="orderDiscount" min="0" max="999999" step="0.01" class="input input-sm" />
       </div>
     } @else if ((order()?.discountValue ?? 0) > 0) {
       <div class="total-row">
-        <span>Desconto</span>
+        <span class="discount-label">Desconto adicional</span>
         <span class="discount">-{{ formatCurrency(order()!.discountValue) }}</span>
       </div>
     }
+
+    <!-- Total a pagar -->
     <div class="total-row total-final">
-      <strong>Total</strong>
+      <strong>Total a pagar</strong>
       <strong>{{ formatCurrency(totalValue()) }}</strong>
     </div>
+
     @if (paidValue() > 0) {
       <div class="total-row">
         <span>Pago</span>
         <span class="paid">{{ formatCurrency(paidValue()) }}</span>
       </div>
-      <div class="total-row">
+      <div class="total-row total-remaining">
         <span>Restante</span>
         <span class="remaining">{{ formatCurrency(remainingValue()) }}</span>
       </div>
@@ -179,7 +205,7 @@
   <section class="section">
     <div class="section-header">
       <h3>Pagamentos</h3>
-      @if (order()?.status === 'CONFIRMED' || order()?.status === 'PAID' || isDraft()) {
+      @if ((order()?.status === 'CONFIRMED' || order()?.status === 'PAID' || isDraft()) && remainingValue() > 0) {
         <button class="btn btn-sm btn-primary" (click)="openPaymentModal()">+ Adicionar Pagamento</button>
       }
     </div>
@@ -208,16 +234,14 @@
     }
   </section>
 
-  <!-- Invoice Info -->
-  @if (order()?.invoiceStatus && order()!.invoiceStatus !== 'NONE') {
+  <!-- NF-e (emissão de nota fiscal de venda) -->
+  @if (order()?.id) {
     <section class="section">
-      <h3>NFS-e</h3>
-      <p>
-        Status: <strong>{{ order()!.invoiceStatusDescription || order()!.invoiceStatus }}</strong>
-        @if (order()!.invoiceId) {
-          <span> — ID: {{ order()!.invoiceId }}</span>
-        }
-      </p>
+      <rentafit-nfe-emission
+        [context]="fiscalContext()"
+        [initialDocument]="initialFiscalDocument()"
+        (changed)="onInvoiceChanged($event)"
+      />
     </section>
   }
 
@@ -337,7 +361,6 @@
     [title]="employeeVerifyAction === 'confirm' ? 'Identificar Atendente — Confirmação'
            : employeeVerifyAction === 'deliver' ? 'Identificar Atendente — Entrega'
            : employeeVerifyAction === 'ready'   ? 'Identificar Atendente — Pronto para Entrega'
-           : employeeVerifyAction === 'invoice' ? 'Identificar Atendente — Emissão NFS-e'
            : 'Identificar Atendente — Pagamento'"
     [requirePin]="true"
     (confirmed)="onEmployeeConfirmed($event)"

@@ -51,6 +51,20 @@ export interface ISalesOrder {
   invoiceStatus: InvoiceStatusApi;
   invoiceStatusDescription?: string;
   invoiceId?: string;
+  // Dados fiscais da NF-e/NFS-e (preenchidos após emissão)
+  invoiceNumber?: string;
+  invoiceSeries?: string;
+  invoiceAccessKey?: string;
+  invoiceEmissionDate?: string;
+  invoiceProtocol?: string;
+  invoiceCancelReason?: string;
+  invoiceCancelledAt?: string;
+  invoiceCancelProtocol?: string;
+  invoiceXmlUrl?: string;
+  invoiceDanfeUrl?: string;
+  invoiceCustomerEmail?: string;
+  invoiceNatureOperation?: string;
+  invoicePurpose?: string;
   subtotal?: number;
   totalValue?: number;
   paidValue?: number;

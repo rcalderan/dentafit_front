@@ -1,0 +1,109 @@
+<div class="report-page">
+  <!-- Barra de controles (oculta na impressão) -->
+  <div class="toolbar no-print">
+    <h1 class="toolbar-title">Relatório de Locação por Período</h1>
+    <div class="field">
+      <label for="startDate">De</label>
+      <input id="startDate" type="date" [ngModel]="startDate()"
+        (ngModelChange)="startDate.set($event)" />
+    </div>
+    <div class="field">
+      <label for="endDate">Até</label>
+      <input id="endDate" type="date" [min]="startDate()" [ngModel]="endDate()"
+        (ngModelChange)="endDate.set($event)" />
+    </div>
+    <button class="btn btn-ghost" (click)="generate()" [disabled]="isLoading()">Gerar</button>
+    <button class="btn btn-primary" (click)="print()" [disabled]="!report() || isLoading()">
+      Imprimir
+    </button>
+  </div>
+
+  @if (isLoading()) {
+  <p class="state-msg no-print">Carregando relatório…</p>
+  }
+
+  @if (errorMsg()) {
+  <p class="state-msg error no-print">{{ errorMsg() }}</p>
+  }
+
+  @if (report(); as data) {
+  <div class="sheet">
+    <div class="rep-head">
+      <div>
+        <div class="rep-title">Checklist de Preparação — Locação</div>
+        <div class="rep-sub">Conferência item a item · marque o que foi separado / ajustado</div>
+      </div>
+      <div class="rep-date">
+        <div class="rep-sub">{{ isPeriod() ? 'Período do evento' : 'Data do evento' }}</div>
+        <div class="rep-date-big">{{ periodLabel(data.startDate, data.endDate) }}</div>
+      </div>
+    </div>
+
+    <div class="totals">
+      <span class="tot"><b>{{ data.contractCount }}</b> contratos</span>
+      <span class="tot"><b>{{ data.itemCount }}</b> itens</span>
+      <span class="tot"><b>{{ data.adjustmentCount }}</b> ajustes/observações</span>
+    </div>
+
+    @if (isEmpty()) {
+    <p class="state-msg">Nenhuma locação para a data selecionada.</p>
+    }
+
+    @for (group of data.groups; track group.clothingType) {
+    <section class="group">
+      <div class="group-head">
+        <span class="group-name">{{ group.clothingType }}</span>
+        <span class="group-count">{{ group.itemCount }} itens</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th class="chk">✓</th>
+            <th>Item</th>
+            <th>Cliente / Contrato</th>
+            <th class="retirada">Retirada</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of group.items; track $index) {
+          <tr>
+            <td class="chk"><span class="box"></span></td>
+            <td>
+              <div class="item-desc">{{ item.description }}</div>
+              <div class="item-code">
+                COD {{ item.legacyProductCode || '—' }}
+                @if (item.size) { · Tam {{ item.size }} }
+                @if (item.color) { · {{ item.color }} }
+              </div>
+              @if (item.adjustments.length) {
+              <div class="adjust-wrap">
+                @for (adj of item.adjustments; track $index) {
+                <div class="adjust">
+                  <span class="box"></span>
+                  <span class="tag" [class.tag-aj]="adj.type === 'OBSERVACAO'"
+                    [class.tag-ac]="adj.type === 'ACESSORIO'">{{ adj.typeDescription }}</span>
+                  <span class="adjust-txt">{{ adj.description }}</span>
+                </div>
+                }
+              </div>
+              }
+            </td>
+            <td>
+              {{ item.customerName }}
+              <div class="meta-line">Contrato {{ item.contractLegacyId }}</div>
+            </td>
+            <td class="retirada">{{ formatDate(item.pickupDate) }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+    }
+
+    <div class="foot">
+      <span>Rentafit · gerado em {{ data.generatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+      <span>Período: {{ formatDate(data.startDate) }}{{ isPeriod() ? ' a ' + formatDate(data.endDate) : '' }} · Assinados + Fechados</span>
+    </div>
+  </div>
+  }
+</div>

@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { CryptoService } from './crypto.service';
-import { User, UserRole, LoginRequest, LoginResponse, RefreshTokenRequest } from '../data/user.model';
+import { User, UserRole, LoginRequest, LoginResponse, RefreshTokenRequest, SignUpRequest } from '../data/user.model';
 import { ErrorMessages, HTTP_ERROR_MAP } from '../../../shared/data/error-messages';
 import { APP_CONFIG } from '../../../shared/data/app-config.token';
 
@@ -61,7 +61,7 @@ export class AuthService {
           email: response.email,
           name: response.name,
           legacyId: response.legacyId,
-          pin: response.pin ?? null,
+          pinConfigured: response.pinConfigured,
           role: role,
           active: response.active,
           passwordExpired: response.passwordExpired ?? false,
@@ -240,7 +240,7 @@ export class AuthService {
    */
   needsCredentialSetup(): boolean {
     const user = this.currentUserSubject.value;
-    return user != null && user.pin == null;
+    return user != null && !user.pinConfigured;
   }
 
   /**
@@ -252,6 +252,19 @@ export class AuthService {
   }
 
   /**
+   * Public self-registration: creates Customer + UserAccount (CUSTOMER role) and returns tokens.
+   * The backend returns tokens for auto-login; the frontend routes to /auth/setup-credentials.
+   * Usage: `authService.signUp(payload)`
+   */
+  signUp(payload: SignUpRequest): Observable<User> {
+    return this.http.post<LoginResponse>(`${this.config.apiBaseUrl}/api/v1/customers/signup`, payload).pipe(
+      tap(response => this.storeTokens(response)),
+      switchMap(() => this.fetchUserProfile()),
+      catchError(this.handleError.bind(this))
+    );
+  }
+
+  /**
    * First-access: sets password + PIN.
    * Usage: `authService.setupCredentials('MyP@ss1', '1234')`
    */
@@ -260,7 +273,7 @@ export class AuthService {
       tap(() => {
         const user = this.currentUserSubject.value;
         if (user) {
-          user.pin = pin;
+          user.pinConfigured = true;
           user.passwordExpired = false;
           this.currentUserSubject.next(user);
           localStorage.setItem('currentUser', JSON.stringify(user));

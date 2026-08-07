@@ -1,0 +1,133 @@
+<div class="register-container">
+    <div class="register-card">
+        <h2>Criar Conta</h2>
+        <p class="subtitle">Preencha seus dados para se cadastrar</p>
+
+        @if (errorMessage()) {
+        <div class="error-message">{{ errorMessage() }}</div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+
+            <!-- Nome -->
+            <div class="form-group" [class.invalid]="fieldStatus('name') === 'INVALID'">
+                <label for="name">Nome completo *</label>
+                <input id="name" type="text" formControlName="name" placeholder="Seu nome completo">
+                @if (fieldError('name')) {
+                <span class="field-error">{{ fieldError('name') }}</span>
+                }
+            </div>
+
+            <!-- Email -->
+            <div class="form-group" [class.invalid]="fieldStatus('email') === 'INVALID'">
+                <label for="email">E-mail *</label>
+                <input id="email" type="email" formControlName="email" placeholder="seu@email.com">
+                @if (fieldError('email')) {
+                <span class="field-error">{{ fieldError('email') }}</span>
+                }
+            </div>
+
+            <!-- Documento -->
+            <div class="form-group" [class.invalid]="fieldStatus('document') === 'INVALID'">
+                <label for="document">CPF / CNPJ *</label>
+                <input id="document" type="text" formControlName="document" placeholder="000.000.000-00">
+                @if (fieldError('document')) {
+                <span class="field-error">{{ fieldError('document') }}</span>
+                }
+            </div>
+
+            <!-- Telefones -->
+            <div class="form-section">
+                <label class="section-label">Telefones *</label>
+                <div formArrayName="phones">
+                    @for (phone of phones.controls; track $index) {
+                    <div class="phone-row" [class.invalid]="phoneStatus($index) === 'INVALID'">
+                        <input type="text" [formControlName]="$index" placeholder="(11) 99999-9999">
+                        @if (canRemovePhone()) {
+                        <button type="button" class="btn-icon" (click)="removePhone($index)" title="Remover">×</button>
+                        }
+                        @if (phoneError($index)) {
+                        <span class="field-error">{{ phoneError($index) }}</span>
+                        }
+                    </div>
+                    }
+                </div>
+                @if (canAddPhone()) {
+                <button type="button" class="btn-link" (click)="addPhone()">+ Adicionar telefone</button>
+                }
+            </div>
+
+            <!-- Endereço -->
+            <div class="form-section" formGroupName="address">
+                <label class="section-label">Endereço *</label>
+
+                <div class="form-group" [class.invalid]="fieldStatus('zipCode', 'address') === 'INVALID'">
+                    <label for="zipCode">CEP *</label>
+                    <input id="zipCode" type="text" formControlName="zipCode"
+                        placeholder="00000-000"
+                        (keyup)="lookupZip($event, form.get('address.zipCode')?.value)">
+                    @if (isSearchingZip()) {
+                    <span class="hint">Buscando endereço…</span>
+                    }
+                    @if (fieldError('zipCode', 'address')) {
+                    <span class="field-error">{{ fieldError('zipCode', 'address') }}</span>
+                    }
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group flex-2" [class.invalid]="fieldStatus('street', 'address') === 'INVALID'">
+                        <label for="street">Rua *</label>
+                        <input id="street" type="text" formControlName="street" placeholder="Nome da rua">
+                        @if (fieldError('street', 'address')) {
+                        <span class="field-error">{{ fieldError('street', 'address') }}</span>
+                        }
+                    </div>
+                    <div class="form-group flex-1" [class.invalid]="fieldStatus('neighborhood', 'address') === 'INVALID'">
+                        <label for="neighborhood">Bairro</label>
+                        <input id="neighborhood" type="text" formControlName="neighborhood" placeholder="Bairro">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group flex-2" [class.invalid]="fieldStatus('city', 'address') === 'INVALID'">
+                        <label for="city">Cidade *</label>
+                        <input id="city" type="text" formControlName="city" placeholder="Cidade">
+                        @if (fieldError('city', 'address')) {
+                        <span class="field-error">{{ fieldError('city', 'address') }}</span>
+                        }
+                    </div>
+                    <div class="form-group flex-1" [class.invalid]="fieldStatus('state', 'address') === 'INVALID'">
+                        <label for="state">UF *</label>
+                        <input id="state" type="text" formControlName="state" placeholder="SP" maxlength="2"
+                            style="text-transform: uppercase">
+                        @if (fieldError('state', 'address')) {
+                        <span class="field-error">{{ fieldError('state', 'address') }}</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Número e Complemento -->
+            <div class="form-row">
+                <div class="form-group flex-1" [class.invalid]="fieldStatus('number') === 'INVALID'">
+                    <label for="number">Número</label>
+                    <input id="number" type="text" formControlName="number" placeholder="123">
+                    @if (fieldError('number')) {
+                    <span class="field-error">{{ fieldError('number') }}</span>
+                    }
+                </div>
+                <div class="form-group flex-2" [class.invalid]="fieldStatus('complement') === 'INVALID'">
+                    <label for="complement">Complemento</label>
+                    <input id="complement" type="text" formControlName="complement" placeholder="Apto, bloco…">
+                </div>
+            </div>
+
+            <button type="submit" [disabled]="isLoading()">
+                {{ isLoading() ? 'Criando conta...' : 'Criar Conta' }}
+            </button>
+
+        </form>
+
+        <p class="login-link">Já tem conta? <a routerLink="/auth/login">Entrar</a></p>
+    </div>
+</div>

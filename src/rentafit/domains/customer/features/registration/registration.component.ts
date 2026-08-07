@@ -96,6 +96,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   isReadOnly = signal(false);
   isSearchingAddress = signal(false);
   errorMessage = signal<string[] | string | null>(null);
+  successMessage = signal<string | null>(null);
 
   customerData = computed(() => this.customer);
 
@@ -192,6 +193,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   }
 
   private loadCustomerForm(customer: ICustomer) {
+    this.customer = customer;
     this.setPhones(customer.phones);
     this.form.patchValue({ ...customer });
     this.isReadOnly.set(true);
@@ -350,6 +352,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
         next: (customer: ICustomer) => {
           console.log('Cliente Salvo:', customer);
           this.loadCustomerForm(customer);
+          this.successMessage.set('Cliente salvo com sucesso!');
         },
         error: (error) => this.handleError(error)
       });
@@ -381,6 +384,10 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
   clearError() {
     this.errorMessage.set(null);
+  }
+
+  clearSuccess() {
+    this.successMessage.set(null);
   }
 
   clear() {

@@ -9,6 +9,10 @@ export const routes: Routes = [
     { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
     { path: 'auth/login', component: Login },
     {
+        path: 'auth/register',
+        loadComponent: () => import('./domains/auth/features/register/register.component').then(m => m.RegisterComponent)
+    },
+    {
         path: 'auth/setup-credentials',
         loadComponent: () => import('./domains/auth/features/setup-credentials/setup-credentials.component').then(m => m.SetupCredentialsComponent)
     },
@@ -21,6 +25,11 @@ export const routes: Routes = [
         component: MainLayout,
         canActivate: [authGuard],
         children: [
+            {
+                path: 'account/profile',
+                loadComponent: () => import('./domains/account/features/profile/account-profile.component').then(m => m.AccountProfileComponent),
+                data: { title: 'Minha Conta' }
+            },
             {
                 path: 'customer/registration',
                 loadComponent: () => import('./domains/customer/features/registration/registration.component').then(m => m.RegistrationComponent),
@@ -75,6 +84,24 @@ export const routes: Routes = [
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Devolução' }
             },
             {
+                path: 'rental/daily-report',
+                loadComponent: () => import('./domains/rental/features/daily-report/daily-report.component').then(m => m.DailyReportComponent),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Relatório Diário de Locação' }
+            },
+            {
+                path: 'rental/nfse-view',
+                loadComponent: () => import('./domains/finance/features/nfse-view/nfse-view.component').then(m => m.NfseViewComponent),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'NFS-e de Locações' }
+            },
+            {
+                path: 'rental/nfse-view/:id',
+                loadComponent: () => import('./domains/finance/features/nfse-view/nfse-view-detail.component').then(m => m.NfseViewDetailComponent),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Detalhe da NFS-e' }
+            },
+            {
                 path: 'rental/legacy',
                 loadComponent: () => import('./domains/rental/features/legacy/locacao/locacao').then(m => m.LocacaoComponent),
                 canActivate: [roleGuard],
@@ -111,6 +138,18 @@ export const routes: Routes = [
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Gestão de Vendas' }
             },
             {
+                path: 'sales/nfe-view',
+                loadComponent: () => import('./domains/finance/features/nfe-view/nfe-view.component').then(m => m.NfeViewComponent),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'NF-e de Vendas' }
+            },
+            {
+                path: 'sales/nfe-view/:id',
+                loadComponent: () => import('./domains/finance/features/nfe-view/nfe-view-detail.component').then(m => m.NfeViewDetailComponent),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Detalhe da NF-e' }
+            },
+            {
                 path: 'home/dashboard',
                 loadComponent: () => import('./domains/home/features/dashboard.component').then(m => m.HomeDashboard),
                 canActivate: [roleGuard],
@@ -133,6 +172,12 @@ export const routes: Routes = [
                 loadComponent: () => import('./domains/admin/features/dashboard/dashboard').then(m => m.Dashboard),
                 canActivate: [roleGuard],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Administração' }
+            },
+            {
+                path: 'admin/user-roles',
+                loadComponent: () => import('./domains/admin/features/user-roles/user-roles.component').then(m => m.UserRolesComponent),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Papéis de Usuários' }
             }
         ]
     },
