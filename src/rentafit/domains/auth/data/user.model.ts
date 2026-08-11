@@ -23,6 +23,7 @@ export interface User {
   role: UserRole;
   active: boolean;
   passwordExpired?: boolean;
+  issuerCnpj?: string;
   createdAt?: string;
 }
 

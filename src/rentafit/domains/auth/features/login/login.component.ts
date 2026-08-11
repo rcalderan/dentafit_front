@@ -3,18 +3,10 @@ import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { User, UserRole } from '../../data/user.model';
+import { User } from '../../data/user.model';
 import { APP_CONFIG } from '../../../../shared/data/app-config.token';
-
-function resolveHomeRoute(role: UserRole | undefined): string {
-  switch (role) {
-    case UserRole.ADMIN:
-    case UserRole.MANAGER:  return '/finance/dashboard';
-    case UserRole.EMPLOYEE: return '/rental/management';
-    case UserRole.CUSTOMER: return '/account/profile';
-    default:                return '/auth/login';
-  }
-}
+import { FirstUseFlowService } from '../../services/first-use-flow.service';
+import { resolveHomeRoute } from '../../utils/role-route.util';
 
 @Component({
   selector: 'rentafit-login',
@@ -35,6 +27,7 @@ export class Login implements OnInit {
 
   constructor(
     private authService: AuthService,
+    private firstUseFlowService: FirstUseFlowService,
     private router: Router,
     private route: ActivatedRoute
   ) { }
@@ -57,23 +50,7 @@ export class Login implements OnInit {
     this.errorMessage.set(null);
 
     this.authService.login(this.username, this.password).subscribe({
-      next: (user) => {
-        const destination = this.resolvePostLoginRoute(user);
-
-        this.router.navigate([destination]).then(
-          (success) => {
-            if (!success) {
-              console.warn('Acesso negado, redirecionando...');
-              this.router.navigate([resolveHomeRoute(user.role)]);
-            }
-            this.isLoading.set(false);
-          },
-          (error) => {
-            this.isLoading.set(false);
-            console.error('Erro ao redirecionar após login:', error);
-          }
-        );
-      },
+      next: (user) => this.handleLoginSuccess(user),
       error: (error) => {
         this.isLoading.set(false);
         this.errorMessage.set(error.message || 'Erro ao realizar login');
@@ -82,17 +59,33 @@ export class Login implements OnInit {
     });
   }
 
-  togglePassword(): void {
-    this.showPassword.update(v => !v);
+  private handleLoginSuccess(user: User): void {
+    this.firstUseFlowService.resolvePostLoginRoute(user).subscribe({
+      next: (destination) => this.navigateTo(destination, user),
+      error: (error) => {
+        this.isLoading.set(false);
+        console.error('Erro ao resolver fluxo pós-login:', error);
+      }
+    });
   }
 
-  private resolvePostLoginRoute(user: User): string {
-    if (!user.pinConfigured) {
-      return '/auth/setup-credentials';
-    }
-    if (user.passwordExpired) {
-      return '/auth/change-password';
-    }
-    return this.route.snapshot.queryParams['returnUrl'] || resolveHomeRoute(user.role);
+  private navigateTo(destination: string, user: User): void {
+    this.router.navigate([destination]).then(
+      (success) => {
+        if (!success) {
+          console.warn('Acesso negado, redirecionando...');
+          this.router.navigate([resolveHomeRoute(user.role)]);
+        }
+        this.isLoading.set(false);
+      },
+      (error) => {
+        this.isLoading.set(false);
+        console.error('Erro ao redirecionar após login:', error);
+      }
+    );
+  }
+
+  togglePassword(): void {
+    this.showPassword.update(v => !v);
   }
 }

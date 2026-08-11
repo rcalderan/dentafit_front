@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { FirstUseFlowService } from '../../services/first-use-flow.service';
 import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 
 @Component({
@@ -25,6 +26,7 @@ export class ChangePasswordComponent {
 
   constructor(
     private readonly authService: AuthService,
+    private readonly firstUseFlowService: FirstUseFlowService,
     private readonly router: Router
   ) {}
 
@@ -59,7 +61,15 @@ export class ChangePasswordComponent {
     this.authService.changePassword(this.newPassword).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.router.navigate(['/home/dashboard']);
+        const user = this.authService.getCurrentUser();
+        if (!user) {
+          this.router.navigate(['/auth/login']);
+          return;
+        }
+        this.firstUseFlowService.resolveAfterCredentials(user).subscribe({
+          next: (route) => this.router.navigate([route]),
+          error: (err: Error) => this.errorMessage.set(err.message || 'Erro ao resolver próxima etapa.')
+        });
       },
       error: (err: Error) => {
         this.isLoading.set(false);

@@ -3,19 +3,8 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { UserRole } from '../../data/user.model';
-
+import { FirstUseFlowService } from '../../services/first-use-flow.service';
 import { APP_CONFIG } from '../../../../shared/data/app-config.token';
-
-function resolvePostSetupRoute(role: UserRole | undefined): string {
-  switch (role) {
-    case UserRole.ADMIN:
-    case UserRole.MANAGER: return '/finance/dashboard';
-    case UserRole.EMPLOYEE: return '/rental/management';
-    case UserRole.CUSTOMER: return '/account/profile';
-    default: return '/auth/login';
-  }
-}
 
 @Component({
   selector: 'rentafit-setup-credentials',
@@ -39,6 +28,7 @@ export class SetupCredentialsComponent {
 
   constructor(
     private readonly authService: AuthService,
+    private readonly firstUseFlowService: FirstUseFlowService,
     private readonly router: Router
   ) {}
 
@@ -80,8 +70,14 @@ export class SetupCredentialsComponent {
       next: () => {
         this.isLoading.set(false);
         const user = this.authService.getCurrentUser();
-        const route = resolvePostSetupRoute(user?.role);
-        this.router.navigate([route]);
+        if (!user) {
+          this.router.navigate(['/auth/login']);
+          return;
+        }
+        this.firstUseFlowService.resolveAfterCredentials(user).subscribe({
+          next: (route) => this.router.navigate([route]),
+          error: (err: Error) => this.errorMessage.set(err.message || 'Erro ao resolver próxima etapa.')
+        });
       },
       error: (err: Error) => {
         this.isLoading.set(false);

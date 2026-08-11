@@ -65,6 +65,7 @@ export class AuthService {
           role: role,
           active: response.active,
           passwordExpired: response.passwordExpired ?? false,
+          issuerCnpj: response.issuerCnpj,
           createdAt: response.createdAt
         };
         
@@ -293,6 +294,24 @@ export class AuthService {
         const user = this.currentUserSubject.value;
         if (user) {
           user.passwordExpired = false;
+          this.currentUserSubject.next(user);
+          localStorage.setItem('currentUser', JSON.stringify(user));
+        }
+      }),
+      catchError(this.handleError.bind(this))
+    );
+  }
+
+  /**
+   * Vincula o CNPJ do emitente ao usuário logado.
+   * Usage: `authService.setupIssuerCnpj('08299621000120')`
+   */
+  setupIssuerCnpj(issuerCnpj: string): Observable<User> {
+    return this.http.post<User>(`${this.apiUrl}/setup-issuer-cnpj`, { issuerCnpj }).pipe(
+      tap(response => {
+        const user = this.currentUserSubject.value;
+        if (user) {
+          user.issuerCnpj = response.issuerCnpj;
           this.currentUserSubject.next(user);
           localStorage.setItem('currentUser', JSON.stringify(user));
         }

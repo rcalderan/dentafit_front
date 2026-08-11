@@ -3,9 +3,11 @@ import { of, throwError, EMPTY } from 'rxjs';
 import { vi } from 'vitest';
 import { Login } from './login.component';
 import { AuthService } from '../../services/auth.service';
+import { FirstUseFlowService } from '../../services/first-use-flow.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 import { User, UserRole } from '../../data/user.model';
+import { resolveHomeRoute } from '../../utils/role-route.util';
 
 const buildUser = (overrides: Partial<User> = {}): User => ({
   id: 'u-1',
@@ -34,6 +36,17 @@ const makeRoute = (queryParams: Record<string, string> = {}) => ({
   snapshot: { queryParams },
 });
 
+function makeFirstUseFlowService(options: { queryParams?: Record<string, string> } = {}) {
+  return {
+    resolvePostLoginRoute: vi.fn((user: User) => {
+      if (!user.pinConfigured) return of('/auth/setup-credentials');
+      if (user.passwordExpired) return of('/auth/change-password');
+      if (options.queryParams?.['returnUrl']) return of(options.queryParams['returnUrl']);
+      return of(resolveHomeRoute(user.role));
+    }),
+  };
+}
+
 async function setupTestBed(options: {
   isAuthenticated?: boolean;
   currentUser?: User | null;
@@ -45,11 +58,13 @@ async function setupTestBed(options: {
   );
   const router = makeRouter();
   const route = makeRoute(options.queryParams ?? {});
+  const firstUseFlowService = makeFirstUseFlowService(options);
 
   await TestBed.configureTestingModule({
     imports: [Login],
     providers: [
       { provide: AuthService, useValue: authService },
+      { provide: FirstUseFlowService, useValue: firstUseFlowService },
       { provide: Router, useValue: router },
       { provide: ActivatedRoute, useValue: route },
       { provide: APP_CONFIG, useValue: { appName: 'Rentafit Test' } },
