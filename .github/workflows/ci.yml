@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ develop, main ]
   pull_request:
-    branches: [ develop ]
+    branches: [ develop, main ]
 
 jobs:
   validation:
@@ -57,15 +57,25 @@ jobs:
           path: dist/RentAFit/browser
           retention-days: 1
 
-      - name: Trigger deploy in costume-rental-infra
-        if: github.event_name == 'push'
+      - name: Trigger deploy (Hostinger default)
+        if: github.event_name == 'push' && github.ref_name == 'main' && (vars.DEPLOY_TARGET == '' || vars.DEPLOY_TARGET == 'HOSTINGER')
         continue-on-error: true
         run: |
           curl -X POST \
             -H "Authorization: token ${{ secrets.INFRA_REPO_PAT }}" \
             -H "Accept: application/vnd.github.everest-preview+json" \
             https://api.github.com/repos/rcalderan/costume-rental-infra/dispatches \
-            -d "{\"event_type\":\"deploy-frontend\",\"client_payload\":{\"source_repo\":\"${{ github.repository }}\",\"source_branch\":\"${{ github.ref_name }}\",\"artifact_name\":\"dist-build\"}}"
+            -d "{\"event_type\":\"deploy-hostinger-pro\",\"client_payload\":{\"source_repo\":\"${{ github.repository }}\",\"source_branch\":\"main\",\"artifact_name\":\"dist-build\"}}"
+
+      - name: Trigger deploy (AWS legacy)
+        if: github.event_name == 'push' && github.ref_name == 'main' && vars.DEPLOY_TARGET == 'AWS'
+        continue-on-error: true
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.INFRA_REPO_PAT }}" \
+            -H "Accept: application/vnd.github.everest-preview+json" \
+            https://api.github.com/repos/rcalderan/costume-rental-infra/dispatches \
+            -d "{\"event_type\":\"deploy-frontend\",\"client_payload\":{\"source_repo\":\"${{ github.repository }}\",\"source_branch\":\"main\",\"artifact_name\":\"dist-build\"}}"
 
   notify:
     needs: [build]
