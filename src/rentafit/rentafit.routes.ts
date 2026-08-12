@@ -21,6 +21,14 @@ export const routes: Routes = [
         loadComponent: () => import('./domains/auth/features/change-password/change-password.component').then(m => m.ChangePasswordComponent)
     },
     {
+        path: 'auth/issuer-setup',
+        loadComponent: () => import('./domains/auth/features/issuer-setup/issuer-setup.component').then(m => m.IssuerSetupComponent)
+    },
+    {
+        path: 'auth/issuer-confirm',
+        loadComponent: () => import('./domains/auth/features/issuer-confirm/issuer-confirm.component').then(m => m.IssuerConfirmComponent)
+    },
+    {
         path: '',
         component: MainLayout,
         canActivate: [authGuard],

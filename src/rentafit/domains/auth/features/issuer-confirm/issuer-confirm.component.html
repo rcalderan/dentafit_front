@@ -1,0 +1,27 @@
+<div class="setup-container">
+  <div class="setup-card">
+    <h2>Confirmar Emitente</h2>
+    <p class="subtitle">Confirme o CNPJ vinculado ao seu usuário para emissão de notas</p>
+
+    @if (errorMessage()) {
+      <div class="error-message">{{ errorMessage() }}</div>
+    }
+
+    @if (issuerInfo(); as issuer) {
+      <div class="issuer-display">
+        <p><strong>Emitente ativo no sistema:</strong></p>
+        <p>{{ issuer.razaoSocial }}</p>
+        <p class="cnpj">{{ issuer.cnpj | slice:0:2 }}.{{ issuer.cnpj | slice:2:5 }}.{{ issuer.cnpj | slice:5:8 }}/{{ issuer.cnpj | slice:8:12 }}-{{ issuer.cnpj | slice:12:14 }}</p>
+      </div>
+    }
+
+    <div class="form-group">
+      <label for="cnpj">CNPJ do seu usuário</label>
+      <input id="cnpj" [(ngModel)]="cnpj" placeholder="00.000.000/0000-00" [disabled]="isLoading()">
+    </div>
+
+    <button (click)="submit()" [disabled]="isLoading()">
+      {{ isLoading() ? 'Salvando...' : 'Confirmar CNPJ' }}
+    </button>
+  </div>
+</div>

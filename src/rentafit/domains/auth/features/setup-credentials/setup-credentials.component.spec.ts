@@ -3,6 +3,7 @@ import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { SetupCredentialsComponent } from './setup-credentials.component';
 import { AuthService } from '../../services/auth.service';
+import { FirstUseFlowService } from '../../services/first-use-flow.service';
 import { Router } from '@angular/router';
 import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 
@@ -12,6 +13,7 @@ describe('SetupCredentialsComponent', () => {
     getCurrentUser: ReturnType<typeof vi.fn>;
   };
   let router: { navigate: ReturnType<typeof vi.fn> };
+  let firstUseFlowService: { resolveAfterCredentials: ReturnType<typeof vi.fn> };
 
   const makeComponent = () => TestBed.createComponent(SetupCredentialsComponent).componentInstance;
 
@@ -21,11 +23,15 @@ describe('SetupCredentialsComponent', () => {
       getCurrentUser: vi.fn().mockReturnValue({ role: 'CUSTOMER' }),
     };
     router = { navigate: vi.fn() };
+    firstUseFlowService = {
+      resolveAfterCredentials: vi.fn().mockReturnValue(of('/account/profile')),
+    };
 
     await TestBed.configureTestingModule({
       imports: [SetupCredentialsComponent],
       providers: [
         { provide: AuthService, useValue: authService },
+        { provide: FirstUseFlowService, useValue: firstUseFlowService },
         { provide: Router, useValue: router },
         { provide: APP_CONFIG, useValue: { appName: 'Rentafit Test' } },
       ],
