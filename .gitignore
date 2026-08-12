@@ -27,6 +27,27 @@ yarn-error.log
 !.vscode/launch.json
 !.vscode/extensions.json
 .history/*
+.copilot/*
+.copilot/agents
+.copilot/skills
+.github/copilot*
+.devin
+
+### Playwright ###
+.playwright*
+playwright*
+.claude
+test-results
+
+# QA artifacts
+.QA
+.QA/*
+# Graphify
+graphify-out/
+.kiro/
+.agents/
+CLAUDE.md
+graphify*
 
 # Miscellaneous
 /.angular/cache
@@ -41,3 +62,10 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+# Environment secrets — generated at build time from .env.template
+.env
+src/environments/environment.prod.ts
+
+*.pfx
+*.p12
+*.jks

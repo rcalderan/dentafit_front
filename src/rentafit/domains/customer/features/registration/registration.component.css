@@ -1,0 +1,370 @@
+:host {
+    display: block;
+}
+
+.customer-registration-container {
+    background-color: var(--bg-color);
+    padding: 2rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+h1 {
+    color: var(--primary-color);
+    font-size: 2.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.section-card {
+    background: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem 2rem;
+    width: 100%;
+    max-width: 800px;
+    box-shadow: var(--shadow-md);
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 1.2rem;
+    display: block;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
+}
+
+.section-header .section-title {
+    margin-bottom: 0;
+}
+
+.contact-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.phone-limit {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.header-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.2rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-btn:hover {
+    background-color: var(--input-bg);
+}
+
+.btn-edit-trigger {
+    background-color: transparent !important;
+    color: var(--primary-color) !important;
+    padding: 0.4rem 0.8rem !important;
+    font-weight: 600;
+    gap: 0.4rem;
+}
+
+.btn-edit-trigger:hover {
+    background-color: var(--input-bg) !important;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.2rem;
+}
+
+.col-12 {
+    grid-column: span 12;
+}
+
+.col-8 {
+    grid-column: span 8;
+}
+
+.col-6 {
+    grid-column: span 6;
+}
+
+.col-4 {
+    grid-column: span 4;
+}
+
+.col-3 {
+    grid-column: span 3;
+}
+
+.col-2 {
+    grid-column: span 2;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.phone-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.phone-row .input-wrapper {
+    flex: 1;
+}
+
+.phone-add-btn,
+.phone-remove-btn {
+    font-size: 1rem;
+    padding: 0.3rem;
+}
+
+.phone-remove-btn:disabled,
+.phone-add-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.input-group label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="tel"],
+input[type="email"],
+textarea {
+    background-color: var(--input-bg);
+    border: none;
+    border-radius: var(--input-radius);
+    padding: 0.8rem 1rem;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+input:focus,
+textarea:focus {
+    outline: 2px solid var(--primary-color);
+    background-color: var(--card-bg);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding-right: 2.5rem !important;
+}
+
+.valid-icon, .invalid-icon {
+    position: absolute;
+    right: 0.8rem;
+    font-size: 0.9rem;
+    display: none;
+    pointer-events: none;
+}
+
+.valid-icon.show, .invalid-icon.show {
+    display: block;
+}
+
+.loader-icon {
+    position: absolute;
+    right: 0.8rem;
+    font-size: 0.9rem;
+    display: none;
+    pointer-events: none;
+    animation: rotate 1.5s linear infinite;
+}
+
+.loader-icon.show {
+    display: block;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.field-error {
+    color: #f44336;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 0.2rem;
+}
+
+.field-tip {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-style: italic;
+    margin-top: 0.1rem;
+}
+
+/* Modo Visualização (Read Only) */
+.customer-registration-container.read-only input,
+.customer-registration-container.read-only textarea {
+    background-color: #f8f9fa;
+    border: none;
+    color: #6c757d;
+    cursor: default;
+    box-shadow: none;
+}
+
+.customer-registration-container.read-only .valid-icon,
+.customer-registration-container.read-only .invalid-icon {
+    display: none !important;
+}
+
+.customer-registration-container.read-only .section-card {
+    opacity: 0.95;
+    background-color: #fdfdfd;
+}
+
+/* Modo Edição (Highlight) */
+.customer-registration-container:not(.read-only) .section-card {
+    border-top: 4px solid var(--primary-color);
+}
+
+.radio-group {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.5rem 0;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    width: 100%;
+    max-width: 800px;
+}
+
+.btn {
+    padding: 0.8rem 2.5rem;
+    border-radius: var(--input-radius);
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-save {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-update {
+    background-color: var(--input-bg);
+    color: var(--primary-color);
+}
+
+.btn-delete {
+    background-color: transparent;
+    border: 1px solid var(--danger-color);
+    color: var(--danger-color);
+}
+
+.btn-save:hover {
+    background-color: var(--primary-hover);
+    box-shadow: 0 4px 12px rgba(154, 185, 235, 0.3);
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+    .customer-registration-container {
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        text-align: center;
+    }
+
+    .section-card {
+        padding: 1.2rem;
+    }
+
+    .form-grid {
+        gap: 0.8rem;
+    }
+
+    .col-1,
+    .col-2,
+    .col-3,
+    .col-4,
+    .col-6,
+    .col-8,
+    .col-9,
+    .col-12 {
+        grid-column: span 12 !important;
+    }
+
+    .radio-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.8rem;
+    }
+
+    .actions {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 0.8rem 1rem;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+
+    .col-4,
+    .col-3 {
+        grid-column: span 6;
+    }
+}

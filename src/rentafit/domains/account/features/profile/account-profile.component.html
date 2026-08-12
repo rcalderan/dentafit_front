@@ -1,0 +1,103 @@
+<div class="account-page">
+  <header class="account-header">
+    <div class="user-info">
+      <div class="user-avatar">{{ user?.name?.charAt(0) ?? '?' }}</div>
+      <div>
+        <h2>{{ user?.name }}</h2>
+        <span class="user-email">{{ user?.username }}</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="activeTab() === 'rentals'" (click)="selectTab('rentals')">
+      Minhas Locações
+    </button>
+    <button class="tab-btn" [class.active]="activeTab() === 'orders'" (click)="selectTab('orders')">
+      Minhas Compras
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading">Carregando...</div>
+  } @else if (errorMessage()) {
+    <div class="error-msg">{{ errorMessage() }}</div>
+  } @else {
+
+    @if (activeTab() === 'rentals') {
+      @if ((rentals()?.content?.length ?? 0) === 0) {
+        <div class="empty-state">Nenhuma locação encontrada.</div>
+      } @else {
+        <div class="card-list">
+          @for (r of rentals()!.content; track r.id) {
+            <div class="contract-card">
+              <div class="card-top">
+                <span [class]="'status-badge ' + rentalStatusClass(r.status)">{{ r.statusDescription }}</span>
+                <span class="card-date">Criado em {{ r.createdAt | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="card-body">
+                <div class="card-row">
+                  <span class="label">Evento</span>
+                  <span>{{ r.eventDate ? (r.eventDate | date:'dd/MM/yyyy') : '—' }}</span>
+                </div>
+                <div class="card-row">
+                  <span class="label">Retirada</span>
+                  <span>{{ r.pickupDate ? (r.pickupDate | date:'dd/MM/yyyy') : '—' }}</span>
+                </div>
+                <div class="card-row">
+                  <span class="label">Devolução</span>
+                  <span>{{ r.returnDate ? (r.returnDate | date:'dd/MM/yyyy') : '—' }}</span>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="value-label">Total</span>
+                <span class="value">{{ r.totalValue | currency:'BRL' }}</span>
+                <span class="value-label">Pago</span>
+                <span class="value paid">{{ r.paidValue | currency:'BRL' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="pagination">
+          <button (click)="prevPage()" [disabled]="currentPage() === 0">‹ Anterior</button>
+          <span>{{ currentPage() + 1 }} / {{ rentals()!.totalPages }}</span>
+          <button (click)="nextPage()" [disabled]="currentPage() >= rentals()!.totalPages - 1">Próximo ›</button>
+        </div>
+      }
+    }
+
+    @if (activeTab() === 'orders') {
+      @if (orders().length === 0) {
+        <div class="empty-state">Nenhuma compra encontrada.</div>
+      } @else {
+        <div class="card-list">
+          @for (o of orders(); track o.id) {
+            <div class="contract-card">
+              <div class="card-top">
+                <span [class]="'status-badge ' + orderStatusClass(o.status)">{{ o.statusDescription }}</span>
+                <span class="card-date">Criado em {{ o.createdAt | date:'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="card-body">
+                <div class="card-row">
+                  <span class="label">Itens</span>
+                  <span>{{ o.itemCount }}</span>
+                </div>
+                <div class="card-row">
+                  <span class="label">NFS-e</span>
+                  <span>{{ o.invoiceStatus }}</span>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span class="value-label">Total</span>
+                <span class="value">{{ o.totalValue | currency:'BRL' }}</span>
+                <span class="value-label">Pago</span>
+                <span class="value paid">{{ o.paidValue | currency:'BRL' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+  }
+</div>

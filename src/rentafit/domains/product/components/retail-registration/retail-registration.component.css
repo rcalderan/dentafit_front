@@ -1,0 +1,334 @@
+:host {
+    display: block;
+}
+
+.product-registration-container {
+    background-color: #f5f7fa;
+    padding: 2rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+h1 {
+    color: #3f51b5;
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    width: 100%;
+}
+
+/* Section Cards */
+.section-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    width: 100%;
+    max-width: 900px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e0e0e0;
+}
+
+.section-card.colored-bg {
+    background-color: #f8faff;
+    border-color: #dbeafe;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 0.8rem;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #444;
+    display: block;
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.header-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.4rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.btn-edit-trigger {
+    color: #3f51b5;
+}
+
+.row-flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    width: 100%;
+}
+
+/* Grid System */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.2rem;
+}
+
+.col-12 { grid-column: span 12; }
+.col-9  { grid-column: span 9; }
+.col-8  { grid-column: span 8; }
+.col-6  { grid-column: span 6; }
+.col-4  { grid-column: span 4; }
+.col-3  { grid-column: span 3; }
+.col-2  { grid-column: span 2; }
+.col-1  { grid-column: span 1; }
+
+/* Input Styles */
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+label {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+input,
+select,
+textarea {
+    background-color: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 0.7rem 1rem;
+    padding-right: 2.2rem;
+    color: #333;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: #3f51b5;
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
+}
+
+.uppercase {
+    text-transform: uppercase;
+}
+
+/* Validation Icons */
+.valid-icon,
+.invalid-icon {
+    position: absolute;
+    right: 0.6rem;
+    font-size: 0.9rem;
+    display: none;
+    pointer-events: none;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.valid-icon.show,
+.invalid-icon.show {
+    display: block;
+}
+
+.field-error {
+    color: #dc2626;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+/* Category search button */
+.category-search-btn {
+    position: absolute;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.3rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.category-search-btn:hover {
+    background-color: #eef2ff;
+}
+
+/* Actions Footer */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    width: 100%;
+    max-width: 900px;
+    margin-top: 1rem;
+}
+
+.btn {
+    padding: 0.8rem 2.5rem;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+
+.btn-save {
+    background-color: #3f51b5;
+    color: white;
+}
+
+.btn-save:hover:not(:disabled) {
+    background-color: #303f9f;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-save:disabled {
+    background-color: #c7cbe6;
+    cursor: not-allowed;
+}
+
+.btn-delete {
+    background-color: transparent;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+}
+
+.btn-delete:hover:not(:disabled) {
+    background-color: #fee2e2;
+}
+
+/* Read-only Mode */
+.product-registration-container.read-only input,
+.product-registration-container.read-only select,
+.product-registration-container.read-only textarea {
+    background-color: #f3f4f6;
+    border-color: transparent;
+    cursor: default;
+    color: #6b7280;
+    box-shadow: none;
+}
+
+.product-registration-container.read-only .section-card {
+    background-color: #fafafa;
+}
+
+.product-registration-container.read-only .valid-icon,
+.product-registration-container.read-only .invalid-icon {
+    display: none !important;
+}
+
+/* ============================================================
+   Responsividade
+   ============================================================ */
+
+/* Tablet (481px - 768px): grade de 6 colunas  campos nao espremem */
+@media (max-width: 768px) {
+    .product-registration-container {
+        padding: 1rem;
+    }
+
+    .section-card {
+        padding: 1rem;
+    }
+
+    .row-flex-between {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .form-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 1rem;
+    }
+
+    /* Campos largos: linha inteira */
+    .col-12,
+    .col-9,
+    .col-8 {
+        grid-column: span 6 !important;
+    }
+
+    /* Campos menores: meia largura */
+    .col-6,
+    .col-4,
+    .col-3,
+    .col-2,
+    .col-1 {
+        grid-column: span 3 !important;
+    }
+
+    .actions {
+        justify-content: stretch;
+    }
+
+    .btn {
+        flex: 1;
+    }
+}
+
+/* Mobile pequeno (<= 480px): coluna unica */
+@media (max-width: 480px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .col-12,
+    .col-9,
+    .col-8,
+    .col-6,
+    .col-4,
+    .col-3,
+    .col-2,
+    .col-1 {
+        grid-column: span 1 !important;
+    }
+
+    .actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        flex: unset;
+    }
+}

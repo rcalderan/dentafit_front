@@ -34,10 +34,13 @@
 
 .nav-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
+  gap: 0.2rem;
+  width: 64px;
+  height: auto;
+  padding: 0.5rem 0;
   color: var(--text-muted);
   text-decoration: none;
   border-radius: 18px;
@@ -46,13 +49,17 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
 }
 
 .nav-item:hover {
   background-color: var(--input-bg);
   color: var(--primary-color);
   transform: translateY(-2px);
+}
+
+.nav-item.logout-btn:hover {
+  background-color: #ff4444;
+  color: white;
 }
 
 .nav-item-container {
@@ -88,13 +95,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  padding: 0.5rem 0.75rem;
   color: var(--text-muted);
   text-decoration: none;
   border-radius: 12px;
   transition: all 0.2s ease;
-  font-size: 1.2rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
 }
 
 .submenu-item:hover {
@@ -133,6 +140,24 @@
 .icon {
   margin-right: 0;
   font-style: normal;
+}
+
+.nav-label {
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.nav-item.active .nav-label,
+.nav-item:hover .nav-label {
+  color: var(--primary-color);
+}
+
+.nav-item-container.open .nav-item .nav-label {
+  color: var(--primary-color);
 }
 
 .floating-action {
@@ -219,9 +244,20 @@
 }
 
 .content-area {
-  padding: 1rem 3rem 3rem;
+  padding: 1rem 3rem 6rem;
   flex: 1;
   overflow-y: auto;
+}
+
+/* Mobile: ocultar rótulos de texto da sidebar */
+.layout-container.mobile-view .nav-label {
+  display: none;
+}
+
+.layout-container.mobile-view .nav-item {
+  width: 50px;
+  height: 50px;
+  padding: 0;
 }
 
 /* Estilos para Mobile */
@@ -317,8 +353,45 @@
   font-weight: 600;
 }
 
+.page-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
+
 .content-area {
   flex: 1;
   padding: 0 2rem 2rem 2rem;
   overflow-y: auto;
+}
+
+/* ── Print ─────────────────────────────────────────────────── */
+@media print {
+  :host {
+    height: auto;
+    overflow: visible;
+  }
+
+  .layout-container {
+    display: block;
+  }
+
+  .sidebar,
+  .sidebar-overlay,
+  .floating-action,
+  .top-bar {
+    display: none !important;
+  }
+
+  .main-content {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+
+  .content-area {
+    padding: 0;
+    overflow: visible;
+  }
 }

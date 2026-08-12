@@ -1,0 +1,29 @@
+<div class="upload-container">
+  <h2>Upload de Backup NFSe</h2>
+  <p>Selecione o arquivo de backup para iniciar o processamento fiscal automático.</p>
+
+  <div class="drop-zone" (click)="fileInput.click()">
+    <input type="file" #fileInput (change)="onFileSelected($event)" hidden accept=".zip,.xml">
+    <div *ngIf="!selectedFile()">Clique ou arraste o arquivo aqui</div>
+    <div *ngIf="selectedFile()">{{ selectedFile()?.name }}</div>
+  </div>
+
+  <div class="progress-bar" *ngIf="nfseService.isUploading()">
+    <div class="progress-fill" [style.width.%]="nfseService.uploadProgress()"></div>
+    <span>{{ nfseService.uploadProgress() }}%</span>
+  </div>
+
+  <div class="actions">
+    <button (click)="upload()" [disabled]="!selectedFile() || nfseService.isUploading()">
+      {{ nfseService.isUploading() ? 'Enviando...' : 'Iniciar Integração' }}
+    </button>
+  </div>
+
+  <div class="status success" *ngIf="uploadStatus() === 'success'">
+    Upload concluído! O processamento foi iniciado e você receberá um e-mail em breve.
+  </div>
+
+  <div class="status error" *ngIf="uploadStatus() === 'error'">
+    Erro ao realizar o upload. Por favor, tente novamente.
+  </div>
+</div>

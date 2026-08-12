@@ -1,0 +1,102 @@
+<div class="setup-container">
+  <div class="setup-card">
+    <h2>Configurar Emitente</h2>
+    <p class="subtitle">Preencha os dados do CNPJ que emitirá as notas fiscais</p>
+
+    @if (errorMessage()) {
+      <div class="error-message">{{ errorMessage() }}</div>
+    }
+
+    <div class="form-section">
+      <h3>Identificação</h3>
+      <div class="form-group">
+        <label for="cnpj">CNPJ</label>
+        <input id="cnpj" [(ngModel)]="cnpj" placeholder="00.000.000/0000-00" [disabled]="isLoading()">
+      </div>
+      <div class="form-group">
+        <label for="razaoSocial">Razão Social</label>
+        <input id="razaoSocial" [(ngModel)]="razaoSocial" placeholder="Razão Social" [disabled]="isLoading()">
+      </div>
+      <div class="form-group">
+        <label for="nomeFantasia">Nome Fantasia</label>
+        <input id="nomeFantasia" [(ngModel)]="nomeFantasia" placeholder="Nome Fantasia" [disabled]="isLoading()">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="ie">Inscrição Estadual</label>
+          <input id="ie" [(ngModel)]="ie" placeholder="IE" [disabled]="isLoading()">
+        </div>
+        <div class="form-group">
+          <label for="im">Inscrição Municipal</label>
+          <input id="im" [(ngModel)]="im" placeholder="IM" [disabled]="isLoading()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="crt">CRT</label>
+          <select id="crt" [(ngModel)]="crt" [disabled]="isLoading()">
+            <option value="1">1 - Simples Nacional</option>
+            <option value="2">2 - Simples Nacional excesso sublimite</option>
+            <option value="3">3 - Regime Normal</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="fone">Telefone</label>
+          <input id="fone" [(ngModel)]="fone" placeholder="Telefone" [disabled]="isLoading()">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>Endereço</h3>
+      <div class="form-group">
+        <label for="logradouro">Logradouro</label>
+        <input id="logradouro" [(ngModel)]="logradouro" placeholder="Rua, Avenida..." [disabled]="isLoading()">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="numero">Número</label>
+          <input id="numero" [(ngModel)]="numero" placeholder="Número" [disabled]="isLoading()">
+        </div>
+        <div class="form-group">
+          <label for="bairro">Bairro</label>
+          <input id="bairro" [(ngModel)]="bairro" placeholder="Bairro" [disabled]="isLoading()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="municipioCodigo">Código Município (IBGE)</label>
+          <input id="municipioCodigo" [(ngModel)]="municipioCodigo" placeholder="0000000" [disabled]="isLoading()">
+        </div>
+        <div class="form-group">
+          <label for="municipioNome">Município</label>
+          <input id="municipioNome" [(ngModel)]="municipioNome" placeholder="Município" [disabled]="isLoading()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="uf">UF</label>
+          <input id="uf" [(ngModel)]="uf" placeholder="SP" maxlength="2" [disabled]="isLoading()">
+        </div>
+        <div class="form-group">
+          <label for="cep">CEP</label>
+          <input id="cep" [(ngModel)]="cep" placeholder="00000-000" [disabled]="isLoading()">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="paisCodigo">Código País</label>
+          <input id="paisCodigo" [(ngModel)]="paisCodigo" placeholder="1058" [disabled]="isLoading()">
+        </div>
+        <div class="form-group">
+          <label for="paisNome">País</label>
+          <input id="paisNome" [(ngModel)]="paisNome" placeholder="BRASIL" [disabled]="isLoading()">
+        </div>
+      </div>
+    </div>
+
+    <button (click)="submit()" [disabled]="isLoading()">
+      {{ isLoading() ? 'Salvando...' : 'Salvar Emitente' }}
+    </button>
+  </div>
+</div>

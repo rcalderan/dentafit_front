@@ -1,0 +1,33 @@
+import { Observable } from 'rxjs';
+import {
+  ICancelInvoiceRequest,
+  IEmailInvoiceRequest,
+  IEmitInvoiceRequest,
+  IFiscalDocument,
+  IFiscalListParams,
+  IPage,
+} from '../data/fiscal-document.types';
+
+/**
+ * Contrato abstrato para serviços de emissão de documentos fiscais
+ * (NF-e modelo 55 e NFS-e). Permite trocar entre mock e HTTP real sem
+ * alterar os componentes.
+ */
+export abstract class FiscalDocumentService {
+  abstract emit(request: IEmitInvoiceRequest): Observable<IFiscalDocument>;
+  /** Persiste/atualiza um documento fiscal já emitido no backend unificado. */
+  abstract save(document: IFiscalDocument): Observable<IFiscalDocument>;
+  abstract checkStatus(current: IFiscalDocument): Observable<IFiscalDocument>;
+  abstract cancel(
+    current: IFiscalDocument,
+    request: ICancelInvoiceRequest,
+  ): Observable<IFiscalDocument>;
+  abstract reemit(current: IFiscalDocument): Observable<IFiscalDocument>;
+  abstract sendEmail(id: string, request: IEmailInvoiceRequest): Observable<boolean>;
+  abstract downloadXml(documentId: string): Observable<Blob>;
+  abstract downloadDanfe(documentId: string): Observable<Blob>;
+  /** Lista documentos fiscais paginados, filtrando por tipo/origem/status. */
+  abstract list(params: IFiscalListParams): Observable<IPage<IFiscalDocument>>;
+  /** Busca um único documento fiscal pelo id. */
+  abstract findById(id: string): Observable<IFiscalDocument>;
+}

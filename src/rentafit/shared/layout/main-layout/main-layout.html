@@ -6,103 +6,143 @@
 
     <aside class="sidebar" [class.hidden]="!isSidebarVisible()">
         <nav class="nav-menu">
-            <a routerLink="/finance/dashboard" routerLinkActive="active" class="nav-item" title="Finance">
-                <i class="icon">🏠</i>
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
+            <a routerLink="/home/dashboard" routerLinkActive="active" class="nav-item"
+               aria-label="Início" (click)="closeAllSubmenus()">
+                <i class="icon" aria-hidden="true">🏠</i>
+                <span class="nav-label">Início</span>
             </a>
-            
+            }
+
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
             <div class="nav-item-container" [class.open]="isCustomerSubmenuOpen()">
-                <button class="nav-item" (click)="toggleCustomerSubmenu()" title="Customers">
-                    <i class="icon">👤</i>
+                <button class="nav-item" (click)="toggleCustomerSubmenu()"
+                        aria-label="Clientes" [attr.aria-expanded]="isCustomerSubmenuOpen()">
+                    <i class="icon" aria-hidden="true">👤</i>
+                    <span class="nav-label">Clientes</span>
                 </button>
                 @if (isCustomerSubmenuOpen()) {
-                <div class="submenu">
-                    <a routerLink="/customer/registration" routerLinkActive="active" class="submenu-item" title="New Customer">
-                        <i class="icon">✨</i>
-                    </a>
-                    <a routerLink="/customer/legacy" routerLinkActive="active" class="submenu-item" title="Legacy Customer">
-                        <i class="icon">🏛️</i>
-                    </a>
-                    <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item" title="Devolucao Legacy">
-                        <i class="icon">🔄</i>
+                <div class="submenu" role="menu">
+                    <a routerLink="/customer/registration" routerLinkActive="active" class="submenu-item"
+                       role="menuitem" (click)="closeAllSubmenus()">
+                        <span>Cadastro de Cliente</span>
                     </a>
                 </div>
                 }
             </div>
+            }
 
-            <div class="nav-item-container" [class.open]="isRentalSubmenuOpen()">
-                <button class="nav-item" (click)="toggleRentalSubmenu()" title="Rental">
-                    <i class="icon">📋</i>
-                </button>
-                @if (isRentalSubmenuOpen()) {
-                <div class="submenu">
-                    <a routerLink="/rental/management" routerLinkActive="active" class="submenu-item" title="Management">
-                        <i class="icon">📊</i>
-                    </a>
-                    <a routerLink="/customer/devolucao-legacy" routerLinkActive="active" class="submenu-item" title="Devolucao">
-                        <i class="icon">🔄</i>
-                    </a>
-                </div>
-                }
-            </div>
-            
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
             <div class="nav-item-container" [class.open]="isProductSubmenuOpen()">
-                <button class="nav-item" (click)="toggleProductSubmenu()" title="Products">
-                    <i class="icon">👗</i>
+                <button class="nav-item" (click)="toggleProductSubmenu()"
+                        aria-label="Produtos" [attr.aria-expanded]="isProductSubmenuOpen()">
+                    <i class="icon" aria-hidden="true">👗</i>
+                    <span class="nav-label">Produtos</span>
                 </button>
                 @if (isProductSubmenuOpen()) {
-                <div class="submenu">
-                    <a routerLink="/product/registration" routerLinkActive="active" class="submenu-item" title="New Product">
-                        <i class="icon">✨</i>
+                <div class="submenu" role="menu">
+                    <a routerLink="/product/registration" routerLinkActive="active" class="submenu-item"
+                       role="menuitem" (click)="closeAllSubmenus()">
+                        <span>Cadastro Aluguel</span>
                     </a>
-                    <a routerLink="/customer/clothes" routerLinkActive="active" class="submenu-item" title="Legacy Clothes">
-                        <i class="icon">🏛️</i>
+                    <a routerLink="/product/retail-registration" routerLinkActive="active" class="submenu-item"
+                       role="menuitem" (click)="closeAllSubmenus()">
+                        <span>Cadastro Varejo</span>
                     </a>
                 </div>
                 }
             </div>
+            }
 
-            <div class="nav-item-container" [class.open]="isReportsSubmenuOpen()">
-                <button class="nav-item" (click)="toggleReportsSubmenu()" title="Reports">
-                    <i class="icon">📈</i>
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
+            <div class="nav-item-container" [class.open]="isRentalSubmenuOpen()">
+                <button class="nav-item" (click)="toggleRentalSubmenu()"
+                        aria-label="Locações" [attr.aria-expanded]="isRentalSubmenuOpen()">
+                    <i class="icon" aria-hidden="true">📋</i>
+                    <span class="nav-label">Locações</span>
                 </button>
-                @if (isReportsSubmenuOpen()) {
-                <div class="submenu">
-                    <a routerLink="/finance/relatorio-locacao-legacy" routerLinkActive="active" class="submenu-item" title="Relatorio Locação">
-                        <i class="icon">📋</i>
+                @if (isRentalSubmenuOpen()) {
+                <div class="submenu" role="menu">
+                    <a routerLink="/rental/new" routerLinkActive="active" class="submenu-item"
+                       role="menuitem" (click)="closeAllSubmenus()">
+                        <span>Novo Contrato</span>
                     </a>
-                    <a routerLink="/finance/relatorio-devolucao-legacy" routerLinkActive="active" class="submenu-item" title="Relatorio Devolução">
-                        <i class="icon">🔄</i>
+                    <a routerLink="/rental/daily-report" routerLinkActive="active" class="submenu-item"
+                       role="menuitem" (click)="closeAllSubmenus()">
+                        <span>Relatório Diário</span>
+                    </a>
+                    <a routerLink="/rental/nfse-view" routerLinkActive="active" class="submenu-item"
+                       role="menuitem" (click)="closeAllSubmenus()">
+                        <span>NFS-e</span>
                     </a>
                 </div>
                 }
             </div>
+            }
 
-            <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item" title="Admin">
-                <i class="icon">⚙️</i>
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
+            <div class="nav-item-container" [class.open]="isSalesSubmenuOpen()">
+                <button class="nav-item" (click)="toggleSalesSubmenu()"
+                        aria-label="Vendas" [attr.aria-expanded]="isSalesSubmenuOpen()">
+                    <i class="icon" aria-hidden="true">🛒</i>
+                    <span class="nav-label">Vendas</span>
+                </button>
+                @if (isSalesSubmenuOpen()) {
+                <div class="submenu" role="menu">
+                    <a routerLink="/sales/management" routerLinkActive="active" class="submenu-item"
+                       role="menuitem" (click)="closeAllSubmenus()">
+                        <span>Gestão de Vendas</span>
+                    </a>
+                    <a routerLink="/sales/nfe-view" routerLinkActive="active" class="submenu-item"
+                       role="menuitem" (click)="closeAllSubmenus()">
+                        <span>NF-e</span>
+                    </a>
+                </div>
+                }
+            </div>
+            }
+
+            @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER])) {
+            <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item"
+               aria-label="Admin" (click)="closeAllSubmenus()">
+                <i class="icon" aria-hidden="true">⚙️</i>
+                <span class="nav-label">Admin</span>
             </a>
+            }
+
+            <button class="nav-item logout-btn" (click)="logout()" aria-label="Sair">
+                <i class="icon" aria-hidden="true">🚪</i>
+                <span class="nav-label">Sair</span>
+            </button>
         </nav>
     </aside>
 
+    <!-- @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE]) && showFab()) {
     <div class="floating-action">
         <button class="btn-new-contract" routerLink="/rental/new">
             <span class="plus-icon">+</span>
             <span class="btn-text">Novo Contrato</span>
         </button>
-        <button class="btn-new-contract legacy" routerLink="/rental/legacy">
+        <button class="btn-new-contract" routerLink="/sales/new">
+            <span class="plus-icon">🛒</span>
+            <span class="btn-text">Nova Venda</span>
+        </button>
+         <button class="btn-new-contract legacy" routerLink="/rental/legacy">
             <span class="plus-icon">🏛️</span>
             <span class="btn-text">Novo Contrato (Legacy)</span>
         </button>
     </div>
+    }  -->
 
     <main class="main-content">
         <header class="top-bar">
             <div class="left-section">
                 @if (isMobile()) {
-                <button class="menu-toggle" (click)="toggleSidebar()">
-                    <i>☰</i>
+                <button class="menu-toggle" (click)="toggleSidebar()" aria-label="Abrir menu">
+                    <i aria-hidden="true">☰</i>
                 </button>
                 }
-                <h1>Dashboard</h1>
+                <h1 class="page-title">{{ pageTitle() }}</h1>
             </div>
         </header>
         <div class="content-area">

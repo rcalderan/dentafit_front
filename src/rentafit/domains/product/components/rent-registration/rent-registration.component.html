@@ -1,0 +1,209 @@
+<div class="product-registration-container" [formGroup]="form" [class.read-only]="isReadOnly()">
+    <h1>Cadastro de Produto (Aluguel)</h1>
+
+    <!-- 1. Dados Principais -->
+    <div class="section-card">
+        <div class="section-header">
+            <span class="section-title">Dados Principais</span>
+            <div class="header-actions">
+                <button class="header-btn" (click)="clear()" title="Novo Cadastro / Limpar">🧹</button>
+                <button class="header-btn" (click)="close()" title="Fechar">❌</button>
+            </div>
+        </div>
+
+        <div class="form-grid">
+            <!-- Linha 1: Codigo, Categoria (col-3) e Status (col-1) -->
+            <div class="input-group col-3">
+                <label>Codigo (Legacy ID)</label>
+                <div class="input-wrapper search-wrapper">
+                    <input type="text" formControlName="legacyId" placeholder="Busca..." (blur)="searchByLegacyId()"
+                        (keydown.enter)="searchByLegacyId()">
+
+                    @if (isReadOnly()) {
+                    <button type="button" class="icon-btn edit-btn" (click)="enableEditing()"
+                        title="Editar Cadastro">✏️</button>
+                    } @else {
+                    <span class="search-icon">🔍</span>
+                    }
+                </div>
+            </div>
+
+            <div [class]="!isFormEmpty() ? 'input-group col-8' : 'input-group col-9'">
+                <label>Categoria</label>
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="categoryName" placeholder="Ex: Vestido de Noiva" readonly>
+                    <button class="category-search-btn" type="button" (click)="openCategoryModal()"
+                        title="Buscar Categoria">🔍</button>
+                </div>
+                @if (getControlError('categoryName')) {
+                <span class="field-error">{{ getControlError('categoryName') }}</span>
+                }
+            </div>
+
+            @if (!isFormEmpty()) {
+            <div class="input-group col-1 status-compact">
+                <label>Situacao</label>
+                <div class="status-badge" [ngClass]="getStatusClass()">
+                    {{ form.get('status')?.value || 'N/A' }}
+                </div>
+            </div>
+            }
+
+            <!-- Linha 2 -->
+            <!-- Valor -->
+            <div class="input-group col-3 currency-wrapper">
+                <label>Valor Aluguel</label>
+                <div class="input-wrapper">
+                    <span class="currency-symbol">R$</span>
+                    <input type="number" formControlName="value" placeholder="0,00" min="0" step="100">
+                    <span class="valid-icon" [class.show]="getControlStatus('value') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('value') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('value')) {
+                <span class="field-error">{{ getControlError('value') }}</span>
+                }
+            </div>
+
+            <!-- Nome -->
+            <div class="input-group col-6">
+                <label>Nome do Produto</label>
+                <div class="input-wrapper">
+                    <input type="text" formControlName="name" placeholder="Ex: Vestido de Noiva Renda"
+                        class="uppercase">
+                    <span class="valid-icon" [class.show]="getControlStatus('name') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('name') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('name')) {
+                <span class="field-error">{{ getControlError('name') }}</span>
+                }
+            </div>
+
+            <!-- Condição -->
+            <div class="input-group col-3">
+                <label>Condição</label>
+                <div class="input-wrapper">
+                    <select formControlName="condition">
+                        <option value="" disabled>Selecione...</option>
+                        @for (opt of conditionOptions; track opt.value) {
+                        <option [value]="opt.value">{{ opt.label }}</option>
+                        }
+                    </select>
+                </div>
+                @if (getControlError('condition')) {
+                <span class="field-error">{{ getControlError('condition') }}</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Especificações e Detalhes -->
+    <div class="section-card colored-bg">
+        <div class="section-header">
+            <span class="section-title">Especificações e Detalhes</span>
+        </div>
+
+        <div class="form-grid">
+            <!-- Descrição (Linha Inteira) -->
+            <div class="input-group col-12">
+                <label>Descrição Detalhada</label>
+                <div class="input-wrapper">
+                    <textarea formControlName="description" rows="2" class="uppercase"
+                        placeholder="Detalhes do produto..."></textarea>
+                </div>
+            </div>
+
+            <!-- Divisão 1/2 (Specs) + 1/2 (Info) -->
+            <div class="col-6 specs-panel">
+                <div class="form-grid">
+                    <!-- Tamanho -->
+                    <div class="input-group col-12">
+                        <label>Tamanho</label>
+                        <div class="input-wrapper">
+                            <input type="text" formControlName="size" class="uppercase" placeholder="Ex: M, 42">
+                            <span class="valid-icon" [class.show]="getControlStatus('size') === 'VALID'">✅</span>
+                            <span class="invalid-icon" [class.show]="getControlStatus('size') === 'INVALID'">❌</span>
+                        </div>
+                        @if (getControlError('size')) {
+                        <span class="field-error">{{ getControlError('size') }}</span>
+                        }
+                    </div>
+
+                    <!-- Marca -->
+                    <div class="input-group col-12">
+                        <label>Marca</label>
+                        <div class="input-wrapper">
+                            <input type="text" formControlName="brand" class="uppercase" placeholder="Marca/Grife">
+                            <span class="valid-icon" [class.show]="getControlStatus('brand') === 'VALID'">✅</span>
+                            <span class="invalid-icon" [class.show]="getControlStatus('brand') === 'INVALID'">❌</span>
+                        </div>
+                    </div>
+
+                    <!-- Cor -->
+                    <div class="input-group col-12">
+                        <label>Cor Principal</label>
+                        <div class="input-wrapper">
+                            <input type="text" formControlName="color" class="uppercase" placeholder="Ex: Branco">
+                            <span class="valid-icon" [class.show]="getControlStatus('color') === 'VALID'">✅</span>
+                            <span class="invalid-icon" [class.show]="getControlStatus('color') === 'INVALID'">❌</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Panel (1/2) -->
+            <div class="col-6 info-panel-vertical">
+                <div class="info-group">
+                    <label>Qtd. Locações</label>
+                    <span class="info-value">{{ form.get('rentalCount')?.value || 0 }}</span>
+                </div>
+                <div class="info-group">
+                    <label>Última Locação</label>
+                    <span class="info-value">{{ (form.get('lastRentalDate')?.value | date: 'dd/MM/yyyy') || 'Nunca
+                        alugado' }}</span>
+                </div>
+                <div class="info-group">
+                    <label>Cadastrado Em</label>
+                    <span class="info-value">{{ (form.get('createdAt')?.value | date: 'dd/MM/yyyy') || '-' }}</span>
+                </div>
+                <div class="info-group">
+                    <label>Atualizado Em</label>
+                    <span class="info-value">{{ (form.get('updatedAt')?.value | date: 'dd/MM/yyyy') || '-' }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Observações (Footer) -->
+    <div class="section-card">
+        <div class="form-grid">
+            <div class="input-group col-12">
+                <label>Observações Internas</label>
+                <div class="input-wrapper">
+                    <textarea formControlName="notes" rows="3" class="uppercase"
+                        placeholder="Anotações internas..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+        <button class="btn btn-save" (click)="save()" [disabled]="isReadOnly()">Salvar Produto</button>
+    </div>
+
+    @if (errorMessage()) {
+    <rentafit-modal title="Atenção" [message]="errorMessage() ?? ''" type="error" (close)="clearError()">
+    </rentafit-modal>
+    }
+
+    @if (successMessage()) {
+    <rentafit-modal title="Sucesso" [message]="successMessage() ?? ''" type="info" (close)="clearSuccess()">
+    </rentafit-modal>
+    }
+
+    @if (isCategoryModalOpen()) {
+    <rentafit-category-modal productType="RENTAL" (closed)="closeCategoryModal()"
+        (categorySelected)="onCategorySelected($event)">
+    </rentafit-category-modal>
+    }
+</div>

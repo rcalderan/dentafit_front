@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [ develop, main ]
+  pull_request:
+    branches: [ develop, main ]
+
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    environment: develop
+    name: Validation
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check if secrets are available
+        run: |
+          echo "ID is set: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}"
+          echo "Region is set: ${{ secrets.AWS_S3_REGION != '' }}"
+          echo "API_BASE_URL is set: ${{ secrets.API_BASE_URL != '' }}"
+          echo "AWS_S3_BUCKET_URL is set: ${{ secrets.AWS_S3_BUCKET_URL != '' }}"
+
+  build:
+    runs-on: ubuntu-latest
+    environment: develop
+    needs: validation
+    name: Build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Build project
+        env:
+          APP_NAME: ${{ secrets.APP_NAME }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          AWS_S3_BUCKET_URL: ${{ secrets.AWS_S3_BUCKET_URL }}
+        run: npm run build:prod
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-build
+          path: dist/RentAFit/browser
+          retention-days: 1
+
+      - name: Trigger deploy (Hostinger default)
+        if: github.event_name == 'push' && github.ref_name == 'main' && (vars.DEPLOY_TARGET == '' || vars.DEPLOY_TARGET == 'HOSTINGER')
+        continue-on-error: true
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.INFRA_REPO_PAT }}" \
+            -H "Accept: application/vnd.github.everest-preview+json" \
+            https://api.github.com/repos/rcalderan/costume-rental-infra/dispatches \
+            -d "{\"event_type\":\"deploy-hostinger-pro\",\"client_payload\":{\"source_repo\":\"${{ github.repository }}\",\"source_branch\":\"main\",\"artifact_name\":\"dist-build\"}}"
+
+      - name: Trigger deploy (AWS legacy)
+        if: github.event_name == 'push' && github.ref_name == 'main' && vars.DEPLOY_TARGET == 'AWS'
+        continue-on-error: true
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.INFRA_REPO_PAT }}" \
+            -H "Accept: application/vnd.github.everest-preview+json" \
+            https://api.github.com/repos/rcalderan/costume-rental-infra/dispatches \
+            -d "{\"event_type\":\"deploy-frontend\",\"client_payload\":{\"source_repo\":\"${{ github.repository }}\",\"source_branch\":\"main\",\"artifact_name\":\"dist-build\"}}"
+
+  notify:
+    needs: [build]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Notify on Success
+        if: success()
+        run: |
+          echo "✅ Build completed successfully!"
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "❌ Build failed!"
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"

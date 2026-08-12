@@ -1,0 +1,71 @@
+<div class="sales-management">
+  <header class="page-header">
+    <h2>Vendas</h2>
+    <button class="btn btn-primary" (click)="newSale()">+ Nova Venda</button>
+  </header>
+
+  <!-- Filtros -->
+  <div class="filters">
+    <button class="filter-btn" [class.active]="!filterStatus()" (click)="onFilterChange(null)">Todas</button>
+    <button class="filter-btn" [class.active]="filterStatus() === 'DRAFT'" (click)="onFilterChange('DRAFT')">Rascunho</button>
+    <button class="filter-btn" [class.active]="filterStatus() === 'CONFIRMED'" (click)="onFilterChange('CONFIRMED')">Confirmado</button>
+    <button class="filter-btn" [class.active]="filterStatus() === 'PAID'" (click)="onFilterChange('PAID')">Pago</button>
+    <button class="filter-btn" [class.active]="filterStatus() === 'COMPLETED'" (click)="onFilterChange('COMPLETED')">Concluído</button>
+    <button class="filter-btn" [class.active]="filterStatus() === 'CANCELLED'" (click)="onFilterChange('CANCELLED')">Cancelado</button>
+  </div>
+
+  <!-- Loading -->
+  @if (isLoading()) {
+    <div class="loading">Carregando...</div>
+  }
+
+  <!-- Error -->
+  @if (errorMsg()) {
+    <div class="error-msg">{{ errorMsg() }}</div>
+  }
+
+  <!-- Lista de pedidos -->
+  @if (!isLoading() && !errorMsg()) {
+    @if (orders().length === 0) {
+      <div class="empty-state">Nenhum pedido encontrado.</div>
+    } @else {
+      <div class="orders-list">
+        @for (order of orders(); track order.id) {
+          <div class="order-card" [class]="getStatusClass(order.status)" (click)="openOrder(order.id)">
+            <div class="order-header">
+              <span class="legacy-id">{{ order.legacyId }}</span>
+              <span class="status-badge">{{ statusLabels[order.status] || order.status }}</span>
+            </div>
+            <div class="order-body">
+              <div class="customer-name">{{ order.customerName || 'Venda Balcão' }}</div>
+              <div class="order-info">
+                <span class="item-count">{{ order.itemCount }} {{ order.itemCount === 1 ? 'item' : 'itens' }}</span>
+                <span class="total-value">{{ formatCurrency(order.totalValue) }}</span>
+              </div>
+              @if (order.paidValue > 0) {
+                <div class="payment-info">
+                  Pago: {{ formatCurrency(order.paidValue) }}
+                  @if (order.totalValue > order.paidValue) {
+                    <span class="remaining"> | Restante: {{ formatCurrency(order.totalValue - order.paidValue) }}</span>
+                  }
+                </div>
+              }
+            </div>
+            <div class="order-footer">
+              <span class="created-at">{{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Paginação -->
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button [disabled]="currentPage() === 0" (click)="goToPage(currentPage() - 1)">‹</button>
+          <span>{{ currentPage() + 1 }} / {{ totalPages() }}</span>
+          <button [disabled]="currentPage() >= totalPages() - 1" (click)="goToPage(currentPage() + 1)">›</button>
+        </div>
+      }
+    }
+  }
+</div>

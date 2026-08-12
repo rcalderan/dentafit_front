@@ -1,0 +1,11 @@
+/* Reaproveita os estilos da emissão de NF-e (DRY). */
+@import '../nfe-emission/nfe-emission.component.css';
+
+.field-row {
+  display: flex;
+  gap: 0.85rem;
+}
+
+.field-row .field {
+  flex: 1;
+}

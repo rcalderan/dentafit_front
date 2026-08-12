@@ -4,11 +4,14 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc/rentafit-spec",
+    "rootDir": "./src",
     "types": [
-      "jasmine"
+      "vitest/globals"
     ]
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.spec.ts",
+    "src/test-setup.ts"
   ]
 }

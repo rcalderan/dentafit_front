@@ -1,0 +1,136 @@
+<div class="product-registration-container" [formGroup]="form" [class.read-only]="isReadOnly()">
+    <h1>Cadastro de Produto — Varejo</h1>
+
+    <div class="section-card">
+        <div class="section-header">
+            <span class="section-title">Informações do Produto</span>
+            <div class="header-actions">
+                <button class="header-btn" type="button" (click)="clear()" title="Limpar">🧹</button>
+                <button class="header-btn" type="button" (click)="close()" title="Fechar">❌</button>
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="input-group col-3">
+                <label>SKU</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="text" formControlName="sku" placeholder="Auto" style="flex: 1;" 
+                    [disabled]="isSkuSearching()" (keydown.enter)="searchBySku()">
+                    <button class="category-search-btn" type="button" (click)="searchBySku()" title="Buscar por SKU">🔍</button>
+                    @if (isReadOnly()) {
+                    <button class="header-btn btn-edit-trigger" type="button" (click)="enableEditing()"
+                        title="Editar">✏️</button>
+                    }
+                </div>
+            </div>
+            <div class="input-group col-9">
+                <label>Nome</label>
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="name" placeholder="Ex: Camiseta Polo Preta">
+                    <span class="valid-icon" [class.show]="getControlStatus('name') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('name') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('name')) {
+                <span class="field-error">{{ getControlError('name') }}</span>
+                }
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="input-group col-4">
+                <label>Categoria</label>
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="categoryName" placeholder="Ex: Camisetas" readonly>
+                    <button class="category-search-btn" type="button" (click)="openCategoryModal()"
+                        [disabled]="isReadOnly()" title="Buscar Categoria">🔍</button>
+                </div>
+                @if (getControlError('categoryName')) {
+                <span class="field-error">{{ getControlError('categoryName') }}</span>
+                }
+            </div>
+            <div class="input-group col-4">
+                <label>Marca</label>
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="brand" placeholder="Ex: Nike">
+                </div>
+            </div>
+            <div class="input-group col-2">
+                <label>Tamanho</label>
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="size" placeholder="Ex: M">
+                    <span class="valid-icon" [class.show]="getControlStatus('size') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('size') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('size')) {
+                <span class="field-error">{{ getControlError('size') }}</span>
+                }
+            </div>
+            <div class="input-group col-2">
+                <label>Cor</label>
+                <div class="input-wrapper">
+                    <input type="text" class="uppercase" formControlName="color" placeholder="Ex: Preto">
+                    <span class="valid-icon" [class.show]="getControlStatus('color') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('color') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('color')) {
+                <span class="field-error">{{ getControlError('color') }}</span>
+                }
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="input-group col-3">
+                <label>Valor de Venda</label>
+                <div class="input-wrapper">
+                    <input type="number" formControlName="value" placeholder="0,00">
+                    <span class="valid-icon" [class.show]="getControlStatus('value') === 'VALID'">✅</span>
+                    <span class="invalid-icon" [class.show]="getControlStatus('value') === 'INVALID'">❌</span>
+                </div>
+                @if (getControlError('value')) {
+                <span class="field-error">{{ getControlError('value') }}</span>
+                }
+            </div>
+            <div class="input-group col-4">
+                <label>Criado em</label>
+                <div class="input-wrapper">
+                    <input type="text" formControlName="createdAt" placeholder="-" readonly>
+                </div>
+            </div>
+            <div class="input-group col-4">
+                <label>Atualizado em</label>
+                <div class="input-wrapper">
+                    <input type="text" formControlName="updatedAt" placeholder="-" readonly>
+                </div>
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="input-group col-12">
+                <label>Descrição</label>
+                <textarea rows="3" formControlName="description"></textarea>
+            </div>
+        </div>
+        <div class="form-grid">
+            <div class="input-group col-12">
+                <label>Detalhes</label>
+                <textarea rows="3" formControlName="details"
+                    placeholder="Informações detalhadas do produto para varejo"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <rentafit-stock [productId]="form.get('id')?.value"></rentafit-stock>
+
+    <div class="actions">
+        <button class="btn btn-save" type="button" (click)="save()"
+            [disabled]="isReadOnly()">Salvar</button>
+        <button class="btn btn-delete" type="button" [disabled]="form.invalid || isReadOnly()">Excluir</button>
+    </div>
+
+    @if (errorMessage()) {
+    <rentafit-modal title="Atenção" [message]="errorMessage() ?? ''" type="error" (close)="clearError()">
+    </rentafit-modal>
+    }
+
+    @if (isCategoryModalOpen()) {
+    <rentafit-category-modal productType="RETAIL" (closed)="closeCategoryModal()"
+        (categorySelected)="onCategorySelected($event)">
+    </rentafit-category-modal>
+    }
+</div>

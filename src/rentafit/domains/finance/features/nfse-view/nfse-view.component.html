@@ -1,0 +1,53 @@
+<div class="fiscal-list">
+  <header class="page-header">
+    <h2>NFS-e (Locações)</h2>
+  </header>
+
+  <div class="filters">
+    <button class="filter-btn" [class.active]="!filterStatus()" (click)="onFilterChange(null)">Todas</button>
+    <button class="filter-btn" [class.active]="filterStatus() === 'PENDING_EMISSION'" (click)="onFilterChange('PENDING_EMISSION')">Em processamento</button>
+    <button class="filter-btn" [class.active]="filterStatus() === 'EMITTED'" (click)="onFilterChange('EMITTED')">Emitida</button>
+    <button class="filter-btn" [class.active]="filterStatus() === 'CANCELLED'" (click)="onFilterChange('CANCELLED')">Cancelada</button>
+    <button class="filter-btn" [class.active]="filterStatus() === 'DENIED'" (click)="onFilterChange('DENIED')">Negada</button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading">Carregando...</div>
+  }
+
+  @if (errorMsg()) {
+    <div class="error-msg">{{ errorMsg() }}</div>
+  }
+
+  @if (!isLoading() && !errorMsg()) {
+    @if (documents().length === 0) {
+      <div class="empty-state">Nenhuma NFS-e encontrada.</div>
+    } @else {
+      <div class="documents-list">
+        @for (doc of documents(); track doc.id) {
+          <div class="document-card" [class]="getStatusClass(doc.status)" (click)="openDocument(doc.id)">
+            <div class="document-header">
+              <span class="document-number">{{ doc.number || doc.id }}</span>
+              <span class="status-badge">{{ statusLabel(doc.status) }}</span>
+            </div>
+            <div class="document-body">
+              <div class="customer-name">{{ doc.customerName || 'Cliente não identificado' }}</div>
+              <div class="document-info">
+                <span class="total-value">{{ formatCurrency(doc.value) }}</span>
+                <span class="emission-date">{{ formatDateTime(doc.emissionDate) }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button [disabled]="currentPage() === 0" (click)="goToPage(currentPage() - 1)">‹</button>
+          <span>{{ currentPage() + 1 }} / {{ totalPages() }}</span>
+          <button [disabled]="currentPage() >= totalPages() - 1" (click)="goToPage(currentPage() + 1)">›</button>
+        </div>
+      }
+    }
+  }
+</div>

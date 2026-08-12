@@ -1,25 +1,36 @@
-import { Component, inject, signal, effect } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { filter } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../domains/auth/services/auth.service';
+import { UserRole } from '../../../domains/auth/data/user.model';
 
 @Component({
   selector: 'rentafit-main-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   templateUrl: './main-layout.html',
   styleUrl: './main-layout.css'
 })
 export class MainLayout {
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly router = inject(Router);
+  private readonly activatedRoute = inject(ActivatedRoute);
+  protected readonly authService = inject(AuthService);
 
   protected readonly isMobile = signal(false);
   protected readonly isSidebarVisible = signal(true);
   protected readonly isCustomerSubmenuOpen = signal(false);
   protected readonly isProductSubmenuOpen = signal(false);
   protected readonly isRentalSubmenuOpen = signal(false);
+  protected readonly isSalesSubmenuOpen = signal(false);
   protected readonly isReportsSubmenuOpen = signal(false);
+  protected readonly showFab = signal(true);
+  protected readonly pageTitle = signal('Dashboard');
+
+  // Expõe UserRole para uso no template
+  protected readonly UserRole = UserRole;
 
   constructor() {
     // Detecta se a tela é mobile/tablet
@@ -33,10 +44,19 @@ export class MainLayout {
       this.isSidebarVisible.set(!mobile);
     });
 
-    // Fecha a sidebar automaticamente ao navegar no mobile
+    // BUG-2026-05-04-4: atualiza título do header e estado do FAB a cada navegação
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
+    ).subscribe((event) => {
+      const url = (event as NavigationEnd).url;
+      this.showFab.set(!url.includes('/rental/return/'));
+
+      // Percorre a árvore de rotas ativadas para encontrar o title mais específico
+      let child = this.activatedRoute.firstChild;
+      while (child?.firstChild) { child = child.firstChild; }
+      const title = child?.snapshot.data?.['title'] as string | undefined;
+      this.pageTitle.set(title ?? 'Dashboard');
+
       if (this.isMobile()) {
         this.isSidebarVisible.set(false);
       }
@@ -46,11 +66,12 @@ export class MainLayout {
   protected toggleSidebar(): void {
     this.isSidebarVisible.update(visible => !visible);
   }
-
-  private closeAllSubmenus(): void {
+  
+  public closeAllSubmenus(): void {
     this.isCustomerSubmenuOpen.set(false);
     this.isProductSubmenuOpen.set(false);
     this.isRentalSubmenuOpen.set(false);
+    this.isSalesSubmenuOpen.set(false);
     this.isReportsSubmenuOpen.set(false);
   }
 
@@ -72,9 +93,27 @@ export class MainLayout {
     this.isRentalSubmenuOpen.set(nextState);
   }
 
+  protected toggleSalesSubmenu(): void {
+    const nextState = !this.isSalesSubmenuOpen();
+    this.closeAllSubmenus();
+    this.isSalesSubmenuOpen.set(nextState);
+  }
+
   protected toggleReportsSubmenu(): void {
     const nextState = !this.isReportsSubmenuOpen();
     this.closeAllSubmenus();
     this.isReportsSubmenuOpen.set(nextState);
+  }
+
+  protected logout(): void {
+    this.authService.logout();
+  }
+
+  protected hasRole(role: UserRole): boolean {
+    return this.authService.hasRole(role);
+  }
+
+  protected hasAnyRole(roles: UserRole[]): boolean {
+    return this.authService.hasAnyRole(roles);
   }
 }

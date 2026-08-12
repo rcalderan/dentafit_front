@@ -1,0 +1,137 @@
+<div class="modal-overlay" (click)="closeModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="modal-header">
+            <h3>Gerenciar Categorias</h3>
+            <button class="close-btn" (click)="closeModal()" type="button">×</button>
+        </div>
+
+        <!-- Messages -->
+        @if (errorMessage()) {
+        <div class="message message-error">
+            <span>⚠️ {{ errorMessage() }}</span>
+        </div>
+        }
+        @if (successMessage()) {
+        <div class="message message-success">
+            <span>✅ {{ successMessage() }}</span>
+        </div>
+        }
+
+        <!-- Category List -->
+        <div class="modal-body">
+            @if (!isFormVisible()) {
+            <div class="list-header">
+                <span class="list-title">Categorias</span>
+                <label class="toggle-inactive">
+                    <input type="checkbox" [checked]="showInactive()" (change)="showInactive.set(!showInactive())">
+                    Exibir inativas
+                </label>
+                <button class="btn btn-add" type="button" (click)="showNewForm()">
+                    <span>+ Nova</span>
+                </button>
+            </div>
+
+            @if (isLoading()) {
+            <div class="loading-indicator">
+                <span>Carregando...</span>
+            </div>
+            } @else if (categories().length === 0) {
+            <div class="empty-state">
+                <span>📂</span>
+                <p>Nenhuma categoria encontrada.</p>
+            </div>
+            } @else {
+            <div class="category-list">
+                @for (category of visibleCategories; track category.id) {
+                <div class="category-item" [class.inactive]="!category.active"
+                    (mouseenter)="hoveredCategory.set(category)"
+                    (mouseleave)="hoveredCategory.set(null)">
+                    <div class="category-info" (click)="selectCategory(category)">
+                        <span class="category-name">{{ category.displayName || category.name }}</span>
+                        <span class="category-meta">
+                            {{ category.productType }}
+                            @if (!category.active) {
+                            · <span class="badge-inactive">Inativa</span>
+                            }
+                        </span>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-btn" type="button" (click)="editCategory(category)"
+                            title="Editar">✏️</button>
+                        <button class="icon-btn icon-btn-danger" type="button" (click)="deleteCategory(category)"
+                            title="Excluir">🗑️</button>
+                    </div>
+                </div>
+                }
+            </div>
+            }
+            }
+
+            <!-- Category Form -->
+            @if (isFormVisible()) {
+            <div class="category-form" [formGroup]="form">
+                <h4>{{ editingCategory() ? 'Editar Categoria' : 'Nova Categoria' }}</h4>
+
+                <div class="form-field">
+                    <label>Nome (identificador)</label>
+                    <input type="text" formControlName="name" placeholder="Ex: vestidos-noiva" class="uppercase">
+                    @if (getControlError('name')) {
+                    <span class="field-error">{{ getControlError('name') }}</span>
+                    }
+                </div>
+
+                <div class="form-field">
+                    <label>Nome de Exibição</label>
+                    <input type="text" formControlName="displayName" placeholder="Ex: Vestidos de Noiva">
+                    @if (getControlError('displayName')) {
+                    <span class="field-error">{{ getControlError('displayName') }}</span>
+                    }
+                </div>
+
+                <div class="form-field">
+                    <label>Descrição</label>
+                    <textarea rows="2" formControlName="description" placeholder="Descrição da categoria..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field flex-1">
+                        <label>Tipo de Produto</label>
+                        <select formControlName="productType">
+                            @for (type of productTypes; track type) {
+                            <option [value]="type">{{ type }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-field checkbox-field">
+                        <label>
+                            <input type="checkbox" formControlName="active">
+                            Ativa
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-cancel" type="button" (click)="cancelForm()">Cancelar</button>
+                    <button class="btn btn-save" type="button" (click)="saveCategory()"
+                        [disabled]="form.invalid || isLoading()">
+                        {{ editingCategory() ? 'Atualizar' : 'Criar' }}
+                    </button>
+                </div>
+            </div>
+            }
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer">
+            @if (hoveredCategory()) {
+            <div class="footer-detail">
+                <span class="footer-detail-desc">{{ hoveredCategory()!.description || 'Sem descrição.' }}</span>
+            </div>
+            } @else {
+            <span class="footer-hint">Passe o mouse sobre uma categoria para ver detalhes</span>
+            }
+        </div>
+    </div>
+</div>
