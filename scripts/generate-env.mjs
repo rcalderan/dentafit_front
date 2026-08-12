@@ -4,7 +4,9 @@
  *
  * Usage:
  *   node scripts/generate-env.mjs          # reads .env file
- *   API_BASE_URL=https://... node scripts/generate-env.mjs  # CI via env vars
+ *   APP_NAME=Foo AWS_S3_BUCKET_URL=https://... node scripts/generate-env.mjs  # CI via env vars
+ *
+ * API_BASE_URL is optional and defaults to '' (relative URLs for same-origin Caddy gateway).
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
@@ -16,7 +18,10 @@ const rootDir = resolve(__dirname, '..');
 const envFile = resolve(rootDir, '.env');
 const outputFile = resolve(rootDir, 'src/environments/environment.prod.ts');
 
-const REQUIRED_VARS = ['APP_NAME', 'API_BASE_URL', 'AWS_S3_BUCKET_URL'];
+// Variaveis obrigatorias. API_BASE_URL nao esta aqui porque e opcional
+// (default vazio = URLs relativas para o Caddy gateway na mesma origem).
+const REQUIRED_VARS = ['APP_NAME', 'AWS_S3_BUCKET_URL'];
+const OPTIONAL_VARS = ['API_BASE_URL'];
 
 /** Minimal .env parser — no external dependencies needed. */
 function parseEnvFile(content) {
@@ -42,7 +47,7 @@ if (existsSync(envFile)) {
 
 // 2. process.env always wins over .env (CI secrets injected via workflow env: block)
 const merged = { ...fileVars };
-for (const key of REQUIRED_VARS) {
+for (const key of [...REQUIRED_VARS, ...OPTIONAL_VARS]) {
   const val = process.env[key];
   if (val !== undefined) {
     merged[key] = val;
@@ -55,17 +60,14 @@ if (merged.API_BASE_URL === undefined) {
 }
 
 // Debug: show what was resolved (values masked for security)
-for (const key of REQUIRED_VARS) {
+const allVars = [...REQUIRED_VARS, ...OPTIONAL_VARS];
+for (const key of allVars) {
   const val = merged[key];
   console.log(`    ${key}: ${val ? `${val.slice(0, 12)}...` : '(not set)'}`);
 }
 
 // Validate all required vars are present.
-// API_BASE_URL defaults to empty string (relative URLs for same-origin Caddy gateway).
-const missing = REQUIRED_VARS.filter((k) => {
-  if (k === 'API_BASE_URL') return false;
-  return !merged[k] || merged[k].trim() === '';
-});
+const missing = REQUIRED_VARS.filter((k) => !merged[k] || merged[k].trim() === '');
 if (missing.length > 0) {
   console.error('❌  Missing required environment variables:', missing.join(', '));
   console.error('    Create a .env file based on .env.template or set them in CI.');
