@@ -44,9 +44,14 @@ if (existsSync(envFile)) {
 const merged = { ...fileVars };
 for (const key of REQUIRED_VARS) {
   const val = process.env[key];
-  if (val !== undefined && val !== '') {
+  if (val !== undefined) {
     merged[key] = val;
   }
+}
+
+// Default API_BASE_URL to relative (empty) for same-origin Caddy gateway.
+if (merged.API_BASE_URL === undefined) {
+  merged.API_BASE_URL = '';
 }
 
 // Debug: show what was resolved (values masked for security)
@@ -55,8 +60,12 @@ for (const key of REQUIRED_VARS) {
   console.log(`    ${key}: ${val ? `${val.slice(0, 12)}...` : '(not set)'}`);
 }
 
-// Validate all required vars are present
-const missing = REQUIRED_VARS.filter((k) => !merged[k] || merged[k].trim() === '');
+// Validate all required vars are present.
+// API_BASE_URL defaults to empty string (relative URLs for same-origin Caddy gateway).
+const missing = REQUIRED_VARS.filter((k) => {
+  if (k === 'API_BASE_URL') return false;
+  return !merged[k] || merged[k].trim() === '';
+});
 if (missing.length > 0) {
   console.error('❌  Missing required environment variables:', missing.join(', '));
   console.error('    Create a .env file based on .env.template or set them in CI.');
