@@ -46,7 +46,9 @@ jobs:
       - name: Build project
         env:
           APP_NAME: ${{ secrets.APP_NAME }}
-          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          # API_BASE_URL vazio = URLs relativas para o Caddy gateway (mesma origem).
+          # O secret legacy foi mantido para compatibilidade, mas nao e usado aqui.
+          API_BASE_URL: ''
           AWS_S3_BUCKET_URL: ${{ secrets.AWS_S3_BUCKET_URL }}
         run: npm run build:prod
 
