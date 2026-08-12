@@ -69,6 +69,26 @@ export const environment = {
   appName: '${merged.APP_NAME}',
   apiBaseUrl: '${merged.API_BASE_URL}',
   s3BucketUrl: '${merged.AWS_S3_BUCKET_URL}',
+  // Defaults para emissao fiscal — em homologacao o backend nao exige certificado
+  // e aceita quaisquer valores; em producao esses valores devem vir da configuracao
+  // cadastral do emitente e do produto/servico.
+  fiscalDefaults: {
+    nfse: {
+      nbsCode: '1.0101',
+      cityCode: '3550308',
+      serviceDescription: 'Locacao de trajes e vestuario',
+      ibsRate: 0.025,
+      cbsRate: 0.015,
+      isqnRate: 0.0,
+    },
+    nfe: {
+      // NCM 9505.90.00: "Artigos para festas, carnaval ou outros divertimentos,
+      // incluindo os artigos de magia e artigos-surpresa - Outros" (cobre fantasias/costumes).
+      ncm: '95059000',
+      cfop: '5102',
+      unit: 'UN',
+    },
+  },
 };
 `;
 
