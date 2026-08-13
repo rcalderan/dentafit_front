@@ -52,8 +52,7 @@ export class UserRolesComponent implements OnInit {
   }
 
   primaryRole(user: IUserSummary): UserRole {
-    if (!user.roles?.length) return UserRole.CUSTOMER;
-    return [...user.roles].sort((a, b) => ROLE_ORDER.indexOf(b) - ROLE_ORDER.indexOf(a))[0];
+    return user.role ?? UserRole.CUSTOMER;
   }
 
   /** Returns roles the current user is allowed to assign to another user. */

@@ -22,7 +22,7 @@ const buildSummary = (overrides: Partial<IUserSummary> = {}): IUserSummary => ({
   id: 'u-target',
   username: 'target',
   name: 'Target',
-  roles: [UserRole.CUSTOMER],
+  role: UserRole.CUSTOMER,
   active: true,
   ...overrides,
 });
@@ -71,22 +71,17 @@ describe('UserRolesComponent', () => {
   });
 
   describe('primaryRole', () => {
-    it('retorna CUSTOMER como padrão quando o usuário não tem papéis', () => {
+    it('retorna o papel salvo no backend', () => {
       const component = makeComponent();
-      const user = buildSummary({ roles: [] });
+      expect(component.primaryRole(buildSummary({ role: UserRole.EMPLOYEE }))).toBe(UserRole.EMPLOYEE);
+      expect(component.primaryRole(buildSummary({ role: UserRole.ADMIN }))).toBe(UserRole.ADMIN);
+      expect(component.primaryRole(buildSummary({ role: UserRole.MANAGER }))).toBe(UserRole.MANAGER);
+    });
+
+    it('retorna CUSTOMER quando o papel está ausente', () => {
+      const component = makeComponent();
+      const user = { ...buildSummary(), role: undefined as unknown as UserRole };
       expect(component.primaryRole(user)).toBe(UserRole.CUSTOMER);
-    });
-
-    it('retorna o papel de maior hierarquia entre múltiplos papéis', () => {
-      const component = makeComponent();
-      const user = buildSummary({ roles: [UserRole.CUSTOMER, UserRole.EMPLOYEE] });
-      expect(component.primaryRole(user)).toBe(UserRole.EMPLOYEE);
-    });
-
-    it('retorna ADMIN quando o papel estiver presente', () => {
-      const component = makeComponent();
-      const user = buildSummary({ roles: [UserRole.ADMIN] });
-      expect(component.primaryRole(user)).toBe(UserRole.ADMIN);
     });
   });
 
@@ -138,34 +133,34 @@ describe('UserRolesComponent', () => {
 
     it('ADMIN pode editar MANAGER, EMPLOYEE e CUSTOMER', () => {
       const component = makeComponent();
-      expect(component.canEdit(buildSummary({ id: 'u-manager', roles: [UserRole.MANAGER] }))).toBe(true);
-      expect(component.canEdit(buildSummary({ id: 'u-employee', roles: [UserRole.EMPLOYEE] }))).toBe(true);
-      expect(component.canEdit(buildSummary({ id: 'u-customer', roles: [UserRole.CUSTOMER] }))).toBe(true);
+      expect(component.canEdit(buildSummary({ id: 'u-manager', role: UserRole.MANAGER }))).toBe(true);
+      expect(component.canEdit(buildSummary({ id: 'u-employee', role: UserRole.EMPLOYEE }))).toBe(true);
+      expect(component.canEdit(buildSummary({ id: 'u-customer', role: UserRole.CUSTOMER }))).toBe(true);
     });
 
     it('ADMIN não edita outro ADMIN', () => {
       const component = makeComponent();
-      expect(component.canEdit(buildSummary({ id: 'u-other-admin', roles: [UserRole.ADMIN] }))).toBe(false);
+      expect(component.canEdit(buildSummary({ id: 'u-other-admin', role: UserRole.ADMIN }))).toBe(false);
     });
 
     it('nenhum usuário pode editar a si mesmo', () => {
       const component = makeComponent();
-      expect(component.canEdit(buildSummary({ id: 'u-admin', roles: [UserRole.MANAGER] }))).toBe(false);
+      expect(component.canEdit(buildSummary({ id: 'u-admin', role: UserRole.MANAGER }))).toBe(false);
     });
 
     it('MANAGER pode editar EMPLOYEE e CUSTOMER, mas não MANAGER nem ADMIN', () => {
       authService.getCurrentUser.mockReturnValue(buildUser({ id: 'u-manager', role: UserRole.MANAGER }));
       const component = makeComponent();
-      expect(component.canEdit(buildSummary({ id: 'u-employee', roles: [UserRole.EMPLOYEE] }))).toBe(true);
-      expect(component.canEdit(buildSummary({ id: 'u-customer', roles: [UserRole.CUSTOMER] }))).toBe(true);
-      expect(component.canEdit(buildSummary({ id: 'u-other-manager', roles: [UserRole.MANAGER] }))).toBe(false);
-      expect(component.canEdit(buildSummary({ id: 'u-admin', roles: [UserRole.ADMIN] }))).toBe(false);
+      expect(component.canEdit(buildSummary({ id: 'u-employee', role: UserRole.EMPLOYEE }))).toBe(true);
+      expect(component.canEdit(buildSummary({ id: 'u-customer', role: UserRole.CUSTOMER }))).toBe(true);
+      expect(component.canEdit(buildSummary({ id: 'u-other-manager', role: UserRole.MANAGER }))).toBe(false);
+      expect(component.canEdit(buildSummary({ id: 'u-admin', role: UserRole.ADMIN }))).toBe(false);
     });
 
     it('CUSTOMER não edita ninguém', () => {
       authService.getCurrentUser.mockReturnValue(buildUser({ id: 'u-customer', role: UserRole.CUSTOMER }));
       const component = makeComponent();
-      expect(component.canEdit(buildSummary({ id: 'u-other-customer', roles: [UserRole.CUSTOMER] }))).toBe(false);
+      expect(component.canEdit(buildSummary({ id: 'u-other-customer', role: UserRole.CUSTOMER }))).toBe(false);
     });
   });
 

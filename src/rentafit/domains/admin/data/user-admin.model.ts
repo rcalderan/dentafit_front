@@ -4,7 +4,7 @@ export interface IUserSummary {
   id: string;
   username: string;
   name: string;
-  roles: UserRole[];
+  role: UserRole;
   active: boolean;
 }
 
