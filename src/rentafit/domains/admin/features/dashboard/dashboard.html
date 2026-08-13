@@ -2,33 +2,117 @@
     <h1>Administração do Sistema</h1>
 
     <div class="admin-grid">
-        <!-- System Logs -->
-        <div class="section-card logs-section">
-            <span class="section-title">Logs do Sistema</span>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Horário</th>
-                            <th>Usuário</th>
-                            <th>Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>12:45:02</td>
-                            <td>admin</td>
-                            <td>CADASTRO_CLIENTE: RICHARD</td>
-                        </tr>
-                        <tr>
-                            <td>11:20:15</td>
-                            <td>vendedor1</td>
-                            <td>NOVA_LOCACAO: 2024-001</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <button class="btn-link">Ver todos os logs →</button>
+        <!-- Firm / Issuer Data -->
+        <div class="section-card firm-section">
+            <span class="section-title">Dados da Empresa (Emitente)</span>
+            @if (firmError()) {
+                <div class="error-text">{{ firmError() }}</div>
+            }
+            @if (firmLoading()) {
+                <div class="firm-loading">Carregando dados da empresa...</div>
+            } @else if (firm(); as f) {
+                <div class="firm-form">
+                    <div class="form-group">
+                        <label for="firmCnpj">CNPJ</label>
+                        <input id="firmCnpj" [value]="f.cnpj" disabled />
+                    </div>
+                    <div class="form-group">
+                        <label for="firmRazao">Razão Social</label>
+                        <input id="firmRazao" [(ngModel)]="editRazaoSocial" [disabled]="!firmEditing()" />
+                    </div>
+                    <div class="form-group">
+                        <label for="firmFantasia">Nome Fantasia</label>
+                        <input id="firmFantasia" [(ngModel)]="editNomeFantasia" [disabled]="!firmEditing()" />
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firmIe">Inscrição Estadual</label>
+                            <input id="firmIe" [(ngModel)]="editIe" [disabled]="!firmEditing()" />
+                        </div>
+                        <div class="form-group">
+                            <label for="firmIm">Inscrição Municipal</label>
+                            <input id="firmIm" [(ngModel)]="editIm" [disabled]="!firmEditing()" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firmCrt">CRT</label>
+                            <select id="firmCrt" [(ngModel)]="editCrt" [disabled]="!firmEditing()">
+                                <option value="1">1 - Simples Nacional</option>
+                                <option value="2">2 - Simples Nacional excesso sublimite</option>
+                                <option value="3">3 - Regime Normal</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="firmFone">Telefone</label>
+                            <input id="firmFone" [(ngModel)]="editFone" [disabled]="!firmEditing()" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="firmLogradouro">Logradouro</label>
+                        <input id="firmLogradouro" [(ngModel)]="editLogradouro" [disabled]="!firmEditing()" />
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firmNumero">Número</label>
+                            <input id="firmNumero" [(ngModel)]="editNumero" [disabled]="!firmEditing()" />
+                        </div>
+                        <div class="form-group">
+                            <label for="firmBairro">Bairro</label>
+                            <input id="firmBairro" [(ngModel)]="editBairro" [disabled]="!firmEditing()" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firmMunCodigo">Código Município (IBGE)</label>
+                            <input id="firmMunCodigo" [(ngModel)]="editMunicipioCodigo" [disabled]="!firmEditing()" maxlength="7" />
+                            <small class="field-info">
+                                7 dígitos. Ex: São Carlos/SP = <strong>3548906</strong>.
+                                <a href="https://www.ibge.gov.br/explica/codigos-dos-municipios.php" target="_blank" rel="noopener">Consultar IBGE</a>.
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="firmMunNome">Município</label>
+                            <input id="firmMunNome" [(ngModel)]="editMunicipioNome" [disabled]="!firmEditing()" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firmUf">UF</label>
+                            <input id="firmUf" [(ngModel)]="editUf" [disabled]="!firmEditing()" maxlength="2" />
+                        </div>
+                        <div class="form-group">
+                            <label for="firmCep">CEP</label>
+                            <input id="firmCep" [(ngModel)]="editCep" [disabled]="!firmEditing()" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firmPaisCodigo">Código País</label>
+                            <input id="firmPaisCodigo" [(ngModel)]="editPaisCodigo" [disabled]="!firmEditing()" />
+                        </div>
+                        <div class="form-group">
+                            <label for="firmPaisNome">País</label>
+                            <input id="firmPaisNome" [(ngModel)]="editPaisNome" [disabled]="!firmEditing()" />
+                        </div>
+                    </div>
+                    <div class="firm-actions">
+                        @if (!firmEditing()) {
+                            <button class="btn btn-update" (click)="startEditFirm()">Editar Dados</button>
+                        } @else {
+                            <button class="btn btn-secondary" (click)="cancelEditFirm()">Cancelar</button>
+                            <button class="btn btn-update" [disabled]="firmSaving()" (click)="saveFirm()">
+                                {{ firmSaving() ? 'Salvando...' : 'Salvar' }}
+                            </button>
+                        }
+                    </div>
+                </div>
+            } @else {
+                <div class="firm-empty">
+                    <p>Nenhuma empresa cadastrada.</p>
+                    <button class="btn btn-update" (click)="startEditFirm()">Cadastrar Empresa</button>
+                </div>
+            }
         </div>
 
         <!-- Digital Certificate -->
