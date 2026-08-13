@@ -205,6 +205,106 @@
             </div>
             <button class="btn btn-update" style="width: 100%; margin-top: 1rem;">Editar Preços</button>
         </div>
+
+        <!-- Branch / Filial -->
+        <div class="section-card branch-section">
+            <span class="section-title">Filiais</span>
+
+            @if (branchError()) {
+                <div class="error-text">{{ branchError() }}</div>
+            }
+
+            @if (branchLoading()) {
+                <div class="branch-loading">Carregando filiais...</div>
+            } @else if (branches().length > 0) {
+                <ul class="branch-list">
+                    @for (b of branches(); track b.cnpj) {
+                        <li>
+                            <span class="branch-type" [class.matriz]="b.matriz">{{ b.matriz ? 'Matriz' : 'Filial' }}</span>
+                            <span class="branch-cnpj">{{ b.cnpj }}</span>
+                            <span class="branch-name">{{ b.nomeFantasia || b.razaoSocial }}</span>
+                        </li>
+                    }
+                </ul>
+            } @else {
+                <p class="branch-empty">Nenhuma filial cadastrada.</p>
+            }
+
+            <div class="branch-actions">
+                <button class="btn btn-update" (click)="toggleBranchForm()">
+                    {{ showBranchForm() ? 'Cancelar' : 'Adicionar Filial' }}
+                </button>
+            </div>
+
+            @if (showBranchForm()) {
+                <div class="branch-form">
+                    <h4>Nova Filial</h4>
+                    <p class="field-info">A Razão Social vem da matriz. Informe apenas os dados locais da filial.</p>
+                    <div class="form-group">
+                        <label for="branchCnpj">CNPJ da Filial</label>
+                        <input id="branchCnpj" [(ngModel)]="branchCnpj" [disabled]="branchSaving()" />
+                    </div>
+                    <div class="form-group">
+                        <label for="branchNomeFantasia">Nome Fantasia</label>
+                        <input id="branchNomeFantasia" [(ngModel)]="branchNomeFantasia" [disabled]="branchSaving()" />
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="branchIe">Inscrição Estadual</label>
+                            <input id="branchIe" [(ngModel)]="branchIe" [disabled]="branchSaving()" />
+                        </div>
+                        <div class="form-group">
+                            <label for="branchIm">Inscrição Municipal</label>
+                            <input id="branchIm" [(ngModel)]="branchIm" [disabled]="branchSaving()" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="branchFone">Telefone</label>
+                        <input id="branchFone" [(ngModel)]="branchFone" [disabled]="branchSaving()" />
+                    </div>
+                    <div class="form-group">
+                        <label for="branchLogradouro">Logradouro</label>
+                        <input id="branchLogradouro" [(ngModel)]="branchLogradouro" [disabled]="branchSaving()" />
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="branchNumero">Número</label>
+                            <input id="branchNumero" [(ngModel)]="branchNumero" [disabled]="branchSaving()" />
+                        </div>
+                        <div class="form-group">
+                            <label for="branchBairro">Bairro</label>
+                            <input id="branchBairro" [(ngModel)]="branchBairro" [disabled]="branchSaving()" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="branchMunicipioCodigo">Código Município (IBGE)</label>
+                            <input id="branchMunicipioCodigo" [(ngModel)]="branchMunicipioCodigo" [disabled]="branchSaving()" maxlength="7" />
+                            <small class="field-info">7 dígitos. Ex: São Carlos/SP = <strong>3548906</strong>.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="branchMunicipioNome">Município</label>
+                            <input id="branchMunicipioNome" [(ngModel)]="branchMunicipioNome" [disabled]="branchSaving()" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="branchUf">UF</label>
+                            <input id="branchUf" [(ngModel)]="branchUf" [disabled]="branchSaving()" maxlength="2" />
+                        </div>
+                        <div class="form-group">
+                            <label for="branchCep">CEP</label>
+                            <input id="branchCep" [(ngModel)]="branchCep" [disabled]="branchSaving()" />
+                        </div>
+                    </div>
+                    <div class="branch-actions">
+                        <button class="btn btn-update" [disabled]="branchSaving()" (click)="submitBranch()">
+                            {{ branchSaving() ? 'Salvando...' : 'Salvar Filial' }}
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
     </div>
 
     @if (showUploadModal()) {

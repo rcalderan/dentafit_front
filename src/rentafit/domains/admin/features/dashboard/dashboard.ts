@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 import { CertificateService } from '../../service/certificate.service';
 import { ICertificateDetails } from '../../data/certificate.model';
 import { IssuerSetupService } from '../../../auth/services/issuer-setup.service';
-import { IssuerInfo, IssuerSetupRequest } from '../../../auth/data/issuer.model';
+import { IssuerBranchSetupRequest, IssuerInfo, IssuerSetupRequest } from '../../../auth/data/issuer.model';
 
 @Component({
   selector: 'rentafit-dashboard',
@@ -57,9 +57,30 @@ export class Dashboard implements OnInit {
   editPaisCodigo = '1058';
   editPaisNome = 'BRASIL';
 
+  /** --- Branches / Filiais --- */
+  branches = signal<IssuerInfo[]>([]);
+  branchLoading = signal(false);
+  branchSaving = signal(false);
+  branchError = signal<string | null>(null);
+  showBranchForm = signal(false);
+
+  branchCnpj = '';
+  branchNomeFantasia = '';
+  branchIe = '';
+  branchIm = '';
+  branchFone = '';
+  branchLogradouro = '';
+  branchNumero = '';
+  branchBairro = '';
+  branchMunicipioCodigo = '';
+  branchMunicipioNome = '';
+  branchUf = '';
+  branchCep = '';
+
   ngOnInit(): void {
     this.loadStatus();
     this.loadFirm();
+    this.loadBranches();
   }
 
   loadStatus(): void {
@@ -209,5 +230,97 @@ export class Dashboard implements OnInit {
         this.firmSaving.set(false);
       },
     });
+  }
+
+  /** --- Branch / Filial methods --- */
+  toggleBranchForm(): void {
+    this.showBranchForm.set(!this.showBranchForm());
+    this.branchError.set(null);
+  }
+
+  loadBranches(): void {
+    this.branchLoading.set(true);
+    this.branchError.set(null);
+    this.issuerSetupService.listBranches().subscribe({
+      next: (list) => {
+        this.branches.set(list);
+        this.branchLoading.set(false);
+      },
+      error: (err: Error) => {
+        this.branchError.set(err.message);
+        this.branchLoading.set(false);
+      },
+    });
+  }
+
+  submitBranch(): void {
+    const validationError = this.validateBranch();
+    if (validationError) {
+      this.branchError.set(validationError);
+      return;
+    }
+
+    this.branchSaving.set(true);
+    this.branchError.set(null);
+    const request: IssuerBranchSetupRequest = this.buildBranchRequest();
+    this.issuerSetupService.configureBranch(request).subscribe({
+      next: () => {
+        this.branchSaving.set(false);
+        this.resetBranchForm();
+        this.showBranchForm.set(false);
+        this.loadBranches();
+      },
+      error: (err: Error) => {
+        this.branchError.set(err.message);
+        this.branchSaving.set(false);
+      },
+    });
+  }
+
+  private buildBranchRequest(): IssuerBranchSetupRequest {
+    return {
+      cnpj: this.branchCnpj.replace(/\D/g, ''),
+      nomeFantasia: this.branchNomeFantasia.trim() || undefined,
+      ie: this.branchIe.trim() || undefined,
+      im: this.branchIm.trim() || undefined,
+      fone: this.branchFone.trim() || undefined,
+      logradouro: this.branchLogradouro.trim(),
+      numero: this.branchNumero.trim(),
+      bairro: this.branchBairro.trim(),
+      municipioCodigo: this.branchMunicipioCodigo.trim(),
+      municipioNome: this.branchMunicipioNome.trim(),
+      uf: this.branchUf.trim().toUpperCase(),
+      cep: this.branchCep.replace(/\D/g, ''),
+    };
+  }
+
+  private resetBranchForm(): void {
+    this.branchCnpj = '';
+    this.branchNomeFantasia = '';
+    this.branchIe = '';
+    this.branchIm = '';
+    this.branchFone = '';
+    this.branchLogradouro = '';
+    this.branchNumero = '';
+    this.branchBairro = '';
+    this.branchMunicipioCodigo = '';
+    this.branchMunicipioNome = '';
+    this.branchUf = '';
+    this.branchCep = '';
+  }
+
+  private validateBranch(): string | null {
+    const cnpj = this.branchCnpj.replace(/\D/g, '');
+    if (cnpj.length !== 14) return 'CNPJ da filial deve conter 14 dígitos.';
+    if (cnpj.substring(8, 12) === '0001') return 'CNPJ da filial deve ter sufixo diferente de 0001 (matriz).';
+    if (!this.branchLogradouro.trim()) return 'Logradouro da filial é obrigatório.';
+    if (!this.branchNumero.trim()) return 'Número da filial é obrigatório.';
+    if (!this.branchBairro.trim()) return 'Bairro da filial é obrigatório.';
+    if (!this.branchMunicipioCodigo.trim()) return 'Código do município da filial é obrigatório.';
+    if (!this.branchMunicipioNome.trim()) return 'Nome do município da filial é obrigatório.';
+    if (!this.branchUf.trim() || this.branchUf.trim().length !== 2) return 'UF da filial deve conter 2 letras.';
+    const cep = this.branchCep.replace(/\D/g, '');
+    if (cep.length !== 8) return 'CEP da filial deve conter 8 dígitos.';
+    return null;
   }
 }
