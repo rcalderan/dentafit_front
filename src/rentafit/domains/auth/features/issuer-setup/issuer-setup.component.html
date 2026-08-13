@@ -66,7 +66,14 @@
       <div class="form-row">
         <div class="form-group">
           <label for="municipioCodigo">Código Município (IBGE)</label>
-          <input id="municipioCodigo" [(ngModel)]="municipioCodigo" placeholder="0000000" [disabled]="isLoading()">
+          <input id="municipioCodigo" [(ngModel)]="municipioCodigo" placeholder="0000000" maxlength="7" [disabled]="isLoading()">
+          <small class="field-info">
+            7 dígitos: 2 da UF + 4 da ordem + 1 verificador. Ex: São Carlos/SP = <strong>3548906</strong>.
+            Consulte em
+            <a href="https://www.ibge.gov.br/explica/codigos-dos-municipios.php" target="_blank" rel="noopener">
+              Códigos dos Municípios do IBGE
+            </a>.
+          </small>
         </div>
         <div class="form-group">
           <label for="municipioNome">Município</label>
@@ -162,7 +169,14 @@
         <div class="form-row">
           <div class="form-group">
             <label for="branchMunicipioCodigo">Código Município (IBGE)</label>
-            <input id="branchMunicipioCodigo" [(ngModel)]="branchMunicipioCodigo" placeholder="0000000" [disabled]="isLoading()">
+            <input id="branchMunicipioCodigo" [(ngModel)]="branchMunicipioCodigo" placeholder="0000000" maxlength="7" [disabled]="isLoading()">
+            <small class="field-info">
+              7 dígitos: 2 da UF + 4 da ordem + 1 verificador. Ex: São Carlos/SP = <strong>3548906</strong>.
+              Consulte em
+              <a href="https://www.ibge.gov.br/explica/codigos-dos-municipios.php" target="_blank" rel="noopener">
+                Códigos dos Municípios do IBGE
+              </a>.
+            </small>
           </div>
           <div class="form-group">
             <label for="branchMunicipioNome">Município</label>
