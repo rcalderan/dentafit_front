@@ -35,7 +35,8 @@ export class FirstUseFlowService {
   }
 
   private resolveNonAdminRoute(user: User): Observable<string> {
-    if (user.issuerCnpj) {
+    const needsIssuerCnpj = user.role === UserRole.MANAGER || user.role === UserRole.EMPLOYEE;
+    if (!needsIssuerCnpj || user.issuerCnpj) {
       return of(resolveHomeRoute(user.role));
     }
     return of('/auth/issuer-confirm');

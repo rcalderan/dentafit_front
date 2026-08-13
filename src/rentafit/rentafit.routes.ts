@@ -26,7 +26,9 @@ export const routes: Routes = [
     },
     {
         path: 'auth/issuer-confirm',
-        loadComponent: () => import('./domains/auth/features/issuer-confirm/issuer-confirm.component').then(m => m.IssuerConfirmComponent)
+        loadComponent: () => import('./domains/auth/features/issuer-confirm/issuer-confirm.component').then(m => m.IssuerConfirmComponent),
+        canActivate: [roleGuard],
+        data: { roles: [UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Confirmar Emitente' }
     },
     {
         path: '',
