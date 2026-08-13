@@ -54,8 +54,9 @@ export class UserRolesComponent implements OnInit {
   allowedRoles(): UserRole[] {
     if (!this.currentUser) return [];
     const myIdx = ROLE_ORDER.indexOf(this.currentUser.role);
-    // A user can only assign roles strictly below their own
-    return ROLE_ORDER.filter((_, i) => i < myIdx);
+    // A user can assign roles up to and including their own level.
+    // ADMIN may elevate a lower user to ADMIN; MANAGER may elevate to MANAGER.
+    return ROLE_ORDER.filter((_, i) => i <= myIdx);
   }
 
   canEdit(target: IUserSummary): boolean {

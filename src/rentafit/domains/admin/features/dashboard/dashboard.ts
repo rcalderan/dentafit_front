@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { CertificateService } from '../../service/certificate.service';
 import { ICertificateDetails } from '../../data/certificate.model';
 import { IssuerSetupService } from '../../../auth/services/issuer-setup.service';
@@ -8,7 +9,7 @@ import { IssuerInfo, IssuerSetupRequest } from '../../../auth/data/issuer.model'
 @Component({
   selector: 'rentafit-dashboard',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
