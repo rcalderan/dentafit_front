@@ -190,4 +190,51 @@ describe('UserRolesComponent', () => {
       expect(adminService.listUsers).toHaveBeenCalledTimes(2); // ngOnInit + após sucesso
     });
   });
+
+  describe('requestPin + confirmWithPin', () => {
+    it('abre o modal e guarda o usuário/papel selecionados', () => {
+      const component = makeComponent();
+      const user = buildSummary({ id: 'u-target', name: 'Target' });
+      component.requestPin(user, UserRole.EMPLOYEE);
+      expect(component.showPinModal()).toBe(true);
+      expect(component.pendingUser()?.id).toBe('u-target');
+      expect(component.pendingRole()).toBe(UserRole.EMPLOYEE);
+    });
+
+    it('não faz nada quando o papel do requestPin é vazio', () => {
+      const component = makeComponent();
+      component.requestPin(buildSummary(), '');
+      expect(component.showPinModal()).toBe(false);
+    });
+
+    it('confirmWithPin com PIN inválido mantém o modal aberto e não chama updateRole', () => {
+      const component = makeComponent();
+      const user = buildSummary({ id: 'u-target' });
+      component.requestPin(user, UserRole.EMPLOYEE);
+      component.pin.set('123');
+      component.confirmWithPin();
+      expect(component.pinError()).toBe('Digite um PIN de 4 a 6 dígitos.');
+      expect(adminService.updateRole).not.toHaveBeenCalled();
+    });
+
+    it('confirmWithPin com PIN válido fecha o modal e chama updateRole', () => {
+      const component = makeComponent();
+      const user = buildSummary({ id: 'u-target' });
+      component.requestPin(user, UserRole.EMPLOYEE);
+      component.pin.set('1234');
+      component.confirmWithPin();
+      expect(component.showPinModal()).toBe(false);
+      expect(adminService.updateRole).toHaveBeenCalledWith('u-target', { role: UserRole.EMPLOYEE });
+    });
+
+    it('closePinModal limpa o estado do modal', () => {
+      const component = makeComponent();
+      component.requestPin(buildSummary(), UserRole.EMPLOYEE);
+      component.closePinModal();
+      expect(component.showPinModal()).toBe(false);
+      expect(component.pendingUser()).toBeNull();
+      expect(component.pendingRole()).toBeNull();
+      expect(component.pin()).toBe('');
+    });
+  });
 });

@@ -24,6 +24,12 @@ export class UserRolesComponent implements OnInit {
   successMessage = signal<string | null>(null);
   updatingId = signal<string | null>(null);
 
+  showPinModal = signal(false);
+  pin = signal('');
+  pinError = signal<string | null>(null);
+  pendingUser = signal<IUserSummary | null>(null);
+  pendingRole = signal<string | null>(null);
+
   readonly allRoles: UserRole[] = ROLE_ORDER;
   readonly currentUser = this.authService.getCurrentUser();
 
@@ -65,6 +71,37 @@ export class UserRolesComponent implements OnInit {
     const myIdx = ROLE_ORDER.indexOf(this.currentUser.role);
     const targetIdx = ROLE_ORDER.indexOf(this.primaryRole(target));
     return myIdx > targetIdx;
+  }
+
+  requestPin(user: IUserSummary, newRole: string): void {
+    if (!newRole) return;
+    this.pendingUser.set(user);
+    this.pendingRole.set(newRole);
+    this.pin.set('');
+    this.pinError.set(null);
+    this.showPinModal.set(true);
+  }
+
+  confirmWithPin(): void {
+    const value = this.pin().trim();
+    if (!/^\d{4,6}$/.test(value)) {
+      this.pinError.set('Digite um PIN de 4 a 6 dígitos.');
+      return;
+    }
+    const user = this.pendingUser();
+    const role = this.pendingRole();
+    this.closePinModal();
+    if (user && role) {
+      this.changeRole(user, role);
+    }
+  }
+
+  closePinModal(): void {
+    this.showPinModal.set(false);
+    this.pendingUser.set(null);
+    this.pendingRole.set(null);
+    this.pin.set('');
+    this.pinError.set(null);
   }
 
   changeRole(user: IUserSummary, newRole: string): void {
