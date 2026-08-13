@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { APP_CONFIG } from '../../../shared/data/app-config.token';
-import { IssuerInfo, IssuerSetupRequest } from '../data/issuer.model';
+import { IssuerBranchSetupRequest, IssuerInfo, IssuerSetupRequest } from '../data/issuer.model';
 
 @Injectable({
   providedIn: 'root'
@@ -24,8 +24,25 @@ export class IssuerSetupService {
     );
   }
 
+  listBranches(): Observable<IssuerInfo[]> {
+    return this.http.get<IssuerInfo[]>(`${this.baseUrl}/branches`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 404) {
+          return of([]);
+        }
+        return this.handleError(error);
+      })
+    );
+  }
+
   configureIssuer(request: IssuerSetupRequest): Observable<IssuerInfo> {
     return this.http.post<IssuerInfo>(`${this.baseUrl}/setup`, request).pipe(
+      catchError((error: HttpErrorResponse) => this.handleError(error))
+    );
+  }
+
+  configureBranch(request: IssuerBranchSetupRequest): Observable<IssuerInfo> {
+    return this.http.post<IssuerInfo>(`${this.baseUrl}/branch`, request).pipe(
       catchError((error: HttpErrorResponse) => this.handleError(error))
     );
   }

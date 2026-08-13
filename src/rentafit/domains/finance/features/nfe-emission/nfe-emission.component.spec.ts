@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NfeEmissionComponent } from './nfe-emission.component';
 import { FiscalDocumentService } from '../../service/fiscal-document.service';
 import { CustomerService } from '../../../customer/service/customer.service';
+import { IssuerSetupService } from '../../../auth/services/issuer-setup.service';
 import { ICustomer } from '../../../customer/data/Customer.interface';
 import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 import { IFiscalContext, IFiscalDocument } from '../../data/fiscal-document.types';
@@ -95,6 +96,7 @@ describe('NfeEmissionComponent', () => {
     downloadDanfe: ReturnType<typeof vi.fn>;
   };
   let customerService: { getCustomerById: ReturnType<typeof vi.fn> };
+  let issuerSetupService: { listBranches: ReturnType<typeof vi.fn> };
 
   const build = (context: IFiscalContext): ComponentFixture<NfeEmissionComponent> => {
     const fixture = TestBed.createComponent(NfeEmissionComponent);
@@ -118,11 +120,33 @@ describe('NfeEmissionComponent', () => {
     customerService = {
       getCustomerById: vi.fn().mockReturnValue(of(customer)),
     };
+    issuerSetupService = {
+      listBranches: vi.fn().mockReturnValue(of([{
+        cnpj: '08299621000120',
+        rootCnpj: '08299621',
+        branchOrder: '0001',
+        digitoControle: '20',
+        matriz: true,
+        razaoSocial: 'Emitente Teste',
+        crt: '1',
+        logradouro: 'Rua Teste',
+        numero: '0',
+        bairro: 'Centro',
+        municipioCodigo: '3548906',
+        municipioNome: 'Sao Carlos',
+        uf: 'SP',
+        cep: '13560000',
+        paisCodigo: '1058',
+        paisNome: 'BRASIL',
+        certificateConfigured: false,
+      }])),
+    };
     await TestBed.configureTestingModule({
       imports: [NfeEmissionComponent],
       providers: [
         { provide: FiscalDocumentService, useValue: fiscalService },
         { provide: CustomerService, useValue: customerService },
+        { provide: IssuerSetupService, useValue: issuerSetupService },
         { provide: APP_CONFIG, useValue: appConfig },
       ],
     }).compileComponents();

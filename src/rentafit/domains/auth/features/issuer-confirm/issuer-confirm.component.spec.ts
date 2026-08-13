@@ -53,6 +53,10 @@ describe('IssuerConfirmComponent', () => {
   it('carrega CNPJ do emitente ativo quando usuário não tem', () => {
     issuerSetupService.getCurrentIssuer.mockReturnValue(of({
       cnpj: '08299621000120',
+      rootCnpj: '08299621',
+      branchOrder: '0001',
+      digitoControle: '20',
+      matriz: true,
       razaoSocial: 'Emitente',
       certificateConfigured: false,
       crt: '1',

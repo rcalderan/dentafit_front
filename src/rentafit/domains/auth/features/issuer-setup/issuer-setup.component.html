@@ -98,5 +98,91 @@
     <button (click)="submit()" [disabled]="isLoading()">
       {{ isLoading() ? 'Salvando...' : 'Salvar Emitente' }}
     </button>
+
+    <hr class="divider" />
+
+    <button class="btn-secondary" (click)="toggleBranchForm()" [disabled]="isLoading()">
+      {{ showBranchForm() ? 'Cancelar' : 'Adicionar Filial' }}
+    </button>
+
+    @if (branches().length > 0) {
+      <div class="branch-list">
+        <h4>Filiais cadastradas</h4>
+        <ul>
+          @for (b of branches(); track b.cnpj) {
+            <li>
+              <strong>{{ b.matriz ? 'Matriz' : 'Filial' }}</strong> —
+              {{ b.cnpj }} ({{ b.nomeFantasia || b.razaoSocial }})
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    @if (showBranchForm()) {
+      <div class="form-section">
+        <h3>Nova Filial</h3>
+        <p class="subtitle">A Razão Social vem da matriz. Informe apenas os dados locais da filial.</p>
+        <div class="form-group">
+          <label for="branchCnpj">CNPJ da Filial</label>
+          <input id="branchCnpj" [(ngModel)]="branchCnpj" placeholder="00.000.000/0002-00" [disabled]="isLoading()">
+        </div>
+        <div class="form-group">
+          <label for="branchNomeFantasia">Nome Fantasia</label>
+          <input id="branchNomeFantasia" [(ngModel)]="branchNomeFantasia" placeholder="Nome Fantasia da Filial" [disabled]="isLoading()">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="branchIe">Inscrição Estadual</label>
+            <input id="branchIe" [(ngModel)]="branchIe" placeholder="IE" [disabled]="isLoading()">
+          </div>
+          <div class="form-group">
+            <label for="branchIm">Inscrição Municipal</label>
+            <input id="branchIm" [(ngModel)]="branchIm" placeholder="IM" [disabled]="isLoading()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="branchFone">Telefone</label>
+          <input id="branchFone" [(ngModel)]="branchFone" placeholder="Telefone" [disabled]="isLoading()">
+        </div>
+        <div class="form-group">
+          <label for="branchLogradouro">Logradouro</label>
+          <input id="branchLogradouro" [(ngModel)]="branchLogradouro" placeholder="Rua, Avenida..." [disabled]="isLoading()">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="branchNumero">Número</label>
+            <input id="branchNumero" [(ngModel)]="branchNumero" placeholder="Número" [disabled]="isLoading()">
+          </div>
+          <div class="form-group">
+            <label for="branchBairro">Bairro</label>
+            <input id="branchBairro" [(ngModel)]="branchBairro" placeholder="Bairro" [disabled]="isLoading()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="branchMunicipioCodigo">Código Município (IBGE)</label>
+            <input id="branchMunicipioCodigo" [(ngModel)]="branchMunicipioCodigo" placeholder="0000000" [disabled]="isLoading()">
+          </div>
+          <div class="form-group">
+            <label for="branchMunicipioNome">Município</label>
+            <input id="branchMunicipioNome" [(ngModel)]="branchMunicipioNome" placeholder="Município" [disabled]="isLoading()">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="branchUf">UF</label>
+            <input id="branchUf" [(ngModel)]="branchUf" placeholder="SP" maxlength="2" [disabled]="isLoading()">
+          </div>
+          <div class="form-group">
+            <label for="branchCep">CEP</label>
+            <input id="branchCep" [(ngModel)]="branchCep" placeholder="00000-000" [disabled]="isLoading()">
+          </div>
+        </div>
+        <button (click)="submitBranch()" [disabled]="isLoading()">
+          {{ isLoading() ? 'Salvando...' : 'Salvar Filial' }}
+        </button>
+      </div>
+    }
   </div>
 </div>
