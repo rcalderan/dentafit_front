@@ -9,7 +9,7 @@ export interface IUserSummary {
 }
 
 export interface IUpdateRoleRequest {
-  newRole: UserRole;
+  role: UserRole;
 }
 
 export interface IPagedResponse<T> {

@@ -73,7 +73,7 @@ export class UserRolesComponent implements OnInit {
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
-    this.adminService.updateRole(user.id, { newRole: newRole as UserRole }).subscribe({
+    this.adminService.updateRole(user.id, { role: newRole as UserRole }).subscribe({
       next: () => {
         this.updatingId.set(null);
         this.successMessage.set(`Papel de ${user.name} atualizado com sucesso.`);

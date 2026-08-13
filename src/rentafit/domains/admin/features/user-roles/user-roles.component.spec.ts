@@ -174,7 +174,7 @@ describe('UserRolesComponent', () => {
       const component = makeComponent();
       const user = buildSummary({ id: 'u-target' });
       component.changeRole(user, UserRole.EMPLOYEE);
-      expect(adminService.updateRole).toHaveBeenCalledWith('u-target', { newRole: UserRole.EMPLOYEE });
+      expect(adminService.updateRole).toHaveBeenCalledWith('u-target', { role: UserRole.EMPLOYEE });
     });
 
     it('não chama updateRole quando o papel é vazio', () => {
