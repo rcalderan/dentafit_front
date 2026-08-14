@@ -44,7 +44,11 @@ describe('UserRolesComponent', () => {
     getCurrentUser: ReturnType<typeof vi.fn>;
   };
 
-  const makeComponent = () => TestBed.createComponent(UserRolesComponent).componentInstance;
+  const makeComponent = () => {
+    const fixture = TestBed.createComponent(UserRolesComponent);
+    fixture.detectChanges();
+    return fixture.componentInstance;
+  };
 
   beforeEach(async () => {
     adminService = {

@@ -32,6 +32,9 @@ yarn-error.log
 .copilot/skills
 .github/copilot*
 .devin
+.QA
+.QA/*
+.QA/**/*
 
 ### Playwright ###
 .playwright*
@@ -48,6 +51,10 @@ graphify-out/
 .agents/
 CLAUDE.md
 graphify*
+
+# Removed / local artifacts
+mockup/
+infra/
 
 # Miscellaneous
 /.angular/cache
