@@ -2,33 +2,117 @@
     <h1>Administração do Sistema</h1>
 
     <div class="admin-grid">
-        <!-- System Logs -->
-        <div class="section-card logs-section">
-            <span class="section-title">Logs do Sistema</span>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Horário</th>
-                            <th>Usuário</th>
-                            <th>Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>12:45:02</td>
-                            <td>admin</td>
-                            <td>CADASTRO_CLIENTE: RICHARD</td>
-                        </tr>
-                        <tr>
-                            <td>11:20:15</td>
-                            <td>vendedor1</td>
-                            <td>NOVA_LOCACAO: 2024-001</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <button class="btn-link">Ver todos os logs →</button>
+        <!-- Firm / Issuer Data -->
+        <div class="section-card firm-section">
+            <span class="section-title">Dados da Empresa (Emitente)</span>
+            @if (firmError()) {
+                <div class="error-text">{{ firmError() }}</div>
+            }
+            @if (firmLoading()) {
+                <div class="firm-loading">Carregando dados da empresa...</div>
+            } @else if (firm(); as f) {
+                <div class="firm-form">
+                    <div class="form-group">
+                        <label for="firmCnpj">CNPJ</label>
+                        <input id="firmCnpj" [value]="f.cnpj" disabled />
+                    </div>
+                    <div class="form-group">
+                        <label for="firmRazao">Razão Social</label>
+                        <input id="firmRazao" [(ngModel)]="editRazaoSocial" [disabled]="!firmEditing()" />
+                    </div>
+                    <div class="form-group">
+                        <label for="firmFantasia">Nome Fantasia</label>
+                        <input id="firmFantasia" [(ngModel)]="editNomeFantasia" [disabled]="!firmEditing()" />
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firmIe">Inscrição Estadual</label>
+                            <input id="firmIe" [(ngModel)]="editIe" [disabled]="!firmEditing()" />
+                        </div>
+                        <div class="form-group">
+                            <label for="firmIm">Inscrição Municipal</label>
+                            <input id="firmIm" [(ngModel)]="editIm" [disabled]="!firmEditing()" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firmCrt">CRT</label>
+                            <select id="firmCrt" [(ngModel)]="editCrt" [disabled]="!firmEditing()">
+                                <option value="1">1 - Simples Nacional</option>
+                                <option value="2">2 - Simples Nacional excesso sublimite</option>
+                                <option value="3">3 - Regime Normal</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="firmFone">Telefone</label>
+                            <input id="firmFone" [(ngModel)]="editFone" [disabled]="!firmEditing()" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="firmLogradouro">Logradouro</label>
+                        <input id="firmLogradouro" [(ngModel)]="editLogradouro" [disabled]="!firmEditing()" />
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firmNumero">Número</label>
+                            <input id="firmNumero" [(ngModel)]="editNumero" [disabled]="!firmEditing()" />
+                        </div>
+                        <div class="form-group">
+                            <label for="firmBairro">Bairro</label>
+                            <input id="firmBairro" [(ngModel)]="editBairro" [disabled]="!firmEditing()" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firmMunCodigo">Código Município (IBGE)</label>
+                            <input id="firmMunCodigo" [(ngModel)]="editMunicipioCodigo" [disabled]="!firmEditing()" maxlength="7" />
+                            <small class="field-info">
+                                7 dígitos. Ex: São Carlos/SP = <strong>3548906</strong>.
+                                <a href="https://www.ibge.gov.br/explica/codigos-dos-municipios.php" target="_blank" rel="noopener">Consultar IBGE</a>.
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="firmMunNome">Município</label>
+                            <input id="firmMunNome" [(ngModel)]="editMunicipioNome" [disabled]="!firmEditing()" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firmUf">UF</label>
+                            <input id="firmUf" [(ngModel)]="editUf" [disabled]="!firmEditing()" maxlength="2" />
+                        </div>
+                        <div class="form-group">
+                            <label for="firmCep">CEP</label>
+                            <input id="firmCep" [(ngModel)]="editCep" [disabled]="!firmEditing()" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firmPaisCodigo">Código País</label>
+                            <input id="firmPaisCodigo" [(ngModel)]="editPaisCodigo" [disabled]="!firmEditing()" />
+                        </div>
+                        <div class="form-group">
+                            <label for="firmPaisNome">País</label>
+                            <input id="firmPaisNome" [(ngModel)]="editPaisNome" [disabled]="!firmEditing()" />
+                        </div>
+                    </div>
+                    <div class="firm-actions">
+                        @if (!firmEditing()) {
+                            <button class="btn btn-update" (click)="startEditFirm()">Editar Dados</button>
+                        } @else {
+                            <button class="btn btn-secondary" (click)="cancelEditFirm()">Cancelar</button>
+                            <button class="btn btn-update" [disabled]="firmSaving()" (click)="saveFirm()">
+                                {{ firmSaving() ? 'Salvando...' : 'Salvar' }}
+                            </button>
+                        }
+                    </div>
+                </div>
+            } @else {
+                <div class="firm-empty">
+                    <p>Nenhuma empresa cadastrada.</p>
+                    <button class="btn btn-update" (click)="startEditFirm()">Cadastrar Empresa</button>
+                </div>
+            }
         </div>
 
         <!-- Digital Certificate -->
@@ -96,6 +180,14 @@
             </div>
         </div>
 
+        <!-- User Roles Management -->
+        <div class="section-card user-roles-section">
+            <span class="section-title">Gerenciamento de Usuários</span>
+            <a class="btn btn-update" routerLink="/admin/user-roles" style="width: 100%;">
+                Gerenciar Papéis
+            </a>
+        </div>
+
         <!-- Pricing Config -->
         <div class="section-card pricing-section">
             <span class="section-title">Configuração de Preços</span>
@@ -112,6 +204,106 @@
                 </div>
             </div>
             <button class="btn btn-update" style="width: 100%; margin-top: 1rem;">Editar Preços</button>
+        </div>
+
+        <!-- Branch / Filial -->
+        <div class="section-card branch-section">
+            <span class="section-title">Filiais</span>
+
+            @if (branchError()) {
+                <div class="error-text">{{ branchError() }}</div>
+            }
+
+            @if (branchLoading()) {
+                <div class="branch-loading">Carregando filiais...</div>
+            } @else if (branches().length > 0) {
+                <ul class="branch-list">
+                    @for (b of branches(); track b.cnpj) {
+                        <li>
+                            <span class="branch-type" [class.matriz]="b.matriz">{{ b.matriz ? 'Matriz' : 'Filial' }}</span>
+                            <span class="branch-cnpj">{{ b.cnpj }}</span>
+                            <span class="branch-name">{{ b.nomeFantasia || b.razaoSocial }}</span>
+                        </li>
+                    }
+                </ul>
+            } @else {
+                <p class="branch-empty">Nenhuma filial cadastrada.</p>
+            }
+
+            <div class="branch-actions">
+                <button class="btn btn-update" (click)="toggleBranchForm()">
+                    {{ showBranchForm() ? 'Cancelar' : 'Adicionar Filial' }}
+                </button>
+            </div>
+
+            @if (showBranchForm()) {
+                <div class="branch-form">
+                    <h4>Nova Filial</h4>
+                    <p class="field-info">A Razão Social vem da matriz. Informe apenas os dados locais da filial.</p>
+                    <div class="form-group">
+                        <label for="branchCnpj">CNPJ da Filial</label>
+                        <input id="branchCnpj" [(ngModel)]="branchCnpj" [disabled]="branchSaving()" />
+                    </div>
+                    <div class="form-group">
+                        <label for="branchNomeFantasia">Nome Fantasia</label>
+                        <input id="branchNomeFantasia" [(ngModel)]="branchNomeFantasia" [disabled]="branchSaving()" />
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="branchIe">Inscrição Estadual</label>
+                            <input id="branchIe" [(ngModel)]="branchIe" [disabled]="branchSaving()" />
+                        </div>
+                        <div class="form-group">
+                            <label for="branchIm">Inscrição Municipal</label>
+                            <input id="branchIm" [(ngModel)]="branchIm" [disabled]="branchSaving()" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="branchFone">Telefone</label>
+                        <input id="branchFone" [(ngModel)]="branchFone" [disabled]="branchSaving()" />
+                    </div>
+                    <div class="form-group">
+                        <label for="branchLogradouro">Logradouro</label>
+                        <input id="branchLogradouro" [(ngModel)]="branchLogradouro" [disabled]="branchSaving()" />
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="branchNumero">Número</label>
+                            <input id="branchNumero" [(ngModel)]="branchNumero" [disabled]="branchSaving()" />
+                        </div>
+                        <div class="form-group">
+                            <label for="branchBairro">Bairro</label>
+                            <input id="branchBairro" [(ngModel)]="branchBairro" [disabled]="branchSaving()" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="branchMunicipioCodigo">Código Município (IBGE)</label>
+                            <input id="branchMunicipioCodigo" [(ngModel)]="branchMunicipioCodigo" [disabled]="branchSaving()" maxlength="7" />
+                            <small class="field-info">7 dígitos. Ex: São Carlos/SP = <strong>3548906</strong>.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="branchMunicipioNome">Município</label>
+                            <input id="branchMunicipioNome" [(ngModel)]="branchMunicipioNome" [disabled]="branchSaving()" />
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="branchUf">UF</label>
+                            <input id="branchUf" [(ngModel)]="branchUf" [disabled]="branchSaving()" maxlength="2" />
+                        </div>
+                        <div class="form-group">
+                            <label for="branchCep">CEP</label>
+                            <input id="branchCep" [(ngModel)]="branchCep" [disabled]="branchSaving()" />
+                        </div>
+                    </div>
+                    <div class="branch-actions">
+                        <button class="btn btn-update" [disabled]="branchSaving()" (click)="submitBranch()">
+                            {{ branchSaving() ? 'Salvando...' : 'Salvar Filial' }}
+                        </button>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 

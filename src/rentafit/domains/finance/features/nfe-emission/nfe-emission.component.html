@@ -43,6 +43,23 @@
       />
     </div>
 
+    @if (hasMultipleIssuers()) {
+      <div class="field">
+        <label>Emitente (CNPJ)</label>
+        <select
+          class="input"
+          [ngModel]="selectedIssuerCnpj()"
+          (ngModelChange)="selectedIssuerCnpj.set($event)"
+        >
+          @for (iss of issuers(); track iss.cnpj) {
+            <option [value]="iss.cnpj">
+              {{ iss.matriz ? 'Matriz' : 'Filial' }} — {{ iss.cnpj }} ({{ iss.nomeFantasia || iss.razaoSocial }})
+            </option>
+          }
+        </select>
+      </div>
+    }
+
     <div class="field">
       <label>Finalidade</label>
       <div class="radio-row">

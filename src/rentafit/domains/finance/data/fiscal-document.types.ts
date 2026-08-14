@@ -134,6 +134,8 @@ export interface IEmitInvoiceRequest {
   nbsCode?: string;
   serviceDescription?: string;
   cityCode?: string;
+  // Emitente (matriz/filial) — se omitido, usa a matriz ativa
+  issuerCnpj?: string;
 }
 
 export interface ICancelInvoiceRequest {

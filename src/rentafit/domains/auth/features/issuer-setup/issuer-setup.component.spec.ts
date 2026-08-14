@@ -16,6 +16,9 @@ describe('IssuerSetupComponent', () => {
   };
   let issuerSetupService: {
     configureIssuer: ReturnType<typeof vi.fn>;
+    configureBranch: ReturnType<typeof vi.fn>;
+    listBranches: ReturnType<typeof vi.fn>;
+    getCurrentIssuer: ReturnType<typeof vi.fn>;
   };
   let router: { navigate: ReturnType<typeof vi.fn> };
 
@@ -24,7 +27,12 @@ describe('IssuerSetupComponent', () => {
       setupIssuerCnpj: vi.fn(),
       getCurrentUser: vi.fn().mockReturnValue({ role: UserRole.ADMIN }),
     };
-    issuerSetupService = { configureIssuer: vi.fn() };
+    issuerSetupService = {
+      configureIssuer: vi.fn(),
+      configureBranch: vi.fn(),
+      listBranches: vi.fn().mockReturnValue(of([])),
+      getCurrentIssuer: vi.fn().mockReturnValue(of(null)),
+    };
     router = { navigate: vi.fn() };
 
     await TestBed.configureTestingModule({
@@ -54,6 +62,10 @@ describe('IssuerSetupComponent', () => {
     fillValidForm(component);
     issuerSetupService.configureIssuer.mockReturnValue(of({
       cnpj: '08299621000120',
+      rootCnpj: '08299621',
+      branchOrder: '0001',
+      digitoControle: '20',
+      matriz: true,
       razaoSocial: 'Emitente',
       certificateConfigured: false,
       crt: '1',

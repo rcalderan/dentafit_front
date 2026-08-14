@@ -68,6 +68,11 @@ describe('FirstUseFlowService', () => {
     expect(route).toBe('/finance/dashboard');
   });
 
+  it('redireciona CUSTOMER para home sem pedir confirmação de CNPJ', async () => {
+    const route = await lastValueFrom(service.resolvePostLoginRoute(buildUser({ role: UserRole.CUSTOMER })));
+    expect(route).toBe('/account/profile');
+  });
+
   it('prioriza troca de senha sobre setup do emitente', async () => {
     issuerSetupService.getCurrentIssuer.mockReturnValue(of(null));
     const route = await lastValueFrom(service.resolvePostLoginRoute(buildUser({ role: UserRole.ADMIN, passwordExpired: true })));

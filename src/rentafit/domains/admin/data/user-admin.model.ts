@@ -4,12 +4,12 @@ export interface IUserSummary {
   id: string;
   username: string;
   name: string;
-  roles: UserRole[];
+  role: UserRole;
   active: boolean;
 }
 
 export interface IUpdateRoleRequest {
-  newRole: UserRole;
+  role: UserRole;
 }
 
 export interface IPagedResponse<T> {

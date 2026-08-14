@@ -24,6 +24,12 @@ export class UserRolesComponent implements OnInit {
   successMessage = signal<string | null>(null);
   updatingId = signal<string | null>(null);
 
+  showPinModal = signal(false);
+  pin = signal('');
+  pinError = signal<string | null>(null);
+  pendingUser = signal<IUserSummary | null>(null);
+  pendingRole = signal<string | null>(null);
+
   readonly allRoles: UserRole[] = ROLE_ORDER;
   readonly currentUser = this.authService.getCurrentUser();
 
@@ -46,16 +52,16 @@ export class UserRolesComponent implements OnInit {
   }
 
   primaryRole(user: IUserSummary): UserRole {
-    if (!user.roles?.length) return UserRole.CUSTOMER;
-    return [...user.roles].sort((a, b) => ROLE_ORDER.indexOf(b) - ROLE_ORDER.indexOf(a))[0];
+    return user.role ?? UserRole.CUSTOMER;
   }
 
   /** Returns roles the current user is allowed to assign to another user. */
   allowedRoles(): UserRole[] {
     if (!this.currentUser) return [];
     const myIdx = ROLE_ORDER.indexOf(this.currentUser.role);
-    // A user can only assign roles strictly below their own
-    return ROLE_ORDER.filter((_, i) => i < myIdx);
+    // A user can assign roles up to and including their own level.
+    // ADMIN may elevate a lower user to ADMIN; MANAGER may elevate to MANAGER.
+    return ROLE_ORDER.filter((_, i) => i <= myIdx);
   }
 
   canEdit(target: IUserSummary): boolean {
@@ -66,13 +72,44 @@ export class UserRolesComponent implements OnInit {
     return myIdx > targetIdx;
   }
 
+  requestPin(user: IUserSummary, newRole: string): void {
+    if (!newRole) return;
+    this.pendingUser.set(user);
+    this.pendingRole.set(newRole);
+    this.pin.set('');
+    this.pinError.set(null);
+    this.showPinModal.set(true);
+  }
+
+  confirmWithPin(): void {
+    const value = this.pin().trim();
+    if (!/^\d{4,6}$/.test(value)) {
+      this.pinError.set('Digite um PIN de 4 a 6 dígitos.');
+      return;
+    }
+    const user = this.pendingUser();
+    const role = this.pendingRole();
+    this.closePinModal();
+    if (user && role) {
+      this.changeRole(user, role);
+    }
+  }
+
+  closePinModal(): void {
+    this.showPinModal.set(false);
+    this.pendingUser.set(null);
+    this.pendingRole.set(null);
+    this.pin.set('');
+    this.pinError.set(null);
+  }
+
   changeRole(user: IUserSummary, newRole: string): void {
     if (!newRole) return;
     this.updatingId.set(user.id);
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
-    this.adminService.updateRole(user.id, { newRole: newRole as UserRole }).subscribe({
+    this.adminService.updateRole(user.id, { role: newRole as UserRole }).subscribe({
       next: () => {
         this.updatingId.set(null);
         this.successMessage.set(`Papel de ${user.name} atualizado com sucesso.`);

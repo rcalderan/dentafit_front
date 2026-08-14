@@ -36,7 +36,7 @@
                 </td>
                 <td>
                     @if (canEdit(user)) {
-                    <select (change)="changeRole(user, $any($event.target).value)"
+                    <select (change)="requestPin(user, $any($event.target).value)"
                         [disabled]="updatingId() === user.id">
                         <option value="">— selecionar —</option>
                         @for (role of allowedRoles(); track role) {
@@ -56,3 +56,25 @@
     </table>
     }
 </div>
+
+@if (showPinModal()) {
+<div class="pin-modal-overlay" (click)="closePinModal()">
+    <div class="pin-modal" (click)="$event.stopPropagation()">
+        <h3>Confirme seu PIN</h3>
+        <p>Para alterar o papel de <strong>{{ pendingUser()?.name }}</strong> para <strong>{{ pendingRole() }}</strong>,
+            digite seu PIN.</p>
+
+        <input id="pin" type="password" inputmode="numeric" maxlength="6" [ngModel]="pin()"
+            (ngModelChange)="pin.set($event)" placeholder="Digite o PIN" />
+
+        @if (pinError()) {
+        <div class="pin-error">{{ pinError() }}</div>
+        }
+
+        <div class="pin-actions">
+            <button class="btn btn-secondary" (click)="closePinModal()">Cancelar</button>
+            <button class="btn btn-update" [disabled]="!pin()" (click)="confirmWithPin()">Confirmar</button>
+        </div>
+    </div>
+</div>
+}
