@@ -239,7 +239,7 @@
 }
 
 .top-bar {
-  padding: 2rem 3rem 1rem;
+  padding: 0rem 3rem 1rem;
   background: transparent;
 }
 
@@ -331,7 +331,7 @@
 
 @media (max-width: 768px) {
   .top-bar {
-    padding: 1rem 1.5rem;
+    padding: 0rem 1.5rem;
   }
 
   .content-area {
@@ -341,7 +341,7 @@
 
 .top-bar {
   background-color: transparent;
-  padding: 1.5rem 2rem;
+  padding: 0rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;

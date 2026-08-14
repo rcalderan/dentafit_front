@@ -53,21 +53,21 @@ describe('SilentLocationStrategy', () => {
     expect(thirdPath).toBe('/');
   });
 
-  it('pushState sempre escreve "/" no browser', () => {
-    const spy = vi.spyOn(PathLocationStrategy.prototype, 'replaceState');
+  it('pushState sempre escreve "/" no browser mantendo a origem', () => {
+    const spy = vi.spyOn(platformLocation, 'replaceState');
 
     strategy.pushState({}, '', '/finance/dashboard', '');
 
-    expect(spy).toHaveBeenCalledWith({}, '', '/', '');
+    expect(spy).toHaveBeenCalledWith({}, '', 'http://localhost:4200/');
     spy.mockRestore();
   });
 
-  it('replaceState sempre escreve "/" no browser', () => {
-    const spy = vi.spyOn(PathLocationStrategy.prototype, 'replaceState');
+  it('replaceState sempre escreve "/" no browser mantendo a origem', () => {
+    const spy = vi.spyOn(platformLocation, 'replaceState');
 
     strategy.replaceState({}, '', '/customer/registration', '?id=1');
 
-    expect(spy).toHaveBeenCalledWith({}, '', '/', '');
+    expect(spy).toHaveBeenCalledWith({}, '', 'http://localhost:4200/');
     spy.mockRestore();
   });
 

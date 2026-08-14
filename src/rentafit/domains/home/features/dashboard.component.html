@@ -1,6 +1,4 @@
 <div class="dashboard-container">
-    <h1>Painel Geral</h1>
-
     <!-- Search Card -->
     <div class="section-card search-card">
         <span class="section-title">Pesquisa</span>
@@ -186,8 +184,6 @@
                 <div class="loading-state">Carregando...</div>
             } @else if (errorPendingReturns()) {
                 <div class="error-state">{{ errorPendingReturns() }}</div>
-            } @else if (pendingReturns().length === 0) {
-                <div class="empty-state">Nenhuma devolução pendente.</div>
             } @else {
                 <div class="table-responsive">
                     <table>
