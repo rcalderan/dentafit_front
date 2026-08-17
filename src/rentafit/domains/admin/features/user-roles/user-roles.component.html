@@ -78,3 +78,26 @@
     </div>
 </div>
 }
+
+@if (showInitialsModal()) {
+<div class="pin-modal-overlay" (click)="closeInitialsModal()">
+    <div class="pin-modal" (click)="$event.stopPropagation()">
+        <h3>Informe as iniciais</h3>
+        <p><strong>{{ pendingUser()?.name }}</strong> ainda não é funcionário. Defina as iniciais para registrá-lo
+            como Employee antes de elevar para <strong>{{ pendingRole() }}</strong>.</p>
+
+        <input id="initials" type="text" maxlength="10" [ngModel]="initials()"
+            (ngModelChange)="initials.set($event.toUpperCase())" placeholder="Ex.: JD"
+            autocomplete="off" />
+
+        @if (initialsError()) {
+        <div class="pin-error">{{ initialsError() }}</div>
+        }
+
+        <div class="pin-actions">
+            <button class="btn btn-secondary" (click)="closeInitialsModal()">Cancelar</button>
+            <button class="btn btn-update" [disabled]="!initials()" (click)="confirmInitials()">Confirmar</button>
+        </div>
+    </div>
+</div>
+}

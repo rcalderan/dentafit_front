@@ -10,6 +10,10 @@ export interface IUserSummary {
 
 export interface IUpdateRoleRequest {
   role: UserRole;
+  /** Required when elevating to EMPLOYEE/MANAGER and no Employee row exists yet. */
+  initials?: string;
+  /** Employee role level (defaults to 1 on the backend when omitted). */
+  roleLevel?: number;
 }
 
 export interface IPagedResponse<T> {
