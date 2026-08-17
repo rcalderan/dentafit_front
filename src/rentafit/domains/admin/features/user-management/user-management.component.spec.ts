@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
-import { UserRolesComponent } from './user-roles.component';
+import { UserManagementComponent } from './user-management.component';
 import { UserAdminService } from '../../service/user-admin.service';
+import { EmployeeService } from '../../service/employee.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 import { User, UserRole } from '../../../auth/data/user.model';
@@ -35,7 +36,7 @@ const emptyPage = {
   size: 20,
 };
 
-describe('UserRolesComponent', () => {
+describe('UserManagementComponent', () => {
   let adminService: {
     listUsers: ReturnType<typeof vi.fn>;
     updateRole: ReturnType<typeof vi.fn>;
@@ -43,9 +44,12 @@ describe('UserRolesComponent', () => {
   let authService: {
     getCurrentUser: ReturnType<typeof vi.fn>;
   };
+  let employeeService: {
+    findByIdOrNull: ReturnType<typeof vi.fn>;
+  };
 
   const makeComponent = () => {
-    const fixture = TestBed.createComponent(UserRolesComponent);
+    const fixture = TestBed.createComponent(UserManagementComponent);
     fixture.detectChanges();
     return fixture.componentInstance;
   };
@@ -58,11 +62,15 @@ describe('UserRolesComponent', () => {
     authService = {
       getCurrentUser: vi.fn().mockReturnValue(buildUser()),
     };
+    employeeService = {
+      findByIdOrNull: vi.fn().mockReturnValue(of({ id: 'u-target', name: 'Target', initials: 'TT' })),
+    };
 
     await TestBed.configureTestingModule({
-      imports: [UserRolesComponent],
+      imports: [UserManagementComponent],
       providers: [
         { provide: UserAdminService, useValue: adminService },
+        { provide: EmployeeService, useValue: employeeService },
         { provide: AuthService, useValue: authService },
         { provide: APP_CONFIG, useValue: { apiBaseUrl: '' } },
       ],

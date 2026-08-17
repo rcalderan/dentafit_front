@@ -178,16 +178,22 @@ export const routes: Routes = [
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'NFS-e Backup' }
             },
             {
-                path: 'admin/dashboard',
-                loadComponent: () => import('./domains/admin/features/dashboard/dashboard').then(m => m.Dashboard),
+                path: 'admin/user-management',
+                loadComponent: () => import('./domains/admin/features/user-management/user-management.component').then(m => m.UserManagementComponent),
                 canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Administração' }
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Gerenciamento de Usuários' }
             },
             {
-                path: 'admin/user-roles',
-                loadComponent: () => import('./domains/admin/features/user-roles/user-roles.component').then(m => m.UserRolesComponent),
+                path: 'admin/cnpj',
+                loadComponent: () => import('./domains/admin/features/cnpj/cnpj.component').then(m => m.CnpjComponent),
                 canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Papéis de Usuários' }
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'CNPJ' }
+            },
+            {
+                path: 'admin/system',
+                loadComponent: () => import('./domains/admin/features/system/system.component').then(m => m.SystemComponent),
+                canActivate: [roleGuard],
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Sistema' }
             }
         ]
     },

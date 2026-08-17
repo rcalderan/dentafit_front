@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ActivatedRoute } from '@angular/router';
-import { Dashboard } from './dashboard';
+import { CnpjComponent } from './cnpj.component';
 import { CertificateService } from '../../service/certificate.service';
 import { IssuerSetupService } from '../../../auth/services/issuer-setup.service';
 import { APP_CONFIG } from '../../../../shared/data/app-config.token';
@@ -36,7 +36,7 @@ const baseCertificate = {
   diasRestantes: 365,
 };
 
-describe('Dashboard', () => {
+describe('CnpjComponent', () => {
   let certificateService: {
     status: ReturnType<typeof vi.fn>;
     upload: ReturnType<typeof vi.fn>;
@@ -49,7 +49,7 @@ describe('Dashboard', () => {
   };
 
   const makeComponent = () => {
-    const fixture = TestBed.createComponent(Dashboard);
+    const fixture = TestBed.createComponent(CnpjComponent);
     fixture.detectChanges();
     return fixture.componentInstance;
   };
@@ -67,7 +67,7 @@ describe('Dashboard', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [Dashboard],
+      imports: [CnpjComponent],
       providers: [
         { provide: CertificateService, useValue: certificateService },
         { provide: IssuerSetupService, useValue: issuerSetupService },
@@ -80,6 +80,15 @@ describe('Dashboard', () => {
   it('cria o componente', () => {
     const component = makeComponent();
     expect(component).toBeTruthy();
+  });
+
+  it('renderiza os cards de emitente, certificado e filiais', () => {
+    const fixture = TestBed.createComponent(CnpjComponent);
+    fixture.detectChanges();
+    const titles = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('.section-title'),
+    ).map(t => t.textContent?.trim());
+    expect(titles).toEqual(['Dados da Empresa (Emitente)', 'Certificado Digital', 'Filiais']);
   });
 
   it('carrega status, emitente e filiais ao inicializar', () => {
@@ -214,7 +223,7 @@ describe('Dashboard', () => {
   });
 });
 
-function fillValidBranchForm(component: Dashboard): void {
+function fillValidBranchForm(component: CnpjComponent): void {
   component.branchCnpj = '08.299.621/0002-00';
   component.branchNomeFantasia = 'Filial Centro';
   component.branchIe = '123456';
