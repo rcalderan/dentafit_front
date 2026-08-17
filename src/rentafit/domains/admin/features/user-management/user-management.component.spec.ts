@@ -3,6 +3,7 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 import { UserManagementComponent } from './user-management.component';
 import { UserAdminService } from '../../service/user-admin.service';
+import { EmployeeService } from '../../service/employee.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 import { User, UserRole } from '../../../auth/data/user.model';
@@ -43,6 +44,9 @@ describe('UserManagementComponent', () => {
   let authService: {
     getCurrentUser: ReturnType<typeof vi.fn>;
   };
+  let employeeService: {
+    findByIdOrNull: ReturnType<typeof vi.fn>;
+  };
 
   const makeComponent = () => {
     const fixture = TestBed.createComponent(UserManagementComponent);
@@ -58,11 +62,15 @@ describe('UserManagementComponent', () => {
     authService = {
       getCurrentUser: vi.fn().mockReturnValue(buildUser()),
     };
+    employeeService = {
+      findByIdOrNull: vi.fn().mockReturnValue(of({ id: 'u-target', name: 'Target', initials: 'TT' })),
+    };
 
     await TestBed.configureTestingModule({
       imports: [UserManagementComponent],
       providers: [
         { provide: UserAdminService, useValue: adminService },
+        { provide: EmployeeService, useValue: employeeService },
         { provide: AuthService, useValue: authService },
         { provide: APP_CONFIG, useValue: { apiBaseUrl: '' } },
       ],
