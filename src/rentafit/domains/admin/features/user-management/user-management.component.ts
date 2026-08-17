@@ -10,13 +10,13 @@ const ROLE_ORDER: UserRole[] = [UserRole.CUSTOMER, UserRole.EMPLOYEE, UserRole.M
 const INITIALS_PATTERN = /^[A-Z]{2,10}$/;
 
 @Component({
-  selector: 'rentafit-user-roles',
+  selector: 'rentafit-user-management',
   standalone: true,
   imports: [FormsModule],
-  templateUrl: './user-roles.component.html',
-  styleUrl: './user-roles.component.css'
+  templateUrl: './user-management.component.html',
+  styleUrl: './user-management.component.css'
 })
-export class UserRolesComponent implements OnInit {
+export class UserManagementComponent implements OnInit {
   private readonly adminService = inject(UserAdminService);
   private readonly employeeService = inject(EmployeeService);
   private readonly authService = inject(AuthService);

@@ -99,6 +99,7 @@ describe('MainLayout', () => {
     expect(component['isRentalSubmenuOpen']()).toBe(false);
     expect(component['isSalesSubmenuOpen']()).toBe(false);
     expect(component['isReportsSubmenuOpen']()).toBe(false);
+    expect(component['isAdminSubmenuOpen']()).toBe(false);
   });
 
   it('closes mobile sidebar on NavigationEnd', () => {
@@ -120,5 +121,16 @@ describe('MainLayout', () => {
 
     (component as any).toggleProductSubmenu();
     expect(component['isProductSubmenuOpen']()).toBe(false);
+  });
+
+  it('toggles admin submenu on button click', () => {
+    fixture.detectChanges();
+    expect(component['isAdminSubmenuOpen']()).toBe(false);
+
+    (component as any).toggleAdminSubmenu();
+    expect(component['isAdminSubmenuOpen']()).toBe(true);
+
+    (component as any).toggleAdminSubmenu();
+    expect(component['isAdminSubmenuOpen']()).toBe(false);
   });
 });

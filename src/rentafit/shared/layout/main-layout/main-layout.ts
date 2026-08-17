@@ -26,6 +26,7 @@ export class MainLayout {
   protected readonly isRentalSubmenuOpen = signal(false);
   protected readonly isSalesSubmenuOpen = signal(false);
   protected readonly isReportsSubmenuOpen = signal(false);
+  protected readonly isAdminSubmenuOpen = signal(false);
   protected readonly showFab = signal(true);
   protected readonly pageTitle = signal('Dashboard');
 
@@ -73,6 +74,7 @@ export class MainLayout {
     this.isRentalSubmenuOpen.set(false);
     this.isSalesSubmenuOpen.set(false);
     this.isReportsSubmenuOpen.set(false);
+    this.isAdminSubmenuOpen.set(false);
   }
 
   protected toggleCustomerSubmenu(): void {
@@ -103,6 +105,12 @@ export class MainLayout {
     const nextState = !this.isReportsSubmenuOpen();
     this.closeAllSubmenus();
     this.isReportsSubmenuOpen.set(nextState);
+  }
+
+  protected toggleAdminSubmenu(): void {
+    const nextState = !this.isAdminSubmenuOpen();
+    this.closeAllSubmenus();
+    this.isAdminSubmenuOpen.set(nextState);
   }
 
   protected logout(): void {

@@ -1,19 +1,18 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { CertificateService } from '../../service/certificate.service';
 import { ICertificateDetails } from '../../data/certificate.model';
 import { IssuerSetupService } from '../../../auth/services/issuer-setup.service';
 import { IssuerBranchSetupRequest, IssuerInfo, IssuerSetupRequest } from '../../../auth/data/issuer.model';
 
 @Component({
-  selector: 'rentafit-dashboard',
+  selector: 'rentafit-cnpj',
   standalone: true,
-  imports: [FormsModule, RouterLink],
-  templateUrl: './dashboard.html',
-  styleUrl: './dashboard.css',
+  imports: [FormsModule],
+  templateUrl: './cnpj.component.html',
+  styleUrl: './cnpj.component.css',
 })
-export class Dashboard implements OnInit {
+export class CnpjComponent implements OnInit {
   private readonly certificateService = inject(CertificateService);
   private readonly issuerSetupService = inject(IssuerSetupService);
 

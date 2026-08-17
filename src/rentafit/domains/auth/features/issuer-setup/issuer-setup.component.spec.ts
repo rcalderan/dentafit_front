@@ -85,7 +85,7 @@ describe('IssuerSetupComponent', () => {
 
     expect(issuerSetupService.configureIssuer).toHaveBeenCalled();
     expect(authService.setupIssuerCnpj).toHaveBeenCalledWith('08299621000120');
-    expect(router.navigate).toHaveBeenCalledWith(['/finance/dashboard']);
+    expect(router.navigate).toHaveBeenCalledWith(['/home/dashboard']);
   });
 
   it('exibe erro quando configuração do emitente falha', () => {
