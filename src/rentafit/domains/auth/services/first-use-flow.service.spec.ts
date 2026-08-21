@@ -55,7 +55,7 @@ describe('FirstUseFlowService', () => {
       certificateConfigured: false,
     }));
     const route = await lastValueFrom(service.resolvePostLoginRoute(buildUser({ role: UserRole.ADMIN })));
-    expect(route).toBe('/finance/dashboard');
+    expect(route).toBe('/home/dashboard');
   });
 
   it('redireciona usuário não-admin para confirmação de CNPJ quando não vinculado', async () => {
@@ -65,7 +65,12 @@ describe('FirstUseFlowService', () => {
 
   it('redireciona usuário não-admin para home quando CNPJ já vinculado', async () => {
     const route = await lastValueFrom(service.resolvePostLoginRoute(buildUser({ role: UserRole.MANAGER, issuerCnpj: '08299621000120' })));
-    expect(route).toBe('/finance/dashboard');
+    expect(route).toBe('/home/dashboard');
+  });
+
+  it('redireciona CUSTOMER para home sem pedir confirmação de CNPJ', async () => {
+    const route = await lastValueFrom(service.resolvePostLoginRoute(buildUser({ role: UserRole.CUSTOMER })));
+    expect(route).toBe('/account/profile');
   });
 
   it('prioriza troca de senha sobre setup do emitente', async () => {

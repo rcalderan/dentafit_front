@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { IssuerSetupService } from '../../services/issuer-setup.service';
-import { IssuerSetupRequest } from '../../data/issuer.model';
+import { IssuerBranchSetupRequest, IssuerInfo, IssuerSetupRequest } from '../../data/issuer.model';
 import { resolveHomeRoute } from '../../utils/role-route.util';
 
 @Component({
@@ -37,6 +37,98 @@ export class IssuerSetupComponent {
 
   errorMessage = signal<string | null>(null);
   isLoading = signal(false);
+
+  /** --- Filiais --- */
+  showBranchForm = signal(false);
+  branches = signal<IssuerInfo[]>([]);
+  branchCnpj = '';
+  branchNomeFantasia = '';
+  branchIe = '';
+  branchIm = '';
+  branchFone = '';
+  branchLogradouro = '';
+  branchNumero = '';
+  branchBairro = '';
+  branchMunicipioCodigo = '';
+  branchMunicipioNome = '';
+  branchUf = '';
+  branchCep = '';
+
+  toggleBranchForm(): void {
+    this.showBranchForm.set(!this.showBranchForm());
+    if (this.showBranchForm()) {
+      this.loadBranches();
+    }
+  }
+
+  private loadBranches(): void {
+    this.issuerSetupService.listBranches().subscribe({
+      next: (issuers) => this.branches.set(issuers),
+      error: () => this.branches.set([]),
+    });
+  }
+
+  submitBranch(): void {
+    const validationError = this.validateBranch();
+    if (validationError) {
+      this.errorMessage.set(validationError);
+      return;
+    }
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    const request: IssuerBranchSetupRequest = {
+      cnpj: this.branchCnpj.replace(/\D/g, ''),
+      nomeFantasia: this.branchNomeFantasia.trim() || undefined,
+      ie: this.branchIe.trim() || undefined,
+      im: this.branchIm.trim() || undefined,
+      fone: this.branchFone.trim() || undefined,
+      logradouro: this.branchLogradouro.trim(),
+      numero: this.branchNumero.trim(),
+      bairro: this.branchBairro.trim(),
+      municipioCodigo: this.branchMunicipioCodigo.trim(),
+      municipioNome: this.branchMunicipioNome.trim(),
+      uf: this.branchUf.trim().toUpperCase(),
+      cep: this.branchCep.replace(/\D/g, ''),
+    };
+    this.issuerSetupService.configureBranch(request).subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.resetBranchForm();
+        this.loadBranches();
+      },
+      error: (err: Error) => this.handleError(err),
+    });
+  }
+
+  private resetBranchForm(): void {
+    this.branchCnpj = '';
+    this.branchNomeFantasia = '';
+    this.branchIe = '';
+    this.branchIm = '';
+    this.branchFone = '';
+    this.branchLogradouro = '';
+    this.branchNumero = '';
+    this.branchBairro = '';
+    this.branchMunicipioCodigo = '';
+    this.branchMunicipioNome = '';
+    this.branchUf = '';
+    this.branchCep = '';
+  }
+
+  private validateBranch(): string | null {
+    const cnpj = this.branchCnpj.replace(/\D/g, '');
+    if (cnpj.length !== 14) return 'CNPJ da filial deve conter 14 dígitos.';
+    if (cnpj.substring(8, 12) === '0001') return 'CNPJ da filial deve ter sufixo diferente de 0001 (matriz).';
+    if (!this.branchLogradouro.trim()) return 'Logradouro da filial é obrigatório.';
+    if (!this.branchNumero.trim()) return 'Número da filial é obrigatório.';
+    if (!this.branchBairro.trim()) return 'Bairro da filial é obrigatório.';
+    if (!this.branchMunicipioCodigo.trim()) return 'Código do município da filial é obrigatório.';
+    if (!this.branchMunicipioNome.trim()) return 'Nome do município da filial é obrigatório.';
+    if (!this.branchUf.trim() || this.branchUf.trim().length !== 2) return 'UF da filial deve conter 2 letras.';
+    const cep = this.branchCep.replace(/\D/g, '');
+    if (cep.length !== 8) return 'CEP da filial deve conter 8 dígitos.';
+    return null;
+  }
 
   submit(): void {
     const validationError = this.validate();

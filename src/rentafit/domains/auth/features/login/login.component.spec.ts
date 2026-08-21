@@ -84,13 +84,13 @@ describe('Login', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('redireciona para /finance/dashboard no ngOnInit quando ADMIN já autenticado', async () => {
+  it('redireciona para /home/dashboard no ngOnInit quando ADMIN já autenticado', async () => {
     const { fixture, router } = await setupTestBed({
       isAuthenticated: true,
       currentUser: buildUser({ role: UserRole.ADMIN }),
     });
     fixture.detectChanges();
-    expect(router.navigate).toHaveBeenCalledWith(['/finance/dashboard']);
+    expect(router.navigate).toHaveBeenCalledWith(['/home/dashboard']);
   });
 
   it('redireciona para /account/profile no ngOnInit quando CUSTOMER já autenticado', async () => {
@@ -111,13 +111,13 @@ describe('Login', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/rental/management']);
   });
 
-  it('redireciona para /finance/dashboard no ngOnInit quando MANAGER já autenticado', async () => {
+  it('redireciona para /home/dashboard no ngOnInit quando MANAGER já autenticado', async () => {
     const { fixture, router } = await setupTestBed({
       isAuthenticated: true,
       currentUser: buildUser({ role: UserRole.MANAGER }),
     });
     fixture.detectChanges();
-    expect(router.navigate).toHaveBeenCalledWith(['/finance/dashboard']);
+    expect(router.navigate).toHaveBeenCalledWith(['/home/dashboard']);
   });
 
   it('redireciona para returnUrl no ngOnInit quando autenticado', async () => {
@@ -164,7 +164,7 @@ describe('Login', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/auth/change-password']);
   });
 
-  it('redireciona para /finance/dashboard quando ADMIN faz login normal', async () => {
+  it('redireciona para /home/dashboard quando ADMIN faz login normal', async () => {
     const { fixture, component, authService, router } = await setupTestBed();
     authService.login.mockReturnValue(of(buildUser({ role: UserRole.ADMIN })));
     fixture.detectChanges();
@@ -173,7 +173,7 @@ describe('Login', () => {
     component.password = 'admin123';
     component.login();
 
-    expect(router.navigate).toHaveBeenCalledWith(['/finance/dashboard']);
+    expect(router.navigate).toHaveBeenCalledWith(['/home/dashboard']);
   });
 
   it('redireciona para /account/profile quando CUSTOMER faz login normal', async () => {

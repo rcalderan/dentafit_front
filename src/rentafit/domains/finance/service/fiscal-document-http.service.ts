@@ -123,18 +123,24 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
       );
   }
 
-  /** NF-e é síncrona: AUTHORIZED = EMITTED, REJECTED = DENIED. */
+  /** NF-e/NFC-e é síncrona: AUTHORIZED = EMITTED, REJECTED = DENIED. */
   private emitNfe(request: IEmitInvoiceRequest): Observable<IFiscalDocument> {
     const defaults = this.config.fiscalDefaults?.nfe;
     if (!defaults) {
       return throwError(() => this.criarErroAmigavel(0, 'Configuração fiscal de NF-e ausente em APP_CONFIG.'));
     }
-    if (!request.customer || !request.items || request.items.length === 0) {
-      return throwError(() => this.criarErroAmigavel(0, 'Dados do destinatário e itens são obrigatórios para emissão de NF-e.'));
+    if (!request.items || request.items.length === 0) {
+      return throwError(() => this.criarErroAmigavel(0, 'Itens são obrigatórios para emissão do documento fiscal.'));
     }
-    const body = {
+    const isNfce = request.documentModel === '65';
+    if (!isNfce && !request.customer) {
+      return throwError(() => this.criarErroAmigavel(0, 'Dados do destinatário são obrigatórios para NF-e (modelo 55).'));
+    }
+    const documentType: FiscalDocumentType = isNfce ? 'NFCE' : 'NFE';
+    const body: Record<string, unknown> = {
       customerId: request.customerId,
       natureOperation: request.natureOperation ?? 'Venda de mercadoria',
+      modelo: request.documentModel ?? '55',
       origin: request.origin,
       originId: request.originId,
       customer: request.customer,
@@ -144,11 +150,13 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
         cfop: item.cfop || request.cfop || defaults.cfop,
         unit: item.unit || defaults.unit,
       })),
+      payment: request.payment,
+      printReceipt: request.printReceipt ?? true,
     };
     return this.http
       .post<INfeEmitResponse>(this.url('/nfe-api/emit'), body)
       .pipe(
-        map((res) => this.toFiscalDocumentFromEmission('NFE', res, request)),
+        map((res) => this.toFiscalDocumentFromEmission(documentType, res, request)),
         catchError((err: HttpErrorResponse) => throwError(() => this.mapearErroHttp(err))),
       );
   }
@@ -361,11 +369,11 @@ export class FiscalDocumentHttpService extends FiscalDocumentService {
     response: INfeEmitResponse | INfseEmitResponse,
     request: IEmitInvoiceRequest,
   ): IFiscalDocument {
-    if (type === 'NFE') {
+    if (type === 'NFE' || type === 'NFCE') {
       const nfe = response as INfeEmitResponse;
       return {
         id: `NFE-${nfe.accessKey.slice(0, 12)}`,
-        type: 'NFE',
+        type,
         status: this.mapStatus(nfe.status),
         number: nfe.number,
         series: nfe.series,

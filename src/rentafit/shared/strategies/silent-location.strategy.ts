@@ -34,14 +34,18 @@ export class SilentLocationStrategy extends PathLocationStrategy {
     return '/';
   }
 
-  /** Não altera a URL do browser ao navegar — mantém '/' */
+  /** Não altera o path visível no browser ao navegar — mantém '/' */
   override pushState(state: any, title: string, url: string, queryParams: string): void {
-    super.replaceState(state, title, '/', '');
+    this.platformLoc.replaceState(state, title, this.rootUrl());
   }
 
-  /** Não altera a URL do browser ao substituir estado — mantém '/' */
+  /** Não altera o path visível no browser ao substituir estado — mantém '/' */
   override replaceState(state: any, title: string, url: string, queryParams: string): void {
-    super.replaceState(state, title, '/', '');
+    this.platformLoc.replaceState(state, title, this.rootUrl());
+  }
+
+  private rootUrl(): string {
+    return new URL('/', this.platformLoc.href).href;
   }
 
   private captureInitialUrl(): string {

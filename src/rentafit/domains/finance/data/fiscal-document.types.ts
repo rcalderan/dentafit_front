@@ -4,7 +4,7 @@
  * sales/rental para evitar divergência de definição.
  */
 
-export type FiscalDocumentType = 'NFE' | 'NFSE';
+export type FiscalDocumentType = 'NFE' | 'NFCE' | 'NFSE';
 
 export type FiscalOrigin = 'SALES' | 'RENTAL' | 'MANUAL';
 
@@ -114,6 +114,18 @@ export interface INfeItem {
   unitValue: number;
 }
 
+/** Forma de pagamento para NFC-e. */
+export interface INfePaymentInfo {
+  tPag: string;
+  vPag?: number;
+  indPag?: string;
+  tpIntegra?: string;
+  cnpjCredenciadora?: string;
+  tBand?: string;
+  cAut?: string;
+  vTroco?: number;
+}
+
 /** Requisição de emissão — espelha InvoiceEmissionRequestDTO/NfeEmissionRequest. */
 export interface IEmitInvoiceRequest {
   fiscalDocumentType: FiscalDocumentType;
@@ -124,16 +136,21 @@ export interface IEmitInvoiceRequest {
   customerName?: string;
   customerDocument?: string;
   value: number;
-  // NF-e (modelo 55)
+  // NF-e (modelo 55) ou NFC-e (modelo 65)
+  documentModel?: '55' | '65';
   natureOperation?: string;
   purpose?: InvoicePurposeApi;
   cfop?: string;
   customer?: INfeCustomerInfo;
   items?: INfeItem[];
+  payment?: INfePaymentInfo;
+  printReceipt?: boolean;
   // NFS-e (serviço)
   nbsCode?: string;
   serviceDescription?: string;
   cityCode?: string;
+  // Emitente (matriz/filial) — se omitido, usa a matriz ativa
+  issuerCnpj?: string;
 }
 
 export interface ICancelInvoiceRequest {

@@ -85,6 +85,19 @@
   background-color: var(--card-bg);
 }
 
+.field-info {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-muted, #666);
+  line-height: 1.4;
+}
+
+.field-info a {
+  color: var(--primary-color, #1976d2);
+  text-decoration: underline;
+}
+
 .error-message {
   background-color: #ff4444;
   color: white;

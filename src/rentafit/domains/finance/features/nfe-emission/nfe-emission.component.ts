@@ -10,10 +10,13 @@ import {
   IEmitInvoiceRequest,
   INfeCustomerInfo,
   INfeItem,
+  INfePaymentInfo,
   InvoicePurposeApi,
 } from '../../data/fiscal-document.types';
 import { CustomerService } from '../../../customer/service/customer.service';
 import { ICustomer } from '../../../customer/data/Customer.interface';
+import { IssuerSetupService } from '../../../auth/services/issuer-setup.service';
+import { IssuerInfo } from '../../../auth/data/issuer.model';
 
 /**
  * Emissão de NF-e (modelo 55) para pedidos de venda. Estende a base fiscal
@@ -28,6 +31,7 @@ import { ICustomer } from '../../../customer/data/Customer.interface';
 })
 export class NfeEmissionComponent extends FiscalEmissionBase implements OnInit {
   private readonly customerService = inject(CustomerService);
+  private readonly issuerService = inject(IssuerSetupService);
 
   readonly fiscalType: FiscalDocumentType = 'NFE';
 
@@ -35,6 +39,13 @@ export class NfeEmissionComponent extends FiscalEmissionBase implements OnInit {
   protected readonly purpose = signal<InvoicePurposeApi>('NORMAL');
   protected readonly customer = signal<ICustomer | null>(null);
   protected readonly isLoadingCustomer = signal(false);
+  protected readonly printReceipt = signal(true);
+  protected readonly payment = signal<INfePaymentInfo>({ tPag: '01' });
+
+  /** Emitentes disponíveis (matriz + filiais) para seleção na emissão. */
+  protected readonly issuers = signal<IssuerInfo[]>([]);
+  protected readonly selectedIssuerCnpj = signal<string | null>(null);
+  protected readonly hasMultipleIssuers = computed(() => this.issuers().length > 1);
 
   /** Opções de finalidade da operação (valor + rótulo) exibidas no formulário. */
   protected readonly purposeOptions: ReadonlyArray<{ value: InvoicePurposeApi; label: string }> = [
@@ -66,6 +77,18 @@ export class NfeEmissionComponent extends FiscalEmissionBase implements OnInit {
 
   override ngOnInit(): void {
     super.ngOnInit();
+    this.loadIssuers();
+  }
+
+  private loadIssuers(): void {
+    this.issuerService.listBranches().subscribe({
+      next: (issuers) => {
+        this.issuers.set(issuers);
+        const matriz = issuers.find((i) => i.matriz);
+        this.selectedIssuerCnpj.set(matriz?.cnpj ?? issuers[0]?.cnpj ?? null);
+      },
+      error: () => this.issuers.set([]),
+    });
   }
 
   private loadCustomer(customerId: string): void {
@@ -83,6 +106,7 @@ export class NfeEmissionComponent extends FiscalEmissionBase implements OnInit {
     const ctx = this.context();
     return {
       fiscalDocumentType: 'NFE',
+      documentModel: '65',
       origin: 'SALES',
       originId: ctx.originId,
       customerId: ctx.customerId,
@@ -94,16 +118,19 @@ export class NfeEmissionComponent extends FiscalEmissionBase implements OnInit {
       purpose: this.purpose(),
       customer: this.buildCustomerInfo(this.customer()),
       items: this.buildItems(ctx.items, ctx.totalValue),
+      payment: this.payment(),
+      printReceipt: this.printReceipt(),
+      issuerCnpj: this.selectedIssuerCnpj() ?? undefined,
     };
   }
 
-  private buildCustomerInfo(customer: ICustomer | null): INfeCustomerInfo {
+  private buildCustomerInfo(customer: ICustomer | null): INfeCustomerInfo | undefined {
     if (!customer) {
-      throw new Error('Cliente não encontrado. É necessário um cliente cadastrado para emitir NF-e.');
+      throw new Error('Cliente não encontrado');
     }
     const address = customer.address;
     if (!address) {
-      throw new Error('Endereço do cliente não disponível para emissão de NF-e.');
+      return undefined;
     }
     return {
       name: customer.name,

@@ -1,6 +1,6 @@
 ﻿import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { APP_CONFIG } from '../../../shared/data/app-config.token';
 import { ErrorMessages, HTTP_ERROR_MAP } from '../../../shared/data/error-messages';
@@ -24,6 +24,18 @@ export class EmployeeService {
   getById(id: string): Observable<IEmployee> {
     return this.http.get<IEmployee>(`${this.apiUrl}/${id}`).pipe(
       catchError(this.handleError.bind(this)),
+    );
+  }
+
+  /** Returns the Employee for the given Person/User id, or null when 404 (no Employee row yet). */
+  findByIdOrNull(id: string): Observable<IEmployee | null> {
+    return this.http.get<IEmployee>(`${this.apiUrl}/${id}`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 404) {
+          return of(null);
+        }
+        return this.handleError(error);
+      }),
     );
   }
 

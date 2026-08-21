@@ -1,6 +1,6 @@
 <section class="fiscal-card">
   <header class="fiscal-header">
-    <h3>NF-e (Nota Fiscal Eletrônica)</h3>
+    <h3>NFC-e (Nota Fiscal de Consumidor Eletrônica)</h3>
     <div class="header-pills">
       <button
         type="button"
@@ -29,7 +29,7 @@
   @if (status() === 'NONE') {
     @if (!hasCustomerDocument()) {
       <div class="warn-inline">
-        ⚠️ Cliente sem CPF/CNPJ. Venda balcão usará CPF/CNPJ genérico de consumidor final.
+        ℹ️ Cliente sem CPF/CNPJ. NFC-e será emitida para consumidor não identificado.
       </div>
     }
 
@@ -42,6 +42,23 @@
         (ngModelChange)="natureOperation.set($event)"
       />
     </div>
+
+    @if (hasMultipleIssuers()) {
+      <div class="field">
+        <label>Emitente (CNPJ)</label>
+        <select
+          class="input"
+          [ngModel]="selectedIssuerCnpj()"
+          (ngModelChange)="selectedIssuerCnpj.set($event)"
+        >
+          @for (iss of issuers(); track iss.cnpj) {
+            <option [value]="iss.cnpj">
+              {{ iss.matriz ? 'Matriz' : 'Filial' }} — {{ iss.cnpj }} ({{ iss.nomeFantasia || iss.razaoSocial }})
+            </option>
+          }
+        </select>
+      </div>
+    }
 
     <div class="field">
       <label>Finalidade</label>
@@ -63,7 +80,7 @@
 
     <div class="actions">
       <button class="btn btn-primary" [disabled]="!canEmit() || isProcessing()" (click)="emit()">
-        {{ isProcessing() ? 'Processando...' : 'Emitir NF-e' }}
+        {{ isProcessing() ? 'Processando...' : 'Emitir NFC-e' }}
       </button>
     </div>
 

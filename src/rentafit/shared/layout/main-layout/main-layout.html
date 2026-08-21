@@ -103,11 +103,33 @@
             }
 
             @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER])) {
-            <a routerLink="/admin/dashboard" routerLinkActive="active" class="nav-item"
-               aria-label="Admin" (click)="closeAllSubmenus()">
-                <i class="icon" aria-hidden="true">⚙️</i>
-                <span class="nav-label">Admin</span>
-            </a>
+            <div class="nav-item-container" [class.open]="isAdminSubmenuOpen()">
+                <button class="nav-item" (click)="toggleAdminSubmenu()"
+                        aria-label="Admin" [attr.aria-expanded]="isAdminSubmenuOpen()">
+                    <i class="icon" aria-hidden="true">⚙️</i>
+                    <span class="nav-label">Admin</span>
+                </button>
+                @if (isAdminSubmenuOpen()) {
+                <div class="submenu" role="menu">
+                    <a routerLink="/finance/dashboard" routerLinkActive="active" class="submenu-item"
+                       role="menuitem" (click)="closeAllSubmenus()">
+                        <span>Financeiro</span>
+                    </a>
+                    <a routerLink="/admin/user-management" routerLinkActive="active" class="submenu-item"
+                       role="menuitem" (click)="closeAllSubmenus()">
+                        <span>Gerenciamento de Usuários</span>
+                    </a>
+                    <a routerLink="/admin/cnpj" routerLinkActive="active" class="submenu-item"
+                       role="menuitem" (click)="closeAllSubmenus()">
+                        <span>CNPJ</span>
+                    </a>
+                    <a routerLink="/admin/system" routerLinkActive="active" class="submenu-item"
+                       role="menuitem" (click)="closeAllSubmenus()">
+                        <span>Sistema</span>
+                    </a>
+                </div>
+                }
+            </div>
             }
 
             <button class="nav-item logout-btn" (click)="logout()" aria-label="Sair">
@@ -117,23 +139,6 @@
         </nav>
     </aside>
 
-    <!-- @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE]) && showFab()) {
-    <div class="floating-action">
-        <button class="btn-new-contract" routerLink="/rental/new">
-            <span class="plus-icon">+</span>
-            <span class="btn-text">Novo Contrato</span>
-        </button>
-        <button class="btn-new-contract" routerLink="/sales/new">
-            <span class="plus-icon">🛒</span>
-            <span class="btn-text">Nova Venda</span>
-        </button>
-         <button class="btn-new-contract legacy" routerLink="/rental/legacy">
-            <span class="plus-icon">🏛️</span>
-            <span class="btn-text">Novo Contrato (Legacy)</span>
-        </button>
-    </div>
-    }  -->
-
     <main class="main-content">
         <header class="top-bar">
             <div class="left-section">
@@ -142,7 +147,6 @@
                     <i aria-hidden="true">☰</i>
                 </button>
                 }
-                <h1 class="page-title">{{ pageTitle() }}</h1>
             </div>
         </header>
         <div class="content-area">
