@@ -10,6 +10,7 @@ import {
   IEmitInvoiceRequest,
   INfeCustomerInfo,
   INfeItem,
+  INfePaymentInfo,
   InvoicePurposeApi,
 } from '../../data/fiscal-document.types';
 import { CustomerService } from '../../../customer/service/customer.service';
@@ -38,6 +39,8 @@ export class NfeEmissionComponent extends FiscalEmissionBase implements OnInit {
   protected readonly purpose = signal<InvoicePurposeApi>('NORMAL');
   protected readonly customer = signal<ICustomer | null>(null);
   protected readonly isLoadingCustomer = signal(false);
+  protected readonly printReceipt = signal(true);
+  protected readonly payment = signal<INfePaymentInfo>({ tPag: '01' });
 
   /** Emitentes disponíveis (matriz + filiais) para seleção na emissão. */
   protected readonly issuers = signal<IssuerInfo[]>([]);
@@ -103,6 +106,7 @@ export class NfeEmissionComponent extends FiscalEmissionBase implements OnInit {
     const ctx = this.context();
     return {
       fiscalDocumentType: 'NFE',
+      documentModel: '65',
       origin: 'SALES',
       originId: ctx.originId,
       customerId: ctx.customerId,
@@ -114,17 +118,19 @@ export class NfeEmissionComponent extends FiscalEmissionBase implements OnInit {
       purpose: this.purpose(),
       customer: this.buildCustomerInfo(this.customer()),
       items: this.buildItems(ctx.items, ctx.totalValue),
+      payment: this.payment(),
+      printReceipt: this.printReceipt(),
       issuerCnpj: this.selectedIssuerCnpj() ?? undefined,
     };
   }
 
-  private buildCustomerInfo(customer: ICustomer | null): INfeCustomerInfo {
+  private buildCustomerInfo(customer: ICustomer | null): INfeCustomerInfo | undefined {
     if (!customer) {
-      throw new Error('Cliente não encontrado. É necessário um cliente cadastrado para emitir NF-e.');
+      throw new Error('Cliente não encontrado');
     }
     const address = customer.address;
     if (!address) {
-      throw new Error('Endereço do cliente não disponível para emissão de NF-e.');
+      return undefined;
     }
     return {
       name: customer.name,
