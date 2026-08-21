@@ -126,7 +126,7 @@ export class NfeEmissionComponent extends FiscalEmissionBase implements OnInit {
 
   private buildCustomerInfo(customer: ICustomer | null): INfeCustomerInfo | undefined {
     if (!customer) {
-      return undefined;
+      throw new Error('Cliente não encontrado');
     }
     const address = customer.address;
     if (!address) {
