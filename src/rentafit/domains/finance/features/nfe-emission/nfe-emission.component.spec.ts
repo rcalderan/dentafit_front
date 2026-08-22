@@ -202,7 +202,7 @@ describe('NfeEmissionComponent', () => {
     expect((fixture.componentInstance as any).status()).toBe('EMITTED');
   });
 
-  it('exibe erro na UI quando os dados do cliente estão incompletos', () => {
+  it('permite emissão de NFC-e sem dados do cliente', () => {
     TestBed.overrideProvider(CustomerService, {
       useValue: { getCustomerById: vi.fn().mockReturnValue(of(null)) },
     });
@@ -210,7 +210,9 @@ describe('NfeEmissionComponent', () => {
     fixture.detectChanges();
     const comp = fixture.componentInstance as any;
     comp.emit();
-    expect(comp.errorMsg()).toContain('Cliente não encontrado');
+    expect(fiscalService.emit).toHaveBeenCalledWith(
+      expect.objectContaining({ customer: undefined }),
+    );
   });
 
   it('regressão: initialDocument=null (backend PENDING_EMISSION mapeado) mostra botão Emitir', () => {
