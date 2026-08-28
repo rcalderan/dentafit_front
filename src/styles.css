@@ -28,6 +28,31 @@
     --ui-font: 'Outfit', 'Inter', sans-serif;
 }
 
+[data-ui='atelier'] {
+    --primary-color: #702f52;
+    --primary-hover: #57213e;
+    --bg-color: #f7f4f1;
+    --card-bg: #fffefd;
+    --text-color: #241f23;
+    --text-muted: #71666d;
+    --input-bg: #fbf9f7;
+    --danger-color: #a72f3f;
+    --success-color: #26715c;
+    --warning-color: #8a5a20;
+    --info-bg: #f4eaf0;
+    --selected-bg: #f7edf2;
+    --control-hover-bg: #f1e8ec;
+    --control-border-color: #ded4d9;
+    --focus-ring: #702f52;
+    --border-radius: 18px;
+    --input-radius: 10px;
+    --surface-border: 1px solid rgba(71, 47, 60, 0.1);
+    --section-padding: 1.5rem 1.75rem;
+    --shadow-sm: 0 2px 8px rgba(54, 35, 46, 0.06);
+    --shadow-md: 0 18px 45px rgba(54, 35, 46, 0.1);
+    --ui-font: 'Inter', 'Outfit', sans-serif;
+}
+
 [data-ui='legacy'] {
     --primary-color: #3f51b5;
     --primary-hover: #303f9f;
@@ -246,6 +271,220 @@ button {
 [data-ui='legacy'] rentafit-new-rental .btn-icon-labeled {
     background: var(--primary-color);
     color: #ffffff;
+}
+
+[data-ui='atelier'] body {
+    background:
+        radial-gradient(circle at 8% 2%, rgba(213, 163, 111, 0.12), transparent 28rem),
+        var(--bg-color);
+}
+
+[data-ui='atelier'] dialog,
+[data-ui='atelier'] [class*='modal-content'],
+[data-ui='atelier'] [class*='card'] {
+    background-color: var(--card-bg);
+    border: var(--surface-border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+}
+
+[data-ui='atelier'] [class*='section-header'] {
+    border-bottom: 1px solid var(--control-border-color);
+    padding-bottom: 0.8rem;
+}
+
+[data-ui='atelier'] [class*='section-title'] {
+    color: var(--text-color);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+[data-ui='atelier'] input:not([type='checkbox']):not([type='radio']),
+[data-ui='atelier'] select,
+[data-ui='atelier'] textarea {
+    background: var(--input-bg) !important;
+    border: 1px solid var(--control-border-color) !important;
+    border-radius: var(--input-radius) !important;
+    color: var(--text-color) !important;
+    box-shadow: inset 0 1px 2px rgba(36, 31, 35, 0.03);
+}
+
+[data-ui='atelier'] input:focus,
+[data-ui='atelier'] select:focus,
+[data-ui='atelier'] textarea:focus {
+    outline: none !important;
+    border-color: var(--primary-color) !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(112, 47, 82, 0.12) !important;
+}
+
+[data-ui='atelier'] button:focus-visible,
+[data-ui='atelier'] a:focus-visible {
+    outline: 3px solid rgba(213, 163, 111, 0.65);
+    outline-offset: 3px;
+}
+
+[data-ui='atelier'] .btn-primary,
+[data-ui='atelier'] .btn-save,
+[data-ui='atelier'] button[class*='primary'] {
+    background: linear-gradient(135deg, var(--primary-color), #8c456a);
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(112, 47, 82, 0.2);
+}
+
+[data-ui='atelier'] .btn-primary:hover:not(:disabled),
+[data-ui='atelier'] .btn-save:hover:not(:disabled),
+[data-ui='atelier'] button[class*='primary']:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+    transform: translateY(-1px);
+}
+
+[data-ui='atelier'] table {
+    overflow: hidden;
+    background: var(--card-bg);
+    border: var(--surface-border);
+    border-radius: 12px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+[data-ui='atelier'] th {
+    background: #f5eff2;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--control-border-color);
+}
+
+[data-ui='atelier'] td {
+    border-bottom: 1px solid #eee7ea;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) {
+    position: relative;
+    flex-direction: column;
+    padding: 82px 22px 28px;
+    background: transparent;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .sidebar {
+    position: fixed;
+    inset: 16px 22px auto;
+    width: auto;
+    height: 58px;
+    max-height: none;
+    margin: 0;
+    padding: 0 0.75rem;
+    border: 1px solid rgba(112, 47, 82, 0.12);
+    border-radius: 16px;
+    background: rgba(255, 254, 253, 0.94);
+    box-shadow: 0 14px 36px rgba(54, 35, 46, 0.12);
+    backdrop-filter: blur(18px);
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-menu {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.25rem;
+    height: 100%;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-item-container {
+    display: block;
+    width: auto;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-item {
+    width: auto;
+    min-width: 72px;
+    height: 40px;
+    padding: 0 0.8rem;
+    flex-direction: row;
+    gap: 0.45rem;
+    border-radius: 10px;
+    color: #55474f;
+    font-size: 0.9rem;
+    transform: none;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-label {
+    color: inherit;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .icon {
+    display: none;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-item:hover,
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-item.active,
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-item-container.open .nav-item {
+    background: #f4e7ed;
+    color: var(--primary-color);
+    box-shadow: inset 0 0 0 1px rgba(112, 47, 82, 0.12);
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .submenu {
+    top: 48px;
+    left: 0;
+    min-width: 220px;
+    gap: 0.2rem;
+    padding: 0.5rem;
+    border: var(--surface-border);
+    border-radius: 14px;
+    background: rgba(255, 254, 253, 0.98);
+    box-shadow: 0 20px 45px rgba(36, 31, 35, 0.2);
+    animation: fadeIn 120ms ease-out;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .submenu-item {
+    justify-content: flex-start;
+    padding: 0.65rem 0.75rem;
+    border-radius: 9px;
+    color: var(--text-color);
+    font-size: 0.8rem;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .submenu-item:hover,
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .submenu-item.active {
+    background: var(--selected-bg);
+    color: var(--primary-color);
+    box-shadow: none;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .main-content {
+    width: 100%;
+    max-width: 1520px;
+    margin: 0 auto;
+    border: var(--surface-border);
+    border-radius: 22px;
+    background: rgba(255, 254, 253, 0.58);
+    box-shadow: 0 24px 70px rgba(54, 35, 46, 0.07);
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .top-bar {
+    min-height: 14px;
+    padding: 0;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .content-area {
+    padding: 1.25rem 1.5rem 2rem;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .legacy-status {
+    position: fixed;
+    inset: auto 30px 6px;
+    z-index: 30;
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-muted);
+    font-size: 0.68rem;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .legacy-status span:first-child {
+    color: var(--primary-color);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 @media (prefers-reduced-motion: reduce) {

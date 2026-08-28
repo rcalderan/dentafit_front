@@ -9,7 +9,7 @@ import { UiVariantService } from '../../services/ui-variant.service';
 
 class MockUiVariantService {
   readonly isMobile = signal(false);
-  readonly activeVariant = signal<'simplified' | 'legacy'>('simplified');
+  readonly activeVariant = signal<'simplified' | 'legacy' | 'atelier'>('simplified');
 }
 
 class MockAuthService {

@@ -42,7 +42,7 @@ p {
 
 .variant-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -133,10 +133,51 @@ p {
   padding: 8px;
 }
 
+.variant-preview.atelier {
+  flex-direction: column;
+  padding-top: 18px;
+  border: 1px solid #d7c7cf;
+  border-radius: 10px;
+  background: #f7f4f1;
+}
+
+.variant-preview.atelier .preview-menu {
+  position: absolute;
+  inset: 4px 5px auto;
+  height: 13px;
+  border-radius: 5px;
+  background: #2b2028;
+  box-shadow: 0 4px 8px #2b202844;
+}
+
+.variant-preview.atelier .preview-content {
+  gap: 5px;
+  padding: 10px 7px 6px;
+}
+
+.variant-preview.atelier .preview-content span {
+  height: 30px;
+  border: 0;
+  border-radius: 5px;
+  box-shadow: 0 3px 7px #36232e18;
+}
+
+.variant-preview.atelier .preview-content span:first-child {
+  border-top: 3px solid #d5a36f;
+}
+
 .preview-status {
   height: 9px;
   background: #f0f0f0;
   border-top: 1px solid #808080;
+}
+
+.variant-preview.atelier .preview-status {
+  height: 5px;
+  margin: 0 7px 5px;
+  border: 0;
+  border-radius: 3px;
+  background: #702f52;
 }
 
 .variant-copy {
@@ -172,7 +213,7 @@ p {
   font-size: 0.78rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1180px) {
   .variant-grid {
     grid-template-columns: 1fr;
   }

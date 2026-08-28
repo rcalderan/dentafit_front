@@ -1,4 +1,4 @@
-export type UiVariant = 'simplified' | 'legacy';
+export type UiVariant = 'simplified' | 'legacy' | 'atelier';
 
 export interface UiVariantOption {
   readonly id: UiVariant;
@@ -19,8 +19,13 @@ export const UI_VARIANT_OPTIONS: readonly UiVariantOption[] = [
     name: 'Legacy',
     description: 'Interface compacta inspirada no sistema clássico para desktop.',
   },
+  {
+    id: 'atelier',
+    name: 'Atelier',
+    description: 'Experiência premium, elegante e focada para o trabalho diário.',
+  },
 ];
 
 export function isUiVariant(value: unknown): value is UiVariant {
-  return value === 'simplified' || value === 'legacy';
+  return value === 'simplified' || value === 'legacy' || value === 'atelier';
 }

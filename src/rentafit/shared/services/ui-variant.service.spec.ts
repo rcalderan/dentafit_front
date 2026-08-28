@@ -13,13 +13,13 @@ class FakeBreakpointObserver {
 }
 
 class FakeUiPreferenceStorage {
-  stored: 'simplified' | 'legacy' = 'simplified';
+  stored: 'simplified' | 'legacy' | 'atelier' = 'simplified';
 
   read() {
     return this.stored;
   }
 
-  write(variant: 'simplified' | 'legacy') {
+  write(variant: 'simplified' | 'legacy' | 'atelier') {
     this.stored = variant;
   }
 }
@@ -54,6 +54,15 @@ describe('UiVariantService', () => {
     expect(service.preferredVariant()).toBe('legacy');
     expect(service.activeVariant()).toBe('legacy');
     expect(document.documentElement.dataset['ui']).toBe('legacy');
+  });
+
+  it('persiste e aplica Atelier imediatamente no desktop', () => {
+    service.selectVariant('atelier');
+
+    expect(storage.stored).toBe('atelier');
+    expect(service.preferredVariant()).toBe('atelier');
+    expect(service.activeVariant()).toBe('atelier');
+    expect(document.documentElement.dataset['ui']).toBe('atelier');
   });
 
   it('força Simplificada no mobile sem apagar a preferência Legacy', () => {

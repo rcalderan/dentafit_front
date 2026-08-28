@@ -138,8 +138,19 @@
 }
 
 .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   margin-right: 0;
+  border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--primary-color);
+  font-size: 0.68rem;
   font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .nav-label {
@@ -433,7 +444,7 @@
 }
 
 :host-context([data-ui='legacy']) .layout-container:not(.mobile-view) .icon {
-  font-size: 0.85rem;
+  display: none;
 }
 
 :host-context([data-ui='legacy']) .layout-container:not(.mobile-view) .submenu {

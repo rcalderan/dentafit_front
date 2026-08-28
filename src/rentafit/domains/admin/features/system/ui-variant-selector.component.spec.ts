@@ -34,13 +34,17 @@ describe('UiVariantSelectorComponent', () => {
   });
 
   it('oferece as interfaces Simplificada e Legacy', () => {
-    expect(UI_VARIANT_OPTIONS.map(variant => variant.name)).toEqual(['Simplificada', 'Legacy']);
+    expect(UI_VARIANT_OPTIONS.map(variant => variant.name)).toEqual([
+      'Simplificada',
+      'Legacy',
+      'Atelier',
+    ]);
   });
 
-  it('seleciona Legacy pelo serviço global', () => {
-    component.selectVariant('legacy');
+  it('seleciona Atelier pelo serviço global', () => {
+    component.selectVariant('atelier');
 
-    expect(service.selectVariant).toHaveBeenCalledWith('legacy');
-    expect(service.preferredVariant()).toBe('legacy');
+    expect(service.selectVariant).toHaveBeenCalledWith('atelier');
+    expect(service.preferredVariant()).toBe('atelier');
   });
 });
