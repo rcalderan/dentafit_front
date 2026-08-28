@@ -15,6 +15,13 @@
   line-height: 1.45;
 }
 
+:host-context([data-ui='legacy']) {
+  --brand: var(--primary-color);
+  --brand-soft: var(--info-bg);
+  --chip: var(--selected-bg);
+  --chip-ink: var(--primary-color);
+}
+
 .report-page {
   max-width: 980px;
   margin: 0 auto;

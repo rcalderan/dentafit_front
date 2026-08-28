@@ -384,3 +384,63 @@ h1 {
 .branch-actions .btn {
     flex: 1;
 }
+
+:host-context([data-ui='legacy']) .admin-container {
+    gap: 1.5rem;
+    padding: 2rem;
+    background: var(--bg-color);
+}
+
+:host-context([data-ui='legacy']) h1 {
+    align-self: center;
+    width: 100%;
+    max-width: 1100px;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+:host-context([data-ui='legacy']) .admin-grid {
+    gap: 1.25rem;
+}
+
+:host-context([data-ui='legacy']) .section-card {
+    padding: 1.5rem 2rem;
+    border: var(--surface-border);
+    border-radius: 10px;
+    background: var(--card-bg);
+    box-shadow: var(--shadow-md);
+}
+
+:host-context([data-ui='legacy']) .section-title {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.75rem;
+}
+
+:host-context([data-ui='legacy']) .firm-form,
+:host-context([data-ui='legacy']) .branch-form {
+    gap: 1rem;
+}
+
+:host-context([data-ui='legacy']) .firm-form input,
+:host-context([data-ui='legacy']) .firm-form select,
+:host-context([data-ui='legacy']) .branch-form input,
+:host-context([data-ui='legacy']) .cert-input {
+    min-height: 40px;
+    padding: 0.7rem 1rem;
+    font-size: 0.9rem;
+}
+
+:host-context([data-ui='legacy']) .drop-zone,
+:host-context([data-ui='legacy']) .branch-list li {
+    border: 1px solid #e2e8f0;
+    background: var(--input-bg);
+}
+
+:host-context([data-ui='legacy']) .btn-update,
+:host-context([data-ui='legacy']) .btn-secondary {
+    min-height: 40px;
+    border: 1px solid var(--control-border-color);
+    background: #ffffff;
+    color: var(--text-color);
+}

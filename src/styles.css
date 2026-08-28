@@ -29,27 +29,27 @@
 }
 
 [data-ui='legacy'] {
-    --primary-color: #245d91;
-    --primary-hover: #17466f;
-    --bg-color: #99b4d1;
-    --card-bg: #d4d0c8;
-    --text-color: #111111;
-    --text-muted: #3f3f3f;
-    --input-bg: #ffffff;
-    --danger-color: #b00000;
-    --success-color: #006b2e;
-    --warning-color: #7a4900;
-    --info-bg: #e7edf4;
-    --selected-bg: #c6d9ec;
-    --control-hover-bg: #e8e6e1;
-    --control-border-color: #7f7f7f;
-    --focus-ring: #003c74;
-    --border-radius: 2px;
-    --input-radius: 2px;
-    --surface-border: 1px solid #7f7f7f;
-    --section-padding: 0.75rem;
-    --shadow-sm: 1px 1px 0 #ffffff;
-    --shadow-md: 1px 1px 0 #ffffff, -1px -1px 0 #808080;
+    --primary-color: #3f51b5;
+    --primary-hover: #303f9f;
+    --bg-color: #f1f5f9;
+    --card-bg: #ffffff;
+    --text-color: #0f172a;
+    --text-muted: #64748b;
+    --input-bg: #f9fafb;
+    --danger-color: #b91c1c;
+    --success-color: #166534;
+    --warning-color: #92400e;
+    --info-bg: #eef2ff;
+    --selected-bg: #eef2ff;
+    --control-hover-bg: #f0f0f0;
+    --control-border-color: #d1d5db;
+    --focus-ring: #3f51b5;
+    --border-radius: 10px;
+    --input-radius: 6px;
+    --surface-border: 1px solid #e0e0e0;
+    --section-padding: 1.25rem 1.5rem;
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
     --ui-font: Tahoma, 'Segoe UI', sans-serif;
 }
 
@@ -122,7 +122,130 @@ button {
 [data-ui='legacy'] dialog,
 [data-ui='legacy'] [class*='modal-content'],
 [data-ui='legacy'] [class*='card'] {
+    background-color: var(--card-bg);
+    border: var(--surface-border);
     border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+}
+
+[data-ui='legacy'] [class*='section-header'] {
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.75rem;
+}
+
+[data-ui='legacy'] [class*='section-title'] {
+    color: var(--text-color);
+    font-weight: 700;
+}
+
+[data-ui='legacy'] label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+[data-ui='legacy'] input:not([type='checkbox']):not([type='radio']),
+[data-ui='legacy'] select,
+[data-ui='legacy'] textarea {
+    background-color: var(--input-bg) !important;
+    border: 1px solid var(--control-border-color) !important;
+    border-radius: var(--input-radius) !important;
+    color: var(--text-color) !important;
+    box-shadow: none;
+}
+
+[data-ui='legacy'] input:focus,
+[data-ui='legacy'] select:focus,
+[data-ui='legacy'] textarea:focus {
+    outline: none !important;
+    border-color: var(--primary-color) !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.12) !important;
+}
+
+[data-ui='legacy'] button:focus-visible,
+[data-ui='legacy'] a:focus-visible {
+    outline: 3px solid rgba(63, 81, 181, 0.35);
+    outline-offset: 2px;
+}
+
+[data-ui='legacy'] .btn-primary,
+[data-ui='legacy'] .btn-save,
+[data-ui='legacy'] button[class*='primary'] {
+    background-color: var(--primary-color);
+    color: #ffffff;
+}
+
+[data-ui='legacy'] .btn-primary:hover:not(:disabled),
+[data-ui='legacy'] .btn-save:hover:not(:disabled),
+[data-ui='legacy'] button[class*='primary']:hover:not(:disabled) {
+    background-color: var(--primary-hover);
+}
+
+[data-ui='legacy'] .field-error,
+[data-ui='legacy'] .error-text,
+[data-ui='legacy'] .text-danger {
+    color: var(--danger-color);
+}
+
+[data-ui='legacy'] rentafit-new-rental .new-rental-container {
+    gap: 1.25rem;
+    padding: 2rem;
+    background: var(--bg-color);
+}
+
+[data-ui='legacy'] rentafit-new-rental h1 {
+    align-self: center;
+    margin: 0 0 0.5rem;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+[data-ui='legacy'] rentafit-new-rental .page-grid {
+    gap: 1.25rem;
+}
+
+[data-ui='legacy'] rentafit-new-rental .section-card,
+[data-ui='legacy'] rentafit-new-rental .contract-load-row,
+[data-ui='legacy'] rentafit-new-rental .stepper-header {
+    border: var(--surface-border);
+    border-radius: 10px;
+    background: var(--card-bg);
+    box-shadow: var(--shadow-md);
+}
+
+[data-ui='legacy'] rentafit-new-rental .section-card {
+    padding: 1.5rem;
+}
+
+[data-ui='legacy'] rentafit-new-rental .section-header {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.75rem;
+}
+
+[data-ui='legacy'] rentafit-new-rental .dates-row {
+    border-top-color: #e2e8f0;
+}
+
+[data-ui='legacy'] rentafit-new-rental input[type='date'],
+[data-ui='legacy'] rentafit-new-rental input[type='text'],
+[data-ui='legacy'] rentafit-new-rental select {
+    min-height: 40px;
+    padding: 0.7rem 1rem;
+}
+
+[data-ui='legacy'] rentafit-new-rental .item-row,
+[data-ui='legacy'] rentafit-new-rental .payment-row,
+[data-ui='legacy'] rentafit-new-rental .total-row {
+    border: 1px solid #e2e8f0;
+    background: var(--input-bg);
+}
+
+[data-ui='legacy'] rentafit-new-rental .icon-btn,
+[data-ui='legacy'] rentafit-new-rental .btn-icon-labeled {
+    background: var(--primary-color);
+    color: #ffffff;
 }
 
 @media (prefers-reduced-motion: reduce) {
