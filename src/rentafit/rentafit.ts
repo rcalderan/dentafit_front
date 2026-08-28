@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { APP_CONFIG } from './shared/data/app-config.token';
 import { GlobalLoaderComponent } from './shared/components/global-loader/global-loader.component';
+import { UiVariantService } from './shared/services/ui-variant.service';
 
 @Component({
   selector: 'rentafit-root',
@@ -13,9 +14,11 @@ import { GlobalLoaderComponent } from './shared/components/global-loader/global-
 export class RentafitComponent implements OnInit {
   private readonly config = inject(APP_CONFIG);
   private readonly titleService = inject(Title);
+  private readonly uiVariant = inject(UiVariantService);
   title = signal(this.config.appName);
 
   ngOnInit(): void {
+    this.uiVariant.activeVariant();
     this.titleService.setTitle(this.config.appName);
   }
 }

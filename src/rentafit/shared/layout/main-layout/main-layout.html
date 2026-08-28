@@ -9,7 +9,7 @@
             @if (hasAnyRole([UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE])) {
             <a routerLink="/home/dashboard" routerLinkActive="active" class="nav-item"
                aria-label="Início" (click)="closeAllSubmenus()">
-                <i class="icon" aria-hidden="true">🏠</i>
+                <i class="icon" aria-hidden="true">IN</i>
                 <span class="nav-label">Início</span>
             </a>
             }
@@ -18,7 +18,7 @@
             <div class="nav-item-container" [class.open]="isCustomerSubmenuOpen()">
                 <button class="nav-item" (click)="toggleCustomerSubmenu()"
                         aria-label="Clientes" [attr.aria-expanded]="isCustomerSubmenuOpen()">
-                    <i class="icon" aria-hidden="true">👤</i>
+                    <i class="icon" aria-hidden="true">CL</i>
                     <span class="nav-label">Clientes</span>
                 </button>
                 @if (isCustomerSubmenuOpen()) {
@@ -36,7 +36,7 @@
             <div class="nav-item-container" [class.open]="isProductSubmenuOpen()">
                 <button class="nav-item" (click)="toggleProductSubmenu()"
                         aria-label="Produtos" [attr.aria-expanded]="isProductSubmenuOpen()">
-                    <i class="icon" aria-hidden="true">👗</i>
+                    <i class="icon" aria-hidden="true">PR</i>
                     <span class="nav-label">Produtos</span>
                 </button>
                 @if (isProductSubmenuOpen()) {
@@ -58,7 +58,7 @@
             <div class="nav-item-container" [class.open]="isRentalSubmenuOpen()">
                 <button class="nav-item" (click)="toggleRentalSubmenu()"
                         aria-label="Locações" [attr.aria-expanded]="isRentalSubmenuOpen()">
-                    <i class="icon" aria-hidden="true">📋</i>
+                    <i class="icon" aria-hidden="true">LO</i>
                     <span class="nav-label">Locações</span>
                 </button>
                 @if (isRentalSubmenuOpen()) {
@@ -84,7 +84,7 @@
             <div class="nav-item-container" [class.open]="isSalesSubmenuOpen()">
                 <button class="nav-item" (click)="toggleSalesSubmenu()"
                         aria-label="Vendas" [attr.aria-expanded]="isSalesSubmenuOpen()">
-                    <i class="icon" aria-hidden="true">🛒</i>
+                    <i class="icon" aria-hidden="true">VE</i>
                     <span class="nav-label">Vendas</span>
                 </button>
                 @if (isSalesSubmenuOpen()) {
@@ -106,7 +106,7 @@
             <div class="nav-item-container" [class.open]="isAdminSubmenuOpen()">
                 <button class="nav-item" (click)="toggleAdminSubmenu()"
                         aria-label="Admin" [attr.aria-expanded]="isAdminSubmenuOpen()">
-                    <i class="icon" aria-hidden="true">⚙️</i>
+                    <i class="icon" aria-hidden="true">AD</i>
                     <span class="nav-label">Admin</span>
                 </button>
                 @if (isAdminSubmenuOpen()) {
@@ -133,7 +133,7 @@
             }
 
             <button class="nav-item logout-btn" (click)="logout()" aria-label="Sair">
-                <i class="icon" aria-hidden="true">🚪</i>
+                <i class="icon" aria-hidden="true">SA</i>
                 <span class="nav-label">Sair</span>
             </button>
         </nav>
@@ -153,4 +153,9 @@
             <router-outlet></router-outlet>
         </div>
     </main>
+
+    <footer class="legacy-status" aria-label="Status do sistema">
+        <span>RentAFit</span>
+        <span>Sistema pronto</span>
+    </footer>
 </div>

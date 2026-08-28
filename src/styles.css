@@ -2,19 +2,80 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Inter:wght@400;500;600&display=swap');
 
-:root {
-    --primary-color: #9ab9eb;
-    --primary-hover: #86a6d6;
+:root,
+[data-ui='simplified'] {
+    --primary-color: #6f96d6;
+    --primary-hover: #587fc0;
     --bg-color: #f7faff;
     --card-bg: #ffffff;
-    --text-color: #4a4a4a;
-    --text-muted: #8e8e8e;
+    --text-color: #353b45;
+    --text-muted: #697386;
     --input-bg: #e9eff7;
-    --danger-color: #f19b9b;
+    --danger-color: #c93636;
+    --success-color: #16794c;
+    --warning-color: #a45108;
+    --info-bg: #edf4ff;
+    --selected-bg: #f0f5ff;
+    --control-hover-bg: #dbe4f1;
+    --control-border-color: #c8d5e8;
+    --focus-ring: #315f9f;
     --border-radius: 16px;
     --input-radius: 12px;
-    --shadow-sm: 0 2px 8px rgba(154, 185, 235, 0.05);
-    --shadow-md: 0 4px 20px rgba(154, 185, 235, 0.1);
+    --surface-border: 1px solid transparent;
+    --section-padding: 1.5rem 2rem;
+    --shadow-sm: 0 2px 8px rgba(78, 118, 180, 0.08);
+    --shadow-md: 0 4px 20px rgba(78, 118, 180, 0.13);
+    --ui-font: 'Outfit', 'Inter', sans-serif;
+}
+
+[data-ui='atelier'] {
+    --primary-color: #702f52;
+    --primary-hover: #57213e;
+    --bg-color: #f7f4f1;
+    --card-bg: #fffefd;
+    --text-color: #241f23;
+    --text-muted: #71666d;
+    --input-bg: #fbf9f7;
+    --danger-color: #a72f3f;
+    --success-color: #26715c;
+    --warning-color: #8a5a20;
+    --info-bg: #f4eaf0;
+    --selected-bg: #f7edf2;
+    --control-hover-bg: #f1e8ec;
+    --control-border-color: #ded4d9;
+    --focus-ring: #702f52;
+    --border-radius: 18px;
+    --input-radius: 10px;
+    --surface-border: 1px solid rgba(71, 47, 60, 0.1);
+    --section-padding: 1.5rem 1.75rem;
+    --shadow-sm: 0 2px 8px rgba(54, 35, 46, 0.06);
+    --shadow-md: 0 18px 45px rgba(54, 35, 46, 0.1);
+    --ui-font: 'Inter', 'Outfit', sans-serif;
+}
+
+[data-ui='legacy'] {
+    --primary-color: #3f51b5;
+    --primary-hover: #303f9f;
+    --bg-color: #f1f5f9;
+    --card-bg: #ffffff;
+    --text-color: #0f172a;
+    --text-muted: #64748b;
+    --input-bg: #f9fafb;
+    --danger-color: #b91c1c;
+    --success-color: #166534;
+    --warning-color: #92400e;
+    --info-bg: #eef2ff;
+    --selected-bg: #eef2ff;
+    --control-hover-bg: #f0f0f0;
+    --control-border-color: #d1d5db;
+    --focus-ring: #3f51b5;
+    --border-radius: 10px;
+    --input-radius: 6px;
+    --surface-border: 1px solid #e0e0e0;
+    --section-padding: 1.25rem 1.5rem;
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-md: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06);
+    --ui-font: Tahoma, 'Segoe UI', sans-serif;
 }
 
 * {
@@ -26,8 +87,9 @@
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    font-family: 'Outfit', 'Inter', sans-serif;
+    font-family: var(--ui-font);
     line-height: 1.5;
+    transition: background-color 120ms ease, color 120ms ease;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -50,4 +112,388 @@ textarea,
 button {
     font-family: inherit;
     font-size: 1rem;
+}
+
+[data-ui='legacy'] body {
+    line-height: 1.25;
+}
+
+[data-ui='legacy'] input,
+[data-ui='legacy'] select,
+[data-ui='legacy'] textarea,
+[data-ui='legacy'] button {
+    border-radius: var(--input-radius) !important;
+}
+
+[data-ui='legacy'] input,
+[data-ui='legacy'] select,
+[data-ui='legacy'] textarea {
+    background-color: var(--input-bg);
+    border: 1px solid var(--control-border-color);
+}
+
+[data-ui='legacy'] table {
+    background: var(--input-bg);
+    border: 1px solid var(--control-border-color);
+    border-collapse: collapse;
+}
+
+[data-ui='legacy'] th,
+[data-ui='legacy'] td {
+    border: 1px solid #b3b3b3;
+    padding: 0.4rem 0.55rem;
+}
+
+[data-ui='legacy'] dialog,
+[data-ui='legacy'] [class*='modal-content'],
+[data-ui='legacy'] [class*='card'] {
+    background-color: var(--card-bg);
+    border: var(--surface-border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+}
+
+[data-ui='legacy'] [class*='section-header'] {
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.75rem;
+}
+
+[data-ui='legacy'] [class*='section-title'] {
+    color: var(--text-color);
+    font-weight: 700;
+}
+
+[data-ui='legacy'] label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+[data-ui='legacy'] input:not([type='checkbox']):not([type='radio']),
+[data-ui='legacy'] select,
+[data-ui='legacy'] textarea {
+    background-color: var(--input-bg) !important;
+    border: 1px solid var(--control-border-color) !important;
+    border-radius: var(--input-radius) !important;
+    color: var(--text-color) !important;
+    box-shadow: none;
+}
+
+[data-ui='legacy'] input:focus,
+[data-ui='legacy'] select:focus,
+[data-ui='legacy'] textarea:focus {
+    outline: none !important;
+    border-color: var(--primary-color) !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.12) !important;
+}
+
+[data-ui='legacy'] button:focus-visible,
+[data-ui='legacy'] a:focus-visible {
+    outline: 3px solid rgba(63, 81, 181, 0.35);
+    outline-offset: 2px;
+}
+
+[data-ui='legacy'] .btn-primary,
+[data-ui='legacy'] .btn-save,
+[data-ui='legacy'] button[class*='primary'] {
+    background-color: var(--primary-color);
+    color: #ffffff;
+}
+
+[data-ui='legacy'] .btn-primary:hover:not(:disabled),
+[data-ui='legacy'] .btn-save:hover:not(:disabled),
+[data-ui='legacy'] button[class*='primary']:hover:not(:disabled) {
+    background-color: var(--primary-hover);
+}
+
+[data-ui='legacy'] .field-error,
+[data-ui='legacy'] .error-text,
+[data-ui='legacy'] .text-danger {
+    color: var(--danger-color);
+}
+
+[data-ui='legacy'] rentafit-new-rental .new-rental-container {
+    gap: 1.25rem;
+    padding: 2rem;
+    background: var(--bg-color);
+}
+
+[data-ui='legacy'] rentafit-new-rental h1 {
+    align-self: center;
+    margin: 0 0 0.5rem;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+[data-ui='legacy'] rentafit-new-rental .page-grid {
+    gap: 1.25rem;
+}
+
+[data-ui='legacy'] rentafit-new-rental .section-card,
+[data-ui='legacy'] rentafit-new-rental .contract-load-row,
+[data-ui='legacy'] rentafit-new-rental .stepper-header {
+    border: var(--surface-border);
+    border-radius: 10px;
+    background: var(--card-bg);
+    box-shadow: var(--shadow-md);
+}
+
+[data-ui='legacy'] rentafit-new-rental .section-card {
+    padding: 1.5rem;
+}
+
+[data-ui='legacy'] rentafit-new-rental .section-header {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 0.75rem;
+}
+
+[data-ui='legacy'] rentafit-new-rental .dates-row {
+    border-top-color: #e2e8f0;
+}
+
+[data-ui='legacy'] rentafit-new-rental input[type='date'],
+[data-ui='legacy'] rentafit-new-rental input[type='text'],
+[data-ui='legacy'] rentafit-new-rental select {
+    min-height: 40px;
+    padding: 0.7rem 1rem;
+}
+
+[data-ui='legacy'] rentafit-new-rental .item-row,
+[data-ui='legacy'] rentafit-new-rental .payment-row,
+[data-ui='legacy'] rentafit-new-rental .total-row {
+    border: 1px solid #e2e8f0;
+    background: var(--input-bg);
+}
+
+[data-ui='legacy'] rentafit-new-rental .icon-btn,
+[data-ui='legacy'] rentafit-new-rental .btn-icon-labeled {
+    background: var(--primary-color);
+    color: #ffffff;
+}
+
+[data-ui='atelier'] body {
+    background:
+        radial-gradient(circle at 8% 2%, rgba(213, 163, 111, 0.12), transparent 28rem),
+        var(--bg-color);
+}
+
+[data-ui='atelier'] dialog,
+[data-ui='atelier'] [class*='modal-content'],
+[data-ui='atelier'] [class*='card'] {
+    background-color: var(--card-bg);
+    border: var(--surface-border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+}
+
+[data-ui='atelier'] [class*='section-header'] {
+    border-bottom: 1px solid var(--control-border-color);
+    padding-bottom: 0.8rem;
+}
+
+[data-ui='atelier'] [class*='section-title'] {
+    color: var(--text-color);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+[data-ui='atelier'] input:not([type='checkbox']):not([type='radio']),
+[data-ui='atelier'] select,
+[data-ui='atelier'] textarea {
+    background: var(--input-bg) !important;
+    border: 1px solid var(--control-border-color) !important;
+    border-radius: var(--input-radius) !important;
+    color: var(--text-color) !important;
+    box-shadow: inset 0 1px 2px rgba(36, 31, 35, 0.03);
+}
+
+[data-ui='atelier'] input:focus,
+[data-ui='atelier'] select:focus,
+[data-ui='atelier'] textarea:focus {
+    outline: none !important;
+    border-color: var(--primary-color) !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(112, 47, 82, 0.12) !important;
+}
+
+[data-ui='atelier'] button:focus-visible,
+[data-ui='atelier'] a:focus-visible {
+    outline: 3px solid rgba(213, 163, 111, 0.65);
+    outline-offset: 3px;
+}
+
+[data-ui='atelier'] .btn-primary,
+[data-ui='atelier'] .btn-save,
+[data-ui='atelier'] button[class*='primary'] {
+    background: linear-gradient(135deg, var(--primary-color), #8c456a);
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(112, 47, 82, 0.2);
+}
+
+[data-ui='atelier'] .btn-primary:hover:not(:disabled),
+[data-ui='atelier'] .btn-save:hover:not(:disabled),
+[data-ui='atelier'] button[class*='primary']:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+    transform: translateY(-1px);
+}
+
+[data-ui='atelier'] table {
+    overflow: hidden;
+    background: var(--card-bg);
+    border: var(--surface-border);
+    border-radius: 12px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+[data-ui='atelier'] th {
+    background: #f5eff2;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--control-border-color);
+}
+
+[data-ui='atelier'] td {
+    border-bottom: 1px solid #eee7ea;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) {
+    position: relative;
+    flex-direction: column;
+    padding: 82px 22px 28px;
+    background: transparent;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .sidebar {
+    position: fixed;
+    inset: 16px 22px auto;
+    width: auto;
+    height: 58px;
+    max-height: none;
+    margin: 0;
+    padding: 0 0.75rem;
+    border: 1px solid rgba(112, 47, 82, 0.12);
+    border-radius: 16px;
+    background: rgba(255, 254, 253, 0.94);
+    box-shadow: 0 14px 36px rgba(54, 35, 46, 0.12);
+    backdrop-filter: blur(18px);
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-menu {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.25rem;
+    height: 100%;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-item-container {
+    display: block;
+    width: auto;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-item {
+    width: auto;
+    min-width: 72px;
+    height: 40px;
+    padding: 0 0.8rem;
+    flex-direction: row;
+    gap: 0.45rem;
+    border-radius: 10px;
+    color: #55474f;
+    font-size: 0.9rem;
+    transform: none;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-label {
+    color: inherit;
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .icon {
+    display: none;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-item:hover,
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-item.active,
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .nav-item-container.open .nav-item {
+    background: #f4e7ed;
+    color: var(--primary-color);
+    box-shadow: inset 0 0 0 1px rgba(112, 47, 82, 0.12);
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .submenu {
+    top: 48px;
+    left: 0;
+    min-width: 220px;
+    gap: 0.2rem;
+    padding: 0.5rem;
+    border: var(--surface-border);
+    border-radius: 14px;
+    background: rgba(255, 254, 253, 0.98);
+    box-shadow: 0 20px 45px rgba(36, 31, 35, 0.2);
+    animation: fadeIn 120ms ease-out;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .submenu-item {
+    justify-content: flex-start;
+    padding: 0.65rem 0.75rem;
+    border-radius: 9px;
+    color: var(--text-color);
+    font-size: 0.8rem;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .submenu-item:hover,
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .submenu-item.active {
+    background: var(--selected-bg);
+    color: var(--primary-color);
+    box-shadow: none;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .main-content {
+    width: 100%;
+    max-width: 1520px;
+    margin: 0 auto;
+    border: var(--surface-border);
+    border-radius: 22px;
+    background: rgba(255, 254, 253, 0.58);
+    box-shadow: 0 24px 70px rgba(54, 35, 46, 0.07);
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .top-bar {
+    min-height: 14px;
+    padding: 0;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .content-area {
+    padding: 1.25rem 1.5rem 2rem;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .legacy-status {
+    position: fixed;
+    inset: auto 30px 6px;
+    z-index: 30;
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-muted);
+    font-size: 0.68rem;
+}
+
+[data-ui='atelier'] rentafit-main-layout .layout-container:not(.mobile-view) .legacy-status span:first-child {
+    color: var(--primary-color);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
 }

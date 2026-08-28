@@ -1,0 +1,41 @@
+<section class="interface-section" aria-labelledby="interface-title">
+  <div class="interface-heading">
+    <div>
+      <h2 id="interface-title">Interface do sistema</h2>
+      <p>Escolha a aparência mais confortável para trabalhar neste navegador.</p>
+    </div>
+    @if (uiVariant.isMobile()) {
+      <span class="mobile-notice">Simplificada em uso neste dispositivo</span>
+    }
+  </div>
+
+  <div class="variant-grid" role="radiogroup" aria-labelledby="interface-title">
+    @for (variant of variants(); track variant.id) {
+      <button
+        type="button"
+        class="variant-card"
+        role="radio"
+        [class.selected]="uiVariant.preferredVariant() === variant.id"
+        [attr.aria-checked]="uiVariant.preferredVariant() === variant.id"
+        (click)="selectVariant(variant.id)"
+      >
+        <span class="variant-preview" [class]="'variant-preview ' + variant.id" aria-hidden="true">
+          <span class="preview-menu"></span>
+          <span class="preview-content">
+            <span></span><span></span><span></span>
+          </span>
+          @if (variant.id === 'legacy' || variant.id === 'atelier') {
+            <span class="preview-status"></span>
+          }
+        </span>
+        <span class="variant-copy">
+          <strong>{{ variant.name }}</strong>
+          <span>{{ variant.description }}</span>
+        </span>
+        <span class="selection-mark" aria-hidden="true"></span>
+      </button>
+    }
+  </div>
+
+  <p class="storage-note">A preferência é salva neste navegador. Em uma próxima versão, ela será sincronizada com sua conta.</p>
+</section>

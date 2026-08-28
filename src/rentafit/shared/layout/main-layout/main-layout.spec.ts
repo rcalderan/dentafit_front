@@ -1,15 +1,15 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
-import { BreakpointObserver } from '@angular/cdk/layout';
 import { Subject } from 'rxjs';
 import { vi } from 'vitest';
 import { MainLayout } from './main-layout';
 import { AuthService } from '../../../domains/auth/services/auth.service';
+import { UiVariantService } from '../../services/ui-variant.service';
 
-class MockBreakpointObserver {
-  observe() {
-    return { subscribe: () => {} };
-  }
+class MockUiVariantService {
+  readonly isMobile = signal(false);
+  readonly activeVariant = signal<'simplified' | 'legacy' | 'atelier'>('simplified');
 }
 
 class MockAuthService {
@@ -31,6 +31,7 @@ describe('MainLayout', () => {
   let fixture: ReturnType<typeof TestBed.createComponent<MainLayout>>;
   let component: MainLayout;
   let routerEvents$: Subject<any>;
+  let uiVariant: MockUiVariantService;
 
   beforeEach(async () => {
     routerEvents$ = new Subject();
@@ -39,7 +40,7 @@ describe('MainLayout', () => {
       imports: [MainLayout],
       providers: [
         provideRouter([]),
-        { provide: BreakpointObserver, useClass: MockBreakpointObserver },
+        { provide: UiVariantService, useClass: MockUiVariantService },
         { provide: AuthService, useClass: MockAuthService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         {
@@ -80,6 +81,7 @@ describe('MainLayout', () => {
 
     fixture = TestBed.createComponent(MainLayout);
     component = fixture.componentInstance;
+    uiVariant = TestBed.inject(UiVariantService) as unknown as MockUiVariantService;
   });
 
   it('should create', () => {
@@ -104,7 +106,7 @@ describe('MainLayout', () => {
 
   it('closes mobile sidebar on NavigationEnd', () => {
     fixture.detectChanges();
-    component['isMobile'].set(true);
+    uiVariant.isMobile.set(true);
     component['isSidebarVisible'].set(true);
 
     routerEvents$.next(new NavigationEnd(1, '/rental/new', '/rental/new'));
