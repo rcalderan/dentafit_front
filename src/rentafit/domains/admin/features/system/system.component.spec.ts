@@ -22,5 +22,6 @@ describe('SystemComponent', () => {
     const element: HTMLElement = makeFixture().nativeElement;
     const titles = Array.from(element.querySelectorAll('.section-title')).map(t => t.textContent?.trim());
     expect(titles).toEqual(['Estatísticas de Uso', 'Configuração de Preços']);
+    expect(element.querySelector('rentafit-ui-variant-selector')).toBeTruthy();
   });
 });

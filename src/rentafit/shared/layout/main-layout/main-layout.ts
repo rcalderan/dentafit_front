@@ -1,10 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { filter } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../domains/auth/services/auth.service';
 import { UserRole } from '../../../domains/auth/data/user.model';
+import { UiVariantService } from '../../services/ui-variant.service';
 
 @Component({
   selector: 'rentafit-main-layout',
@@ -14,13 +14,13 @@ import { UserRole } from '../../../domains/auth/data/user.model';
   styleUrl: './main-layout.css'
 })
 export class MainLayout {
-  private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
   protected readonly authService = inject(AuthService);
+  protected readonly uiVariant = inject(UiVariantService);
 
-  protected readonly isMobile = signal(false);
-  protected readonly isSidebarVisible = signal(true);
+  protected readonly isMobile = this.uiVariant.isMobile;
+  protected readonly isSidebarVisible = signal(!this.isMobile());
   protected readonly isCustomerSubmenuOpen = signal(false);
   protected readonly isProductSubmenuOpen = signal(false);
   protected readonly isRentalSubmenuOpen = signal(false);
@@ -34,17 +34,6 @@ export class MainLayout {
   protected readonly UserRole = UserRole;
 
   constructor() {
-    // Detecta se a tela é mobile/tablet
-    this.breakpointObserver.observe([
-      Breakpoints.Handset,
-      Breakpoints.TabletPortrait
-    ]).subscribe(result => {
-      const mobile = result.matches;
-      this.isMobile.set(mobile);
-      // No mobile, a sidebar começa escondida. No desktop, começa visível.
-      this.isSidebarVisible.set(!mobile);
-    });
-
     // BUG-2026-05-04-4: atualiza título do header e estado do FAB a cada navegação
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)

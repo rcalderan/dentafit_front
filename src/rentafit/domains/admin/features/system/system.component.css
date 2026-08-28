@@ -27,7 +27,8 @@ h1 {
 .section-card {
     background: var(--card-bg);
     border-radius: var(--border-radius);
-    padding: 1.5rem 2rem;
+    padding: var(--section-padding);
+    border: var(--surface-border);
     box-shadow: var(--shadow-md);
 }
 
@@ -116,5 +117,12 @@ h1 {
 }
 
 .btn-update:hover {
-    background-color: #dbe4f1;
+    background-color: var(--control-hover-bg);
+}
+
+@media (max-width: 768px) {
+    .admin-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
 }
