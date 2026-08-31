@@ -4,7 +4,7 @@ import { Observable, of, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { APP_CONFIG } from '../../../shared/data/app-config.token';
 import { ErrorMessages, HTTP_ERROR_MAP } from '../../../shared/data/error-messages';
-import { IEmployee, IEmployeeCheckResponse } from '../data/employee.interface';
+import { IActiveAttendant, IEmployee, IEmployeeCheckResponse } from '../data/employee.interface';
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeService {
@@ -23,6 +23,12 @@ export class EmployeeService {
 
   getById(id: string): Observable<IEmployee> {
     return this.http.get<IEmployee>(`${this.apiUrl}/${id}`).pipe(
+      catchError(this.handleError.bind(this)),
+    );
+  }
+
+  listActiveAttendants(): Observable<IActiveAttendant[]> {
+    return this.http.get<IActiveAttendant[]>(`${this.apiUrl}/attendants`).pipe(
       catchError(this.handleError.bind(this)),
     );
   }

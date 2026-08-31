@@ -335,6 +335,24 @@
         </div>
         <div class="modal-body">
 
+            @if (editingItemIndex === null) {
+                <div class="input-group">
+                    <label for="item-attendant">Atendente</label>
+                    <select id="item-attendant" [(ngModel)]="itemModalEmployee"
+                            [disabled]="attendantsLoading || activeAttendants.length === 0">
+                        <option value="" disabled>
+                            {{ attendantsLoading ? 'Carregando atendentes...' : 'Selecione o atendente' }}
+                        </option>
+                        @for (attendant of activeAttendants; track attendant.id) {
+                            <option [value]="attendant.id">{{ attendant.name }} — {{ attendant.role }}</option>
+                        }
+                    </select>
+                </div>
+                @if (attendantsError) {
+                    <div class="modal-error">{{ attendantsError }}</div>
+                }
+            }
+
             <div class="input-group">
                 <label>Código do Produto</label>
                 <div class="search-input">
@@ -393,7 +411,7 @@
         </div>
         <div class="modal-footer">
             <button class="btn btn-save" (click)="confirmAddItem()"
-                    [disabled]="editingItemIndex === null && !itemModalFoundProduct">
+                    [disabled]="editingItemIndex === null && (!itemModalFoundProduct || !itemModalEmployee || attendantsLoading)">
                 {{ editingItemIndex !== null ? 'Salvar' : 'Adicionar' }}
             </button>
         </div>
