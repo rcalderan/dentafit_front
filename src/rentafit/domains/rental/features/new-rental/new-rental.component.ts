@@ -187,7 +187,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
 
   // ── Payment modal ──
   showPaymentModal = false;
-  paymentModalForma: PaymentMethod = PaymentMethod.PIX;
+  paymentModalForma: PaymentMethod = PaymentMethod.CASH;
   paymentModalValor = 0;
   paymentModalData = '';
   paymentModalStatus: PaymentStatus = PaymentStatus.PENDING;
@@ -618,7 +618,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     if (!this.canAddPayment) return;
     this.editingPaymentIndex = null;
     const prev = this.contract.pagamentos.at(-1);
-    this.paymentModalForma = prev ? prev.forma : PaymentMethod.PIX;
+    this.paymentModalForma = prev ? prev.forma : PaymentMethod.CASH;
     this.paymentModalValor = this.unplannedAmount;
     if (prev) {
       const d = new Date(prev.data + 'T12:00:00');

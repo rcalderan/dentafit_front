@@ -9,6 +9,7 @@ import { HolidayService } from '../../../../shared/services/holiday.service';
 import { AutosaveService } from '../../service/autosave.service';
 import { RentalContractService } from '../../service/rental-contract.service';
 import { ContractStatus } from '../../data/contract-status.enum';
+import { PaymentMethod } from '../../data/payment-method.enum';
 import { IProductCatalog } from '../../data/product-catalog.interface';
 import { NewRental } from './new-rental.component';
 
@@ -120,6 +121,21 @@ describe('NewRental item attendant', () => {
     expect(component.contract.itens[0].valor).toBe(175);
     expect(component.contract.itens[0].attendantEmployeeId).toBe('employee-1');
     expect(employeeService.listActiveAttendants).toHaveBeenCalledOnce();
+  });
+
+  it('usa dinheiro como forma padrão da primeira parcela', () => {
+    component.contract.itens = [{
+      codigo: '10',
+      descricao: 'Terno',
+      valor: 150,
+      entregue: false,
+      attendantEmployeeId: 'employee-1',
+      sub: [],
+    }];
+
+    component.openPaymentModal();
+
+    expect(component.paymentModalForma).toBe(PaymentMethod.CASH);
   });
 
   it('exibe erro e limpa opções quando a lista falha', () => {

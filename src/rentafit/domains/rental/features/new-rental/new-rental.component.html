@@ -344,7 +344,7 @@
                             {{ attendantsLoading ? 'Carregando atendentes...' : 'Selecione o atendente' }}
                         </option>
                         @for (attendant of activeAttendants; track attendant.id) {
-                            <option [value]="attendant.id">{{ attendant.name }} — {{ attendant.role }}</option>
+                            <option [value]="attendant.id">{{ attendant.name }}</option>
                         }
                     </select>
                 </div>
