@@ -13,3 +13,11 @@ export interface IEmployeeCheckResponse {
   initials?: string;
   name?: string;
 }
+
+export type AttendantRole = 'EMPLOYEE' | 'MANAGER' | 'ADMIN';
+
+export interface IActiveAttendant {
+  id: string;
+  name: string;
+  role: AttendantRole;
+}

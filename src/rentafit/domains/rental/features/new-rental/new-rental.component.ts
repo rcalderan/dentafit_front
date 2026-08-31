@@ -5,6 +5,8 @@ import { ActivatedRoute } from '@angular/router';
 import { forkJoin, Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { CustomerService } from '../../../customer/service/customer.service';
+import { IActiveAttendant } from '../../../admin/data/employee.interface';
+import { EmployeeService } from '../../../admin/service/employee.service';
 import { ProductService } from '../../../product/service/product.service';
 import { HolidayService } from '../../../../shared/services/holiday.service';
 import { ContractStatus } from '../../data/contract-status.enum';
@@ -62,14 +64,15 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     [PaymentStatus.CANCELLED]: 'Cancelado',
     [PaymentStatus.MULTA]: 'Multa',
   };
-  // CANCELLED is set only via the dedicated chargeBack flow — never via the status dropdown
+  // CANCELLED is set only via chargeBack; MULTA remains unavailable until its workflow is implemented.
   paymentStatusKeys = Object.values(PaymentStatus).filter(
-    v => typeof v === 'number' && v !== PaymentStatus.CANCELLED
+    v => typeof v === 'number' && v !== PaymentStatus.CANCELLED && v !== PaymentStatus.MULTA
   ) as PaymentStatus[];
 
   // ── Services ──
   private readonly holidayService = inject(HolidayService);
   private readonly customerService = inject(CustomerService);
+  private readonly employeeService = inject(EmployeeService);
   private readonly productService = inject(ProductService);
   private readonly rentalContractService = inject(RentalContractService);
   private readonly autosaveService = inject(AutosaveService<IRentalContractCreateRequest, IRentalContractResponse>);
@@ -117,7 +120,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
   // ── Employee verification modal ──
   showEmployeeVerify = false;
   /** Which action is pending employee confirmation. */
-  employeeVerifyAction: 'sign' | 'finalize' | 'save' | 'addItem' | 'payment' | 'addPayment' | 'chargeBack' | null = null;
+  employeeVerifyAction: 'sign' | 'finalize' | 'save' | 'payment' | 'addPayment' | 'chargeBack' | null = null;
   private pendingPaymentEmployeeId: string | null = null;
   /** Index of the payment pending chargeBack confirmation. */
   private pendingChargeBackIndex: number | null = null;
@@ -127,7 +130,6 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
       case 'sign':     return 'Identificar Atendente — Assinatura';
       case 'finalize': return 'Identificar Atendente — Finalização';
       case 'save':     return 'Validar Atendente — Salvar Proposta';
-      case 'addItem':     return 'Identificar Atendente — Adicionar Item';
       case 'addPayment':  return 'Identificar Atendente — Adicionar Parcela';
       case 'payment':  return this.paymentModalStatus === PaymentStatus.PAID
         ? 'Identificar Atendente — Registrar Pagamento'
@@ -168,6 +170,9 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
   itemModalMeta = '';   // e.g. "TAM: 42 | COR: PRETO"
   itemModalValor = 0;  
   itemModalEmployee = '';
+  activeAttendants: IActiveAttendant[] = [];
+  attendantsLoading = false;
+  attendantsError = '';
   itemModalExtras: IItemMeta[] = [];
   itemModalNewExtraType: 'acessorio' | 'observacao' = 'observacao';
   itemModalNewExtraDesc = '';
@@ -182,7 +187,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
 
   // ── Payment modal ──
   showPaymentModal = false;
-  paymentModalForma: PaymentMethod = PaymentMethod.PIX;
+  paymentModalForma: PaymentMethod = PaymentMethod.CASH;
   paymentModalValor = 0;
   paymentModalData = '';
   paymentModalStatus: PaymentStatus = PaymentStatus.PENDING;
@@ -199,6 +204,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.loadActiveAttendants();
     // Subscribe to autosave status changes for UI feedback
     this.autosaveSubscription = this.autosaveService.status$.subscribe(status => {
       this.autosaveStatus = status;
@@ -406,9 +412,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
 
   openItemModal(): void {
     if (!this.isEditable()) return;
-    // Require employee identification before adding any new item
-    this.employeeVerifyAction = 'addItem';
-    this.showEmployeeVerify = true;
+    this.openItemModalExecute();
   }
 
   private openItemModalExecute(): void {
@@ -427,6 +431,23 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => this.itemCodeInput?.nativeElement.focus(), 0);
   }
 
+  private loadActiveAttendants(): void {
+    this.attendantsLoading = true;
+    this.attendantsError = '';
+    this.employeeService.listActiveAttendants()
+      .pipe(finalize(() => (this.attendantsLoading = false)))
+      .subscribe({
+        next: attendants => {
+          const roles = new Set(['EMPLOYEE', 'MANAGER', 'ADMIN']);
+          this.activeAttendants = attendants.filter(attendant => roles.has(attendant.role));
+        },
+        error: (error: Error) => {
+          this.activeAttendants = [];
+          this.attendantsError = error.message || 'Não foi possível carregar os atendentes ativos.';
+        },
+      });
+  }
+
   openEditItemModal(index: number): void {
     const item = this.contract.itens[index];
     if (!item) return;
@@ -435,7 +456,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     this.itemModalName = item.descricao;
     this.itemModalValor = item.valor;
     this.itemModalMeta = '';
-    this.itemModalEmployee = '';
+    this.itemModalEmployee = item.attendantEmployeeId;
     this.itemModalExtras = [...item.sub];
     this.itemModalFoundProduct = { nome: item.descricao } as any;
     this.itemModalNewExtraDesc = '';
@@ -510,7 +531,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
   }
 
   confirmAddItem(): void {
-    if (this.editingItemIndex === null && !this.itemModalFoundProduct) return;
+    if (this.editingItemIndex === null && (!this.itemModalFoundProduct || !this.itemModalEmployee)) return;
     if (!this.isEditable()) return;
     const item: IRentalContractItem = {
       codigo: this.itemModalCode,
@@ -597,7 +618,7 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     if (!this.canAddPayment) return;
     this.editingPaymentIndex = null;
     const prev = this.contract.pagamentos.at(-1);
-    this.paymentModalForma = prev ? prev.forma : PaymentMethod.PIX;
+    this.paymentModalForma = prev ? prev.forma : PaymentMethod.CASH;
     this.paymentModalValor = this.unplannedAmount;
     if (prev) {
       const d = new Date(prev.data + 'T12:00:00');
@@ -1043,12 +1064,6 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
 
     if (action === 'save') {
       this.executeSave(event.employeeId);
-      return;
-    }
-
-    if (action === 'addItem') {
-      this.openItemModalExecute();
-      this.itemModalEmployee = event.employeeId;
       return;
     }
 
