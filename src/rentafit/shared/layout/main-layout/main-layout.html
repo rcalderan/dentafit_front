@@ -23,10 +23,10 @@
                 </button>
                 @if (isCustomerSubmenuOpen()) {
                 <div class="submenu" role="menu">
-                    <a routerLink="/customer/registration" routerLinkActive="active" class="submenu-item"
-                       role="menuitem" (click)="closeAllSubmenus()">
+                    <button type="button" class="submenu-item"
+                            role="menuitem" (click)="openTab('/customer/registration', 'Clientes', 'customer')">
                         <span>Cadastro de Cliente</span>
-                    </a>
+                    </button>
                 </div>
                 }
             </div>
@@ -41,14 +41,14 @@
                 </button>
                 @if (isProductSubmenuOpen()) {
                 <div class="submenu" role="menu">
-                    <a routerLink="/product/registration" routerLinkActive="active" class="submenu-item"
-                       role="menuitem" (click)="closeAllSubmenus()">
+                    <button type="button" class="submenu-item"
+                            role="menuitem" (click)="openTab('/product/registration', 'Cadastro Aluguel', 'product')">
                         <span>Cadastro Aluguel</span>
-                    </a>
-                    <a routerLink="/product/retail-registration" routerLinkActive="active" class="submenu-item"
-                       role="menuitem" (click)="closeAllSubmenus()">
+                    </button>
+                    <button type="button" class="submenu-item"
+                            role="menuitem" (click)="openTab('/product/retail-registration', 'Cadastro Varejo', 'product')">
                         <span>Cadastro Varejo</span>
-                    </a>
+                    </button>
                 </div>
                 }
             </div>
@@ -63,10 +63,10 @@
                 </button>
                 @if (isRentalSubmenuOpen()) {
                 <div class="submenu" role="menu">
-                    <a routerLink="/rental/new" routerLinkActive="active" class="submenu-item"
-                       role="menuitem" (click)="closeAllSubmenus()">
+                    <button type="button" class="submenu-item"
+                            role="menuitem" (click)="openTab('/rental/new', 'Novo Contrato', 'rental')">
                         <span>Novo Contrato</span>
-                    </a>
+                    </button>
                     <a routerLink="/rental/daily-report" routerLinkActive="active" class="submenu-item"
                        role="menuitem" (click)="closeAllSubmenus()">
                         <span>Relatório Diário</span>
@@ -89,6 +89,10 @@
                 </button>
                 @if (isSalesSubmenuOpen()) {
                 <div class="submenu" role="menu">
+                    <button type="button" class="submenu-item"
+                            role="menuitem" (click)="openTab('/sales/new', 'Nova Venda', 'sales')">
+                        <span>Nova Venda</span>
+                    </button>
                     <a routerLink="/sales/management" routerLinkActive="active" class="submenu-item"
                        role="menuitem" (click)="closeAllSubmenus()">
                         <span>Gestão de Vendas</span>
@@ -111,22 +115,22 @@
                 </button>
                 @if (isAdminSubmenuOpen()) {
                 <div class="submenu" role="menu">
-                    <a routerLink="/finance/dashboard" routerLinkActive="active" class="submenu-item"
-                       role="menuitem" (click)="closeAllSubmenus()">
+                    <button type="button" class="submenu-item"
+                            role="menuitem" (click)="openTab('/finance/dashboard', 'Financeiro', 'admin')">
                         <span>Financeiro</span>
-                    </a>
-                    <a routerLink="/admin/user-management" routerLinkActive="active" class="submenu-item"
-                       role="menuitem" (click)="closeAllSubmenus()">
+                    </button>
+                    <button type="button" class="submenu-item"
+                            role="menuitem" (click)="openTab('/admin/user-management', 'Usuários', 'admin')">
                         <span>Gerenciamento de Usuários</span>
-                    </a>
-                    <a routerLink="/admin/cnpj" routerLinkActive="active" class="submenu-item"
-                       role="menuitem" (click)="closeAllSubmenus()">
+                    </button>
+                    <button type="button" class="submenu-item"
+                            role="menuitem" (click)="openTab('/admin/cnpj', 'CNPJ', 'admin')">
                         <span>CNPJ</span>
-                    </a>
-                    <a routerLink="/admin/system" routerLinkActive="active" class="submenu-item"
-                       role="menuitem" (click)="closeAllSubmenus()">
+                    </button>
+                    <button type="button" class="submenu-item"
+                            role="menuitem" (click)="openTab('/admin/system', 'Sistema', 'admin')">
                         <span>Sistema</span>
-                    </a>
+                    </button>
                 </div>
                 }
             </div>
@@ -149,6 +153,22 @@
                 }
             </div>
         </header>
+
+        <nav class="tab-bar" aria-label="Abas abertas">
+            @for (tab of tabs(); track tab.id) {
+            <button
+                type="button"
+                class="tab"
+                [class.active]="activeTabId() === tab.id"
+                [attr.aria-current]="activeTabId() === tab.id ? 'true' : null"
+                (click)="activateTab(tab.id)"
+                [title]="tab.title">
+                <span class="tab-title">{{ tab.title }}</span>
+                <span class="tab-close" (click)="closeTab($event, tab.id)" aria-label="Fechar aba">×</span>
+            </button>
+            }
+        </nav>
+
         <div class="content-area">
             <router-outlet></router-outlet>
         </div>

@@ -1,8 +1,8 @@
 import { Component, ElementRef, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, debounceTime } from 'rxjs/operators';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { CategoryModalComponent } from '../categories/category-modal.component';
 import {
@@ -15,6 +15,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { ProductService } from '../../service/product.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { SessionFormStorageService } from '../../../../shared/services/session-form-storage.service';
+import { TabService } from '../../../../shared/services/tab.service';
 
 @Component({
   selector: 'rentafit-registration',
@@ -27,8 +29,13 @@ export class Registration implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private service = inject(ProductService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
   private el = inject(ElementRef);
+  private formStorage = inject(SessionFormStorageService);
+  private tabService = inject(TabService);
+  private readonly formType = 'rental-product';
+  private draftId = this.generateDraftId();
 
   form: FormGroup;
   isReadOnly = signal(false);
@@ -74,6 +81,11 @@ export class Registration implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    const draftIdParam = this.route.snapshot.queryParams['draftId'];
+    if (draftIdParam) {
+      this.draftId = draftIdParam;
+    }
+
     // Inicializa campos vazios para evitar undefined
     const initialData: Partial<IRentalItem> = {
       name: '', categoryId: '', categoryName: '', size: '', color: '', brand: '',
@@ -82,6 +94,29 @@ export class Registration implements OnInit, OnDestroy {
       createdAt: '', updatedAt: ''
     };
     this.form.patchValue(initialData);
+    this.restoreDraft();
+
+    this.form.valueChanges
+      .pipe(debounceTime(800), takeUntil(this.destroy$))
+      .subscribe(() => this.persistDraft());
+  }
+
+  private generateDraftId(): string {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID();
+    }
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+  }
+
+  private persistDraft(): void {
+    this.formStorage.saveDraft(this.formType, this.draftId, this.form.getRawValue());
+  }
+
+  private restoreDraft(): void {
+    const draft = this.formStorage.loadDraft<Partial<IRentalItem>>(this.formType, this.draftId);
+    if (draft) {
+      this.form.patchValue(draft);
+    }
   }
 
   ngOnDestroy(): void {
@@ -172,6 +207,8 @@ export class Registration implements OnInit, OnDestroy {
     const rentalItem: IRentalItem = this.form.getRawValue();
     this.service.saveRentalItem(rentalItem).pipe(takeUntil(this.destroy$)).subscribe({
       next: (saved) => {
+        this.formStorage.clearDraft(this.formType, this.draftId);
+        this.tabService.closeActiveIf('/product/registration');
         this.form.patchValue(saved);
         this.isReadOnly.set(true);
         this.form.disable();

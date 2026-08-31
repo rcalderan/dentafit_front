@@ -44,7 +44,7 @@ export const routes: Routes = [
                 path: 'customer/registration',
                 loadComponent: () => import('./domains/customer/features/registration/registration.component').then(m => m.RegistrationComponent),
                 canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Clientes' }
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Clientes', tabGroup: 'customer' }
             },
             {
                 path: 'customer/legacy',
@@ -56,13 +56,13 @@ export const routes: Routes = [
                 path: 'product/registration',
                 loadComponent: () => import('./domains/product/components/rent-registration/rent-registration.component').then(m => m.Registration),
                 canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Cadastro de Produtos' }
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Cadastro de Produtos', tabGroup: 'product' }
             },
             {
                 path: 'product/retail-registration',
                 loadComponent: () => import('./domains/product/components/retail-registration/retail-registration.component').then(m => m.RetailRegistration),
                 canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Produtos para Venda' }
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Produtos para Venda', tabGroup: 'product' }
             },
             {
                 path: 'product/search',
@@ -79,7 +79,7 @@ export const routes: Routes = [
                 path: 'rental/new',
                 loadComponent: () => import('./domains/rental/features/new-rental/new-rental.component').then(m => m.NewRental),
                 canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Nova Locação' }
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Nova Locação', tabGroup: 'rental' }
             },
             {
                 path: 'rental/management',
@@ -139,7 +139,7 @@ export const routes: Routes = [
                 path: 'sales/new',
                 loadComponent: () => import('./domains/sales/features/new-sale/new-sale.component').then(m => m.NewSale),
                 canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Nova Venda' }
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Nova Venda', tabGroup: 'sales' }
             },
             {
                 path: 'sales/management',
@@ -169,31 +169,31 @@ export const routes: Routes = [
                 path: 'finance/dashboard',
                 loadComponent: () => import('./domains/finance/features/dashboard/dashboard').then(m => m.Dashboard),
                 canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Financeiro' }
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Financeiro', tabGroup: 'admin' }
             },
             {
                 path: 'finance/nfse-backup',
                 loadComponent: () => import('./domains/finance/features/nfse-upload/nfse-upload').then(m => m.NfseUpload),
                 canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'NFS-e Backup' }
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'NFS-e Backup', tabGroup: 'admin' }
             },
             {
                 path: 'admin/user-management',
                 loadComponent: () => import('./domains/admin/features/user-management/user-management.component').then(m => m.UserManagementComponent),
                 canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Gerenciamento de Usuários' }
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Gerenciamento de Usuários', tabGroup: 'admin' }
             },
             {
                 path: 'admin/cnpj',
                 loadComponent: () => import('./domains/admin/features/cnpj/cnpj.component').then(m => m.CnpjComponent),
                 canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'CNPJ' }
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'CNPJ', tabGroup: 'admin' }
             },
             {
                 path: 'admin/system',
                 loadComponent: () => import('./domains/admin/features/system/system.component').then(m => m.SystemComponent),
                 canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Sistema' }
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Sistema', tabGroup: 'admin' }
             }
         ]
     },

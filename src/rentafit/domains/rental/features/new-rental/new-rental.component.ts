@@ -32,6 +32,8 @@ import {
 import { RentalContractService } from '../../service/rental-contract.service';
 import { AutosaveService, AutosaveStatus } from '../../service/autosave.service';
 import { NfseEmissionComponent } from '../../../finance/features/nfse-emission/nfse-emission.component';
+import { SessionFormStorageService } from '../../../../shared/services/session-form-storage.service';
+import { TabService } from '../../../../shared/services/tab.service';
 import { IFiscalContext, IFiscalDocument } from '../../../finance/data/fiscal-document.types';
 
 export { ContractStatus, PaymentMethod, PaymentStatus };
@@ -76,7 +78,11 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
   private readonly productService = inject(ProductService);
   private readonly rentalContractService = inject(RentalContractService);
   private readonly autosaveService = inject(AutosaveService<IRentalContractCreateRequest, IRentalContractResponse>);
+  private readonly formStorage = inject(SessionFormStorageService);
+  private readonly tabService = inject(TabService);
   private readonly route = inject(ActivatedRoute);
+  private readonly formType = 'rental-contract';
+  private draftId = this.generateDraftId();
 
   // ── Autosave ──
   autosaveStatus: AutosaveStatus = 'idle';
@@ -204,6 +210,11 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    const draftIdParam = this.route.snapshot.queryParams['draftId'];
+    if (draftIdParam) {
+      this.draftId = draftIdParam;
+    }
+
     this.loadActiveAttendants();
     // Subscribe to autosave status changes for UI feedback
     this.autosaveSubscription = this.autosaveService.status$.subscribe(status => {
@@ -214,6 +225,8 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     const idParam = this.route.snapshot.queryParams['id'];
     if (idParam) {
       this.loadContractById(idParam);
+    } else {
+      this.restoreDraft();
     }
 
     const currentYear = new Date().getFullYear();
@@ -222,16 +235,78 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
       next: sets => {
         sets.forEach(set => set.forEach(d => this.holidays.add(d)));
         this.autoFillDates();
+        this.persistDraftAfterRestore();
       },
       // Silent failure: emergency cache already applied inside the service;
       // autoFillDates still runs so the form isn't stuck.
-      error: () => this.autoFillDates(),
+      error: () => {
+        this.autoFillDates();
+        this.persistDraftAfterRestore();
+      },
     });
+
+    this.draftInterval = setInterval(() => this.persistDraft(), 3000);
+  }
+
+  private generateDraftId(): string {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID();
+    }
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+  }
+
+  private createDraftSnapshot(): object {
+    return {
+      contract: this.contract,
+      customerUuid: this.customerUuid,
+      customerFound: this.customerFound,
+      customerSearchQuery: this.customerSearchQuery,
+      contractLookupLegacyId: this.contractLookupLegacyId,
+      contractId: this.contractId,
+      parentContractId: this.parentContractId,
+      replacedByContractId: this.replacedByContractId,
+      autosaveEmployeeId: this.autosaveEmployeeId,
+    };
+  }
+
+  private applyDraftSnapshot(draft: any): void {
+    if (!draft || typeof draft !== 'object') return;
+    if (draft.contract) this.contract = { ...this.createEmptyContract(), ...draft.contract };
+    if (draft.customerUuid !== undefined) this.customerUuid = draft.customerUuid;
+    if (draft.customerFound !== undefined) this.customerFound = draft.customerFound;
+    if (draft.customerSearchQuery !== undefined) this.customerSearchQuery = draft.customerSearchQuery;
+    if (draft.contractLookupLegacyId !== undefined) this.contractLookupLegacyId = draft.contractLookupLegacyId;
+    if (draft.contractId !== undefined) this.contractId = draft.contractId;
+    if (draft.parentContractId !== undefined) this.parentContractId = draft.parentContractId;
+    if (draft.replacedByContractId !== undefined) this.replacedByContractId = draft.replacedByContractId;
+    if (draft.autosaveEmployeeId !== undefined) this.autosaveEmployeeId = draft.autosaveEmployeeId;
+  }
+
+  private persistDraft(): void {
+    this.formStorage.saveDraft(this.formType, this.draftId, this.createDraftSnapshot());
+  }
+
+  private restoreDraft(): void {
+    const draft = this.formStorage.loadDraft<object>(this.formType, this.draftId);
+    if (draft) {
+      this.applyDraftSnapshot(draft);
+    }
+  }
+
+  /** Persist the draft once after holidays/dates are resolved so the snapshot is fresh. */
+  private persistDraftAfterRestore(): void {
+    this.persistDraft();
   }
 
   ngOnDestroy(): void {
     this.autosaveSubscription?.unsubscribe();
+    if (this.draftInterval) {
+      clearInterval(this.draftInterval);
+      this.draftInterval = null;
+    }
   }
+
+  private draftInterval: ReturnType<typeof setInterval> | null = null;
 
   // ==================== Helpers ====================
 
@@ -1013,7 +1088,8 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
       .subscribe({
         next: (response) => {
           this.contract.situacao = ContractStatus.DRAFT;
-          return this.mapResponseToContract(response);
+          this.mapResponseToContract(response);
+          this.formStorage.clearDraft(this.formType, this.draftId);
         },
         error: (err: unknown) => {
           this.serverError = err instanceof Error ? err.message : 'Erro ao salvar proposta.';

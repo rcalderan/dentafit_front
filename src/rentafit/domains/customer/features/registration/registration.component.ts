@@ -2,12 +2,14 @@ import { Component, ElementRef, inject, OnInit, signal, effect, computed, OnDest
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, Subject } from 'rxjs';
-import { switchMap, tap, takeUntil, catchError, finalize } from 'rxjs/operators';
+import { switchMap, tap, takeUntil, catchError, finalize, debounceTime } from 'rxjs/operators';
 import { ICustomer } from '../../data/Customer.interface';
 import { CustomerService } from '../../service/customer.service';
 import { AddressService } from '../../service/address.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { HttpErrorResponse } from '@angular/common/http';
+import { SessionFormStorageService } from '../../../../shared/services/session-form-storage.service';
+import { TabService } from '../../../../shared/services/tab.service';
 
 export function cpfCnpjValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value?.replace(/[^\d]+/g, '');
@@ -78,8 +80,12 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   private addressService = inject(AddressService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private formStorage = inject(SessionFormStorageService);
+  private tabService = inject(TabService);
   private readonly maxPhones = 5;
   private readonly phonePattern = /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/;
+  private readonly formType = 'customer';
+  private draftId = this.generateDraftId();
   private readonly phoneValidator = (control: AbstractControl): ValidationErrors | null => {
     const value = (control.value ?? '').toString().trim();
     if (!value) return null;
@@ -154,6 +160,47 @@ export class RegistrationComponent implements OnInit, OnDestroy {
         this.form.patchValue({ ...customer });
       }
     });
+
+    this.form.valueChanges
+      .pipe(debounceTime(800), takeUntil(this.destroy$))
+      .subscribe(() => this.persistDraft());
+  }
+
+  private generateDraftId(): string {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID();
+    }
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+  }
+
+  private persistDraft(): void {
+    this.formStorage.saveDraft(this.formType, this.draftId, this.form.getRawValue());
+  }
+
+  private restoreDraft(): void {
+    const draft = this.formStorage.loadDraft<ICustomer>(this.formType, this.draftId);
+    if (draft) {
+      this.setPhones(draft.phones ?? []);
+      this.form.setValue({
+        id: draft.id ?? '',
+        legacyId: draft.legacyId ?? '',
+        name: draft.name ?? '',
+        document: draft.document ?? '',
+        isAuthenticated: draft.isAuthenticated ?? false,
+        address: {
+          street: draft.address?.street ?? '',
+          neighborhood: draft.address?.neighborhood ?? '',
+          city: draft.address?.city ?? '',
+          state: draft.address?.state ?? '',
+          zipCode: draft.address?.zipCode ?? '',
+        },
+        phones: draft.phones ?? [''],
+        email: draft.email ?? '',
+        number: draft.number ?? '',
+        complement: draft.complement ?? '',
+        notes: draft.notes ?? '',
+      });
+    }
   }
 
   getControlStatus(controlName: string, groupName?: string): 'VALID' | 'INVALID' | 'PENDING' | 'NONE' {
@@ -286,6 +333,11 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    const draftIdParam = this.route.snapshot.queryParams['draftId'];
+    if (draftIdParam) {
+      this.draftId = draftIdParam;
+    }
+
     this.customer = {
       name: "",
       document: "",
@@ -305,6 +357,7 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     };
 
     this.setPhones(this.customer.phones);
+    this.restoreDraft();
 
     const legacyIdParam = this.route.snapshot.queryParams['legacyId'];
     const idParam = this.route.snapshot.queryParams['id'];
@@ -351,6 +404,8 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       {
         next: (customer: ICustomer) => {
           console.log('Cliente Salvo:', customer);
+          this.formStorage.clearDraft(this.formType, this.draftId);
+          this.tabService.closeActiveIf('/customer/registration');
           this.loadCustomerForm(customer);
           this.successMessage.set('Cliente salvo com sucesso!');
         },

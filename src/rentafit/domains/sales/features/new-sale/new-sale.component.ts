@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -25,6 +25,8 @@ import {
 } from '../../../rental/features/employee-verify/employee-verify.component';
 import { NfeEmissionComponent } from '../../../finance/features/nfe-emission/nfe-emission.component';
 import { IFiscalContext, IFiscalDocument } from '../../../finance/data/fiscal-document.types';
+import { SessionFormStorageService } from '../../../../shared/services/session-form-storage.service';
+import { TabService } from '../../../../shared/services/tab.service';
 
 /** Métodos de pagamento e seus labels (reutilizados do rental) */
 const PAYMENT_METHOD_LABELS: Record<PaymentMethodApi, string> = {
@@ -42,12 +44,17 @@ const PAYMENT_METHOD_LABELS: Record<PaymentMethodApi, string> = {
   templateUrl: './new-sale.component.html',
   styleUrl: './new-sale.component.css',
 })
-export class NewSale implements OnInit {
+export class NewSale implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly salesService = inject(SalesOrderService);
   private readonly customerService = inject(CustomerService);
   private readonly productService = inject(ProductService);
+  private readonly formStorage = inject(SessionFormStorageService);
+  private readonly tabService = inject(TabService);
+  private readonly formType = 'sales-order';
+  private draftId = this.generateDraftId();
+  private draftInterval: ReturnType<typeof setInterval> | null = null;
 
   // ─── State ──────────────────────────────────────────────────────────────────
 
@@ -242,12 +249,85 @@ export class NewSale implements OnInit {
 
   // ─── Init ───────────────────────────────────────────────────────────────────
 
+  ngOnDestroy(): void {
+    if (this.draftInterval) {
+      clearInterval(this.draftInterval);
+      this.draftInterval = null;
+    }
+  }
+
   ngOnInit(): void {
+    const draftIdParam = this.route.snapshot.queryParams['draftId'];
+    if (draftIdParam) {
+      this.draftId = draftIdParam;
+    }
+
     const orderId = this.route.snapshot.queryParamMap.get('id');
     if (orderId) {
       this.loadOrder(orderId);
+    } else {
+      this.restoreDraft();
     }
     this.loadRetailProducts();
+
+    this.draftInterval = setInterval(() => this.persistDraft(), 3000);
+  }
+
+  private generateDraftId(): string {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID();
+    }
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+  }
+
+  private createDraftSnapshot(): object {
+    return {
+      order: this.order(),
+      selectedCustomer: this.selectedCustomer(),
+      customerSearch: this.customerSearch,
+      orderNotes: this.orderNotes,
+      orderDiscount: this.orderDiscount,
+      itemQuantity: this.itemQuantity,
+      itemDiscount: this.itemDiscount,
+      itemNeedsTailoring: this.itemNeedsTailoring,
+      itemTailoringNotes: this.itemTailoringNotes,
+      paymentMethod: this.paymentMethod,
+      paymentValue: this.paymentValue,
+      paymentDate: this.paymentDate,
+      paymentInstallment: this.paymentInstallment,
+      paymentInstallments: this.paymentInstallments,
+      paymentStatus: this.paymentStatus,
+    };
+  }
+
+  private applyDraftSnapshot(draft: any): void {
+    if (!draft || typeof draft !== 'object') return;
+    if (draft.order !== undefined) this.order.set(draft.order);
+    if (draft.selectedCustomer !== undefined) this.selectedCustomer.set(draft.selectedCustomer);
+    if (draft.customerSearch !== undefined) this.customerSearch = draft.customerSearch;
+    if (draft.orderNotes !== undefined) this.orderNotes = draft.orderNotes;
+    if (draft.orderDiscount !== undefined) this.orderDiscount = draft.orderDiscount;
+    if (draft.itemQuantity !== undefined) this.itemQuantity = draft.itemQuantity;
+    if (draft.itemDiscount !== undefined) this.itemDiscount = draft.itemDiscount;
+    if (draft.itemNeedsTailoring !== undefined) this.itemNeedsTailoring = draft.itemNeedsTailoring;
+    if (draft.itemTailoringNotes !== undefined) this.itemTailoringNotes = draft.itemTailoringNotes;
+    if (draft.paymentMethod !== undefined) this.paymentMethod = draft.paymentMethod;
+    if (draft.paymentValue !== undefined) this.paymentValue = draft.paymentValue;
+    if (draft.paymentDate !== undefined) this.paymentDate = draft.paymentDate;
+    if (draft.paymentInstallment !== undefined) this.paymentInstallment = draft.paymentInstallment;
+    if (draft.paymentInstallments !== undefined) this.paymentInstallments = draft.paymentInstallments;
+    if (draft.paymentStatus !== undefined) this.paymentStatus = draft.paymentStatus;
+  }
+
+  private persistDraft(): void {
+    this.formStorage.saveDraft(this.formType, this.draftId, this.createDraftSnapshot());
+  }
+
+  private restoreDraft(): void {
+    const draft = this.formStorage.loadDraft<object>(this.formType, this.draftId);
+    if (draft) {
+      this.applyDraftSnapshot(draft);
+    }
   }
 
   private loadOrder(id: string): void {
@@ -525,6 +605,7 @@ export class NewSale implements OnInit {
       ).subscribe({
         next: (updated) => {
           this.order.set(updated);
+          this.formStorage.clearDraft(this.formType, this.draftId);
           this.showSuccess('Pedido atualizado');
         },
         error: (err) => this.errorMsg.set(err.message),
@@ -542,6 +623,7 @@ export class NewSale implements OnInit {
       ).subscribe({
         next: (created) => {
           this.order.set(created);
+          this.formStorage.clearDraft(this.formType, this.draftId);
           this.router.navigate(['/sales/new'], {
             queryParams: { id: created.id },
           });

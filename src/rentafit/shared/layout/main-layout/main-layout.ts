@@ -5,6 +5,8 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../domains/auth/services/auth.service';
 import { UserRole } from '../../../domains/auth/data/user.model';
 import { UiVariantService } from '../../services/ui-variant.service';
+import { TabService } from '../../services/tab.service';
+import { TabGroup } from '../../data/tab.model';
 
 @Component({
   selector: 'rentafit-main-layout',
@@ -18,6 +20,7 @@ export class MainLayout {
   private readonly activatedRoute = inject(ActivatedRoute);
   protected readonly authService = inject(AuthService);
   protected readonly uiVariant = inject(UiVariantService);
+  protected readonly tabService = inject(TabService);
 
   protected readonly isMobile = this.uiVariant.isMobile;
   protected readonly isSidebarVisible = signal(!this.isMobile());
@@ -29,6 +32,10 @@ export class MainLayout {
   protected readonly isAdminSubmenuOpen = signal(false);
   protected readonly showFab = signal(true);
   protected readonly pageTitle = signal('Dashboard');
+
+  // Expose tab state for the template.
+  protected readonly tabs = this.tabService.tabs;
+  protected readonly activeTabId = this.tabService.activeTabId;
 
   // Expõe UserRole para uso no template
   protected readonly UserRole = UserRole;
@@ -56,7 +63,7 @@ export class MainLayout {
   protected toggleSidebar(): void {
     this.isSidebarVisible.update(visible => !visible);
   }
-  
+
   public closeAllSubmenus(): void {
     this.isCustomerSubmenuOpen.set(false);
     this.isProductSubmenuOpen.set(false);
@@ -100,6 +107,23 @@ export class MainLayout {
     const nextState = !this.isAdminSubmenuOpen();
     this.closeAllSubmenus();
     this.isAdminSubmenuOpen.set(nextState);
+  }
+
+  /** Open a new tab for the given route and close mobile submenus. */
+  protected openTab(path: string, title: string, group: TabGroup): void {
+    this.closeAllSubmenus();
+    this.tabService.open(path, title, group);
+  }
+
+  /** Activate an existing tab. */
+  protected activateTab(tabId: string): void {
+    this.tabService.activate(tabId);
+  }
+
+  /** Close a tab without triggering navigation side effects. */
+  protected closeTab(event: MouseEvent, tabId: string): void {
+    event.stopPropagation();
+    this.tabService.close(tabId);
   }
 
   protected logout(): void {

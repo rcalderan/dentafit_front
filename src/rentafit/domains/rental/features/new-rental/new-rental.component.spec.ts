@@ -13,6 +13,9 @@ import { PaymentMethod } from '../../data/payment-method.enum';
 import { PaymentStatus } from '../../data/payment-status.enum';
 import { IProductCatalog } from '../../data/product-catalog.interface';
 import { NewRental } from './new-rental.component';
+import { SessionFormStorageService } from '../../../../shared/services/session-form-storage.service';
+import { TabService } from '../../../../shared/services/tab.service';
+import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 
 const product: IProductCatalog = {
   _id: 10,
@@ -56,6 +59,9 @@ describe('NewRental item attendant', () => {
         { provide: HolidayService, useValue: { getHolidays: vi.fn().mockReturnValue(of(new Set<string>())) } },
         { provide: RentalContractService, useValue: {} },
         { provide: AutosaveService, useValue: { status$: of('idle'), lastError: null } },
+        { provide: SessionFormStorageService, useValue: { saveDraft: vi.fn(), loadDraft: vi.fn().mockReturnValue(null), clearDraft: vi.fn() } },
+        { provide: TabService, useValue: { closeActiveIf: vi.fn() } },
+        { provide: APP_CONFIG, useValue: { appName: 'RentAFit Test', apiBaseUrl: '', s3BucketUrl: '' } },
       ],
     });
 

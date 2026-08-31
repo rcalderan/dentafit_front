@@ -7,6 +7,9 @@ import { CustomerService } from '../../service/customer.service';
 import { AddressService } from '../../service/address.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ICustomer } from '../../data/Customer.interface';
+import { SessionFormStorageService } from '../../../../shared/services/session-form-storage.service';
+import { TabService } from '../../../../shared/services/tab.service';
+import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 
 describe('RegistrationComponent', () => {
   let customerService: {
@@ -72,7 +75,10 @@ describe('RegistrationComponent', () => {
         { provide: CustomerService, useValue: customerService },
         { provide: AddressService, useValue: addressService },
         { provide: Router, useValue: router },
-        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} } } }
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} } } },
+        { provide: SessionFormStorageService, useValue: { saveDraft: vi.fn(), loadDraft: vi.fn().mockReturnValue(null), clearDraft: vi.fn(), listDraftIds: vi.fn().mockReturnValue([]), clearAllDraftsOfType: vi.fn() } },
+        { provide: TabService, useValue: { closeActiveIf: vi.fn() } },
+        { provide: APP_CONFIG, useValue: { appName: 'RentAFit Test', apiBaseUrl: '', s3BucketUrl: '' } }
       ]
     }).compileComponents();
   });
