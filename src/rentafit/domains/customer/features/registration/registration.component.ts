@@ -2,7 +2,7 @@ import { Component, ElementRef, inject, OnInit, signal, effect, computed, OnDest
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, Subject } from 'rxjs';
-import { switchMap, tap, takeUntil, catchError, finalize, debounceTime } from 'rxjs/operators';
+import { switchMap, tap, takeUntil, catchError, finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ICustomer } from '../../data/Customer.interface';
 import { CustomerService } from '../../service/customer.service';
 import { AddressService } from '../../service/address.service';
@@ -163,7 +163,29 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
     this.form.valueChanges
       .pipe(debounceTime(800), takeUntil(this.destroy$))
-      .subscribe(() => this.persistDraft());
+      .subscribe(() => {
+        this.persistDraft();
+        this.updateTabTitle(this.form.getRawValue().name);
+      });
+
+    effect(() => {
+      const customer = this.customerData();
+      this.updateTabTitle(customer?.name ?? this.form.getRawValue().name);
+    });
+  }
+
+  private updateTabTitle(name: string | null | undefined): void {
+    const initials = this.getInitials(name);
+    const title = initials ? `Cli: ${initials}` : 'Clientes';
+    const tabId = this.tabService.getTabId('/customer/registration', this.draftId);
+    this.tabService.updateTitle(tabId, title);
+  }
+
+  private getInitials(name: string | null | undefined): string | null {
+    if (!name) return null;
+    const parts = name.trim().split(/\s+/);
+    const initials = parts.slice(0, 3).map(p => p[0]?.toUpperCase() ?? '').join('');
+    return initials || null;
   }
 
   private generateDraftId(): string {
@@ -333,31 +355,25 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const draftIdParam = this.route.snapshot.queryParams['draftId'];
-    if (draftIdParam) {
-      this.draftId = draftIdParam;
-    }
-
-    this.customer = {
-      name: "",
-      document: "",
-      email: "",
-      isAuthenticated: false,
-      notes: "",
-      address: {
-        zipCode: "",
-        street: "",
-        neighborhood: "",
-        city: "",
-        state: ""
-      },
-      number: "",
-      complement: "",
-      phones: [],
-    };
-
+    this.initCustomer();
     this.setPhones(this.customer.phones);
     this.restoreDraft();
+
+    this.route.queryParams
+      .pipe(
+        takeUntil(this.destroy$),
+        distinctUntilChanged((a, b) => a['draftId'] === b['draftId'])
+      )
+      .subscribe(params => {
+        const newDraftId = params['draftId'];
+        if (newDraftId && newDraftId !== this.draftId) {
+          this.draftId = newDraftId;
+          this.initCustomer();
+          this.setPhones(this.customer.phones);
+          this.restoreDraft();
+          this.updateTabTitle(this.form.getRawValue().name);
+        }
+      });
 
     const legacyIdParam = this.route.snapshot.queryParams['legacyId'];
     const idParam = this.route.snapshot.queryParams['id'];
@@ -384,6 +400,26 @@ export class RegistrationComponent implements OnInit, OnDestroy {
         this.errorMessage.set('Erro ao buscar endereço para este CEP.');
       }
     });
+  }
+
+  private initCustomer(): void {
+    this.customer = {
+      name: "",
+      document: "",
+      email: "",
+      isAuthenticated: false,
+      notes: "",
+      address: {
+        zipCode: "",
+        street: "",
+        neighborhood: "",
+        city: "",
+        state: ""
+      },
+      number: "",
+      complement: "",
+      phones: [],
+    };
   }
 
   ngOnDestroy(): void {

@@ -3,6 +3,7 @@ import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+const emptyQueryParams = of({});
 import { RetailRegistration } from './retail-registration.component';
 import { ProductService } from '../../service/product.service';
 import { CategoryService } from '../../service/category.service';
@@ -53,9 +54,9 @@ describe('RetailRegistration', () => {
         { provide: ProductService, useValue: productService },
         { provide: CategoryService, useValue: { getByType: vi.fn().mockReturnValue(of([])) } },
         { provide: Router, useValue: router },
-        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} }, queryParams: emptyQueryParams } },
         { provide: SessionFormStorageService, useValue: { saveDraft: vi.fn(), loadDraft: vi.fn().mockReturnValue(null), clearDraft: vi.fn() } },
-        { provide: TabService, useValue: { closeActiveIf: vi.fn() } },
+        { provide: TabService, useValue: { closeActiveIf: vi.fn(), getTabId: vi.fn(), updateTitle: vi.fn() } },
         // Stock (child) injeta StockService/AuthService que dependem de HttpClient + APP_CONFIG
         provideHttpClient(),
         provideHttpClientTesting(),

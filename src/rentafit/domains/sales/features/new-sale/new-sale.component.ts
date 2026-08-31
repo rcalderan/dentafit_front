@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
+import { Component, effect, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable } from 'rxjs';
-import { finalize, switchMap } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { distinctUntilChanged, finalize, switchMap, takeUntil } from 'rxjs/operators';
 import { SalesOrderService } from '../../service/sales-order.service';
 import { CustomerService, ICustomerPageResponse } from '../../../customer/service/customer.service';
 import { ProductService } from '../../../product/service/product.service';
@@ -55,6 +55,7 @@ export class NewSale implements OnInit, OnDestroy {
   private readonly formType = 'sales-order';
   private draftId = this.generateDraftId();
   private draftInterval: ReturnType<typeof setInterval> | null = null;
+  private destroy$ = new Subject<void>();
 
   // ─── State ──────────────────────────────────────────────────────────────────
 
@@ -112,6 +113,11 @@ export class NewSale implements OnInit, OnDestroy {
   protected readonly isDraft = computed(() => {
     const o = this.order();
     return !o || o.status === 'DRAFT';
+  });
+
+  private readonly titleEffect = effect(() => {
+    const order = this.order();
+    this.updateTabTitle(order);
   });
 
   protected readonly canConfirm = computed(() => {
@@ -254,13 +260,25 @@ export class NewSale implements OnInit, OnDestroy {
       clearInterval(this.draftInterval);
       this.draftInterval = null;
     }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ngOnInit(): void {
-    const draftIdParam = this.route.snapshot.queryParams['draftId'];
-    if (draftIdParam) {
-      this.draftId = draftIdParam;
-    }
+    this.route.queryParams
+      .pipe(
+        takeUntil(this.destroy$),
+        distinctUntilChanged((a, b) => a['draftId'] === b['draftId'])
+      )
+      .subscribe(params => {
+        const newDraftId = params['draftId'];
+        if (newDraftId && newDraftId !== this.draftId) {
+          this.draftId = newDraftId;
+          this.resetOrderState();
+          this.restoreDraft();
+          this.updateTabTitle();
+        }
+      });
 
     const orderId = this.route.snapshot.queryParamMap.get('id');
     if (orderId) {
@@ -271,6 +289,14 @@ export class NewSale implements OnInit, OnDestroy {
     this.loadRetailProducts();
 
     this.draftInterval = setInterval(() => this.persistDraft(), 3000);
+  }
+
+  private resetOrderState(): void {
+    this.order.set(null);
+    this.selectedCustomer.set(null);
+    this.customerSearch = '';
+    this.orderNotes = '';
+    this.orderDiscount = 0;
   }
 
   private generateDraftId(): string {
@@ -330,6 +356,12 @@ export class NewSale implements OnInit, OnDestroy {
     }
   }
 
+  private updateTabTitle(order?: ISalesOrder | null): void {
+    const label = order?.legacyId ? `Venda ${order.legacyId}` : 'Nova Venda';
+    const tabId = this.tabService.getTabId('/sales/new', this.draftId);
+    this.tabService.updateTitle(tabId, label);
+  }
+
   private loadOrder(id: string): void {
     this.isLoading.set(true);
     this.salesService.getById(id).pipe(
@@ -346,6 +378,7 @@ export class NewSale implements OnInit, OnDestroy {
             document: order.customerDocument ?? '',
           });
         }
+        this.updateTabTitle();
       },
       error: (err) => this.errorMsg.set(err.message),
     });

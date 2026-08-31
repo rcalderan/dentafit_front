@@ -4,6 +4,7 @@ import { IRentalPayment } from './rental-payment.interface';
 
 export interface INewRentalContract {
   _id?: number;
+  legacyId?: string;
   tipo: number;
   cliente: string;
   clienteNome?: string;

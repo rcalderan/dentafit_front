@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, effect, OnInit, inject, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -10,6 +10,7 @@ import { ReturnFacadeService } from '../../service/return-facade.service';
 import { ReturnApiPort } from './data/return-api.port';
 import { ReturnApiHttpService } from './service/return-api-http.service';
 import { ReturnItemModel, ReturnAccessoryModel } from './data/return.model';
+import { TabService } from '../../../../shared/services/tab.service';
 
 @Component({
   selector: 'rentafit-return',
@@ -26,8 +27,15 @@ export class ReturnComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly facade = inject(ReturnFacadeService);
+  private readonly tabService = inject(TabService);
 
   readonly summary = this.facade.summary;
+
+  private readonly titleEffect = effect(() => {
+    const s = this.summary();
+    const label = s?.legacyId ? `Devolução ${s.legacyId}` : 'Devolução';
+    this.tabService.updateActiveTitle(label);
+  });
   readonly loading = this.facade.loading;
   readonly error = this.facade.error;
   readonly saving = this.facade.saving;

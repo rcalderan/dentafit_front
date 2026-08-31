@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, EMPTY, throwError } from 'rxjs';
+const emptyQueryParams = of({});
 import { vi } from 'vitest';
 import { RegistrationComponent } from './registration.component';
 import { CustomerService } from '../../service/customer.service';
@@ -20,6 +21,7 @@ describe('RegistrationComponent', () => {
   };
   let addressService: { searchByZipCode: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
+  let tabServiceMock: { closeActiveIf: ReturnType<typeof vi.fn>; getTabId: ReturnType<typeof vi.fn>; updateTitle: ReturnType<typeof vi.fn> };
 
   const buildValidForm = (component: RegistrationComponent) => {
     component.form.patchValue({
@@ -68,6 +70,7 @@ describe('RegistrationComponent', () => {
     };
     addressService = { searchByZipCode: vi.fn().mockReturnValue(EMPTY) };
     router = { navigate: vi.fn() };
+    tabServiceMock = { closeActiveIf: vi.fn(), getTabId: vi.fn((path, draftId) => `${path}::${draftId}`), updateTitle: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [RegistrationComponent],
@@ -75,9 +78,9 @@ describe('RegistrationComponent', () => {
         { provide: CustomerService, useValue: customerService },
         { provide: AddressService, useValue: addressService },
         { provide: Router, useValue: router },
-        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} }, queryParams: emptyQueryParams } },
         { provide: SessionFormStorageService, useValue: { saveDraft: vi.fn(), loadDraft: vi.fn().mockReturnValue(null), clearDraft: vi.fn(), listDraftIds: vi.fn().mockReturnValue([]), clearAllDraftsOfType: vi.fn() } },
-        { provide: TabService, useValue: { closeActiveIf: vi.fn() } },
+        { provide: TabService, useValue: tabServiceMock },
         { provide: APP_CONFIG, useValue: { appName: 'RentAFit Test', apiBaseUrl: '', s3BucketUrl: '' } }
       ]
     }).compileComponents();
@@ -465,7 +468,7 @@ describe('RegistrationComponent', () => {
     customerService.getCustomerByLegacyId.mockReturnValue(of(customer));
 
     await TestBed.overrideProvider(ActivatedRoute, {
-      useValue: { snapshot: { queryParams: { legacyId: '42' } } }
+      useValue: { snapshot: { queryParams: { legacyId: '42' } }, queryParams: of({ legacyId: '42' }) }
     }).compileComponents();
 
     const fixture = TestBed.createComponent(RegistrationComponent);
@@ -481,7 +484,7 @@ describe('RegistrationComponent', () => {
     );
 
     await TestBed.overrideProvider(ActivatedRoute, {
-      useValue: { snapshot: { queryParams: { legacyId: '99' } } }
+      useValue: { snapshot: { queryParams: { legacyId: '99' } }, queryParams: of({ legacyId: '99' }) }
     }).compileComponents();
 
     const fixture = TestBed.createComponent(RegistrationComponent);
@@ -495,7 +498,7 @@ describe('RegistrationComponent', () => {
     customerService.getCustomerById.mockReturnValue(of(customer));
 
     await TestBed.overrideProvider(ActivatedRoute, {
-      useValue: { snapshot: { queryParams: { id: 'c-uuid-1' } } }
+      useValue: { snapshot: { queryParams: { id: 'c-uuid-1' } }, queryParams: of({ id: 'c-uuid-1' }) }
     }).compileComponents();
 
     const fixture = TestBed.createComponent(RegistrationComponent);
@@ -511,7 +514,7 @@ describe('RegistrationComponent', () => {
     );
 
     await TestBed.overrideProvider(ActivatedRoute, {
-      useValue: { snapshot: { queryParams: { id: 'c-invalido' } } }
+      useValue: { snapshot: { queryParams: { id: 'c-invalido' } }, queryParams: of({ id: 'c-invalido' }) }
     }).compileComponents();
 
     const fixture = TestBed.createComponent(RegistrationComponent);
@@ -693,5 +696,46 @@ describe('RegistrationComponent', () => {
 
     component.form.patchValue({ document: '11222333000181' });
     expect(component.form.get('document')?.valid).toBe(true);
+  });
+
+  //  tab persistence & dynamic titles
+
+  it('atualiza título da aba com iniciais do cliente', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    (component as any).updateTabTitle('João Carlos Mendonça');
+
+    expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
+      expect.stringContaining('/customer/registration'),
+      'Cli: JCM'
+    );
+  });
+
+  it('limita iniciais do título a 3 caracteres', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    (component as any).updateTabTitle('Ana Beatriz Carla Dias');
+
+    expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
+      expect.stringContaining('/customer/registration'),
+      'Cli: ABC'
+    );
+  });
+
+  it('mantém título genérico quando o nome está vazio', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    (component as any).updateTabTitle('');
+
+    expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
+      expect.stringContaining('/customer/registration'),
+      'Clientes'
+    );
   });
 });

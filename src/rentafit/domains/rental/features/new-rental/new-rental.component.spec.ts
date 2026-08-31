@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+const emptyQueryParams = of({});
 import { EmployeeService } from '../../../admin/service/employee.service';
 import { CustomerService } from '../../../customer/service/customer.service';
 import { ProductService } from '../../../product/service/product.service';
@@ -37,6 +38,7 @@ const product: IProductCatalog = {
 
 describe('NewRental item attendant', () => {
   let employeeService: { listActiveAttendants: ReturnType<typeof vi.fn> };
+  let tabServiceMock: { closeActiveIf: ReturnType<typeof vi.fn>; getTabId: ReturnType<typeof vi.fn>; updateTitle: ReturnType<typeof vi.fn> };
   let component: NewRental;
 
   beforeEach(() => {
@@ -49,10 +51,11 @@ describe('NewRental item attendant', () => {
         ]),
       ),
     };
+    tabServiceMock = { closeActiveIf: vi.fn(), getTabId: vi.fn((path, draftId) => `${path}::${draftId}`), updateTitle: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} }, queryParams: emptyQueryParams } },
         { provide: EmployeeService, useValue: employeeService },
         { provide: CustomerService, useValue: {} },
         { provide: ProductService, useValue: {} },
@@ -60,7 +63,7 @@ describe('NewRental item attendant', () => {
         { provide: RentalContractService, useValue: {} },
         { provide: AutosaveService, useValue: { status$: of('idle'), lastError: null } },
         { provide: SessionFormStorageService, useValue: { saveDraft: vi.fn(), loadDraft: vi.fn().mockReturnValue(null), clearDraft: vi.fn() } },
-        { provide: TabService, useValue: { closeActiveIf: vi.fn() } },
+        { provide: TabService, useValue: tabServiceMock },
         { provide: APP_CONFIG, useValue: { appName: 'RentAFit Test', apiBaseUrl: '', s3BucketUrl: '' } },
       ],
     });
@@ -161,5 +164,25 @@ describe('NewRental item attendant', () => {
     expect(component.activeAttendants).toEqual([]);
     expect(component.attendantsError).toBe('API indisponível');
     expect(component.attendantsLoading).toBe(false);
+  });
+
+  it('atualiza título da aba com legacyId do contrato', () => {
+    component.contract.legacyId = '2024-001';
+    (component as any).updateTabTitle();
+
+    expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
+      expect.stringContaining('/rental/new'),
+      'Contrato 2024-001'
+    );
+  });
+
+  it('mantém título genérico quando contrato não tem legacyId', () => {
+    component.contract.legacyId = undefined;
+    (component as any).updateTabTitle();
+
+    expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
+      expect.stringContaining('/rental/new'),
+      'Nova Locação'
+    );
   });
 });

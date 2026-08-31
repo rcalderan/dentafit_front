@@ -91,7 +91,7 @@ export const routes: Routes = [
                 path: 'rental/return/:contractId',
                 loadComponent: () => import('./domains/rental/features/return/return.component').then(m => m.ReturnComponent),
                 canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Devolução' }
+                data: { roles: [UserRole.ADMIN, UserRole.MANAGER, UserRole.EMPLOYEE], title: 'Devolução', tabGroup: 'rental' }
             },
             {
                 path: 'rental/daily-report',

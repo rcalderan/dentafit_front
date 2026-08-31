@@ -99,4 +99,20 @@ describe('TabService', () => {
     expect(parsed.length).toBe(1);
     expect(parsed[0].path).toBe('/customer/registration');
   });
+
+  it('updates a tab title without duplicating tabs', () => {
+    const draftId = service.open('/customer/registration', 'Clientes', 'customer');
+    const tabId = service.getTabId('/customer/registration', draftId);
+    service.updateTitle(tabId, 'Cli: JCM');
+    expect(service.tabs().length).toBe(1);
+    expect(service.tabs()[0].title).toBe('Cli: JCM');
+  });
+
+  it('keeps two instances of the same route as separate tabs', () => {
+    const draftA = service.open('/customer/registration', 'Clientes', 'customer');
+    const draftB = service.open('/customer/registration', 'Clientes', 'customer');
+    expect(service.tabs().length).toBe(2);
+    expect(draftA).not.toBe(draftB);
+    expect(service.tabs()[0].id).not.toBe(service.tabs()[1].id);
+  });
 });

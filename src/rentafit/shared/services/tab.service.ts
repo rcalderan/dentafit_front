@@ -102,6 +102,30 @@ export class TabService {
     this.schedulePersist();
   }
 
+  /** Build the canonical tab id for a route and draft. */
+  getTabId(path: string, draftId: string): string {
+    return buildTabId(path, draftId);
+  }
+
+  /** Update the displayed title of the currently active tab, if any. */
+  updateActiveTitle(title: string): void {
+    const activeId = this.activeTabId();
+    if (activeId) {
+      this.updateTitle(activeId, title);
+    }
+  }
+
+  /** Update the displayed title of a tab. */
+  updateTitle(tabId: string, title: string): void {
+    const tab = this.tabs().find(t => t.id === tabId);
+    if (!tab || tab.title === title) return;
+
+    this.tabs.update(current =>
+      this.sortTabs(current.map(t => (t.id === tabId ? { ...t, title } : t)))
+    );
+    this.schedulePersist();
+  }
+
   /** Close the active tab if it matches a saved entity (used after successful save). */
   closeActiveIf(path: string): void {
     const activeId = this.activeTabId();

@@ -2,7 +2,7 @@ import { Component, ElementRef, inject, OnDestroy, OnInit, signal } from '@angul
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject } from 'rxjs';
-import { takeUntil, debounceTime } from 'rxjs/operators';
+import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { CategoryModalComponent } from '../categories/category-modal.component';
 import {
@@ -81,10 +81,26 @@ export class Registration implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    const draftIdParam = this.route.snapshot.queryParams['draftId'];
-    if (draftIdParam) {
-      this.draftId = draftIdParam;
-    }
+    this.route.queryParams
+      .pipe(
+        takeUntil(this.destroy$),
+        distinctUntilChanged((a, b) => a['draftId'] === b['draftId'])
+      )
+      .subscribe(params => {
+        const newDraftId = params['draftId'];
+        if (newDraftId && newDraftId !== this.draftId) {
+          this.draftId = newDraftId;
+          this.form.reset();
+          const initialData: Partial<IRentalItem> = {
+            name: '', categoryId: '', categoryName: '', size: '', color: '', brand: '',
+            value: 0, description: '', status: 'AVAILABLE', notes: '',
+            condition: 'NEW', lastRentalDate: null, rentalCount: 0,
+            createdAt: '', updatedAt: ''
+          };
+          this.form.patchValue(initialData);
+          this.restoreDraft();
+        }
+      });
 
     // Inicializa campos vazios para evitar undefined
     const initialData: Partial<IRentalItem> = {
