@@ -10,6 +10,7 @@ import { AutosaveService } from '../../service/autosave.service';
 import { RentalContractService } from '../../service/rental-contract.service';
 import { ContractStatus } from '../../data/contract-status.enum';
 import { PaymentMethod } from '../../data/payment-method.enum';
+import { PaymentStatus } from '../../data/payment-status.enum';
 import { IProductCatalog } from '../../data/product-catalog.interface';
 import { NewRental } from './new-rental.component';
 
@@ -121,6 +122,11 @@ describe('NewRental item attendant', () => {
     expect(component.contract.itens[0].valor).toBe(175);
     expect(component.contract.itens[0].attendantEmployeeId).toBe('employee-1');
     expect(employeeService.listActiveAttendants).toHaveBeenCalledOnce();
+  });
+
+  it('não disponibiliza multa no seletor de status', () => {
+    expect(component.paymentStatusKeys).not.toContain(PaymentStatus.MULTA);
+    expect(component.paymentStatusKeys).not.toContain(PaymentStatus.CANCELLED);
   });
 
   it('usa dinheiro como forma padrão da primeira parcela', () => {

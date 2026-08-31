@@ -64,9 +64,9 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     [PaymentStatus.CANCELLED]: 'Cancelado',
     [PaymentStatus.MULTA]: 'Multa',
   };
-  // CANCELLED is set only via the dedicated chargeBack flow — never via the status dropdown
+  // CANCELLED is set only via chargeBack; MULTA remains unavailable until its workflow is implemented.
   paymentStatusKeys = Object.values(PaymentStatus).filter(
-    v => typeof v === 'number' && v !== PaymentStatus.CANCELLED
+    v => typeof v === 'number' && v !== PaymentStatus.CANCELLED && v !== PaymentStatus.MULTA
   ) as PaymentStatus[];
 
   // ── Services ──
