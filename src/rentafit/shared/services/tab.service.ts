@@ -36,7 +36,7 @@ export class TabService {
    * Open a new tab or activate an existing one for the given route.
    * Returns the generated draftId, which callers can use to persist form state.
    */
-  open(path: string, title: string, group: TabGroup, draftId?: string): string {
+  open(path: string, title: string, group: TabGroup, draftId?: string, queryParams: Record<string, string> = {}): string {
     const resolvedDraftId = draftId ?? generateId();
     const id = buildTabId(path, resolvedDraftId);
     const groupMeta = TAB_GROUPS[group];
@@ -47,10 +47,11 @@ export class TabService {
       return resolvedDraftId;
     }
 
+    const mergedQueryParams: Record<string, string> = { ...queryParams, draftId: resolvedDraftId };
     const newTab: ITab = {
       id,
       path,
-      queryParams: { draftId: resolvedDraftId },
+      queryParams: mergedQueryParams,
       title,
       group,
       groupOrder: groupMeta.order,
@@ -60,7 +61,7 @@ export class TabService {
     this.tabs.update(current => this.sortTabs([...current, newTab]));
     this.activate(id);
     this.router.navigate([path], {
-      queryParams: { draftId: resolvedDraftId },
+      queryParams: mergedQueryParams,
       replaceUrl: false,
     });
     this.schedulePersist();
@@ -197,7 +198,9 @@ export class TabService {
           return;
         }
 
-        const id = buildTabId(path, draftId ?? '_default_');
+        const queryParams: Record<string, string> = { ...tree.queryParams };
+        const resolvedDraftId = queryParams['draftId'] ?? queryParams['id'] ?? generateId();
+        const id = buildTabId(path, resolvedDraftId);
         const existing = this.tabs().find(t => t.id === id);
 
         if (existing) {
@@ -205,7 +208,7 @@ export class TabService {
         } else {
           // The user landed here without a tab — add one if the route belongs to a group.
           const title = this.resolveTitle(path);
-          this.open(path, title, group, draftId);
+          this.open(path, title, group, resolvedDraftId, queryParams);
         }
       });
   }

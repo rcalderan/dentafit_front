@@ -115,4 +115,30 @@ describe('TabService', () => {
     expect(draftA).not.toBe(draftB);
     expect(service.tabs()[0].id).not.toBe(service.tabs()[1].id);
   });
+
+  it('preserves external query params (e.g. id) when syncing from the router', () => {
+    const url = '/rental/new?id=contract-1';
+    (router as any).routerState.snapshot.url = url;
+    (router as any).parseUrl = (u: string) => ({
+      root: {
+        children: {
+          primary: {
+            segments: u.replace(/^\//, '').split('?')[0].split('/').filter(Boolean).map(path => ({ path })),
+          },
+        },
+      },
+      queryParams: { id: 'contract-1' },
+    });
+
+    routerEvents$.next(new NavigationEnd(1, url, url));
+
+    expect(service.tabs().length).toBe(1);
+    expect(service.tabs()[0].path).toBe('/rental/new');
+    expect(service.tabs()[0].queryParams['id']).toBe('contract-1');
+    expect(service.tabs()[0].queryParams['draftId']).toBe('contract-1');
+    expect(navigateSpy).toHaveBeenCalledWith(
+      ['/rental/new'],
+      expect.objectContaining({ queryParams: { id: 'contract-1', draftId: 'contract-1' } })
+    );
+  });
 });

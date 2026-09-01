@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { of, EMPTY, throwError } from 'rxjs';
-const emptyQueryParams = of({});
+import { of, EMPTY, throwError, BehaviorSubject } from 'rxjs';
 import { vi } from 'vitest';
 import { RegistrationComponent } from './registration.component';
 import { CustomerService } from '../../service/customer.service';
@@ -22,6 +21,8 @@ describe('RegistrationComponent', () => {
   let addressService: { searchByZipCode: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
   let tabServiceMock: { closeActiveIf: ReturnType<typeof vi.fn>; getTabId: ReturnType<typeof vi.fn>; updateTitle: ReturnType<typeof vi.fn> };
+  let queryParams$: BehaviorSubject<Record<string, string>>;
+  let draftStorage: Record<string, unknown>;
 
   const buildValidForm = (component: RegistrationComponent) => {
     component.form.patchValue({
@@ -71,6 +72,8 @@ describe('RegistrationComponent', () => {
     addressService = { searchByZipCode: vi.fn().mockReturnValue(EMPTY) };
     router = { navigate: vi.fn() };
     tabServiceMock = { closeActiveIf: vi.fn(), getTabId: vi.fn((path, draftId) => `${path}::${draftId}`), updateTitle: vi.fn() };
+    queryParams$ = new BehaviorSubject<Record<string, string>>({});
+    draftStorage = {};
 
     await TestBed.configureTestingModule({
       imports: [RegistrationComponent],
@@ -78,8 +81,8 @@ describe('RegistrationComponent', () => {
         { provide: CustomerService, useValue: customerService },
         { provide: AddressService, useValue: addressService },
         { provide: Router, useValue: router },
-        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} }, queryParams: emptyQueryParams } },
-        { provide: SessionFormStorageService, useValue: { saveDraft: vi.fn(), loadDraft: vi.fn().mockReturnValue(null), clearDraft: vi.fn(), listDraftIds: vi.fn().mockReturnValue([]), clearAllDraftsOfType: vi.fn() } },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} }, queryParams: queryParams$.asObservable() } },
+        { provide: SessionFormStorageService, useValue: { saveDraft: vi.fn((formType, draftId, data) => { draftStorage[draftId] = data; }), loadDraft: vi.fn((formType, draftId) => draftStorage[draftId] ?? null), clearDraft: vi.fn(), listDraftIds: vi.fn().mockReturnValue([]), clearAllDraftsOfType: vi.fn() } },
         { provide: TabService, useValue: tabServiceMock },
         { provide: APP_CONFIG, useValue: { appName: 'RentAFit Test', apiBaseUrl: '', s3BucketUrl: '' } }
       ]
@@ -700,7 +703,7 @@ describe('RegistrationComponent', () => {
 
   //  tab persistence & dynamic titles
 
-  it('atualiza título da aba com iniciais do cliente', () => {
+  it('atualiza título da aba com primeiro e último nome do cliente', () => {
     const fixture = TestBed.createComponent(RegistrationComponent);
     const component = fixture.componentInstance;
     fixture.detectChanges();
@@ -709,20 +712,20 @@ describe('RegistrationComponent', () => {
 
     expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
       expect.stringContaining('/customer/registration'),
-      'Cli: JCM'
+      'João Mendonça'
     );
   });
 
-  it('limita iniciais do título a 3 caracteres', () => {
+  it('mantém título com nome único quando há apenas uma palavra', () => {
     const fixture = TestBed.createComponent(RegistrationComponent);
     const component = fixture.componentInstance;
     fixture.detectChanges();
 
-    (component as any).updateTabTitle('Ana Beatriz Carla Dias');
+    (component as any).updateTabTitle('Madonna');
 
     expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
       expect.stringContaining('/customer/registration'),
-      'Cli: ABC'
+      'Madonna'
     );
   });
 
@@ -736,6 +739,39 @@ describe('RegistrationComponent', () => {
     expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
       expect.stringContaining('/customer/registration'),
       'Clientes'
+    );
+  });
+
+  it('restaura rascunho correto ao trocar de draftId', () => {
+    const draftA = 'draft-a';
+    const draftB = 'draft-b';
+    draftStorage[draftA] = { name: 'João Silva', document: '', email: '', address: {}, phones: [], number: '', complement: '', notes: '' };
+    draftStorage[draftB] = { name: 'Maria Souza', document: '', email: '', address: {}, phones: [], number: '', complement: '', notes: '' };
+
+    queryParams$.next({ draftId: draftA });
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.form.getRawValue().name).toBe('João Silva');
+
+    queryParams$.next({ draftId: draftB });
+    fixture.detectChanges();
+
+    expect(component.form.getRawValue().name).toBe('Maria Souza');
+  });
+
+  it('atualiza título da aba ao trocar de draftId', () => {
+    const draftA = 'draft-a';
+    draftStorage[draftA] = { name: 'João Carlos Mendonça', document: '', email: '', address: {}, phones: [], number: '', complement: '', notes: '' };
+
+    queryParams$.next({ draftId: draftA });
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    fixture.detectChanges();
+
+    expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
+      expect.stringContaining('/customer/registration'),
+      'João Mendonça'
     );
   });
 });

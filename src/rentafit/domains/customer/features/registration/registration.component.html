@@ -165,7 +165,7 @@
             </div>
         </div>
         <div class="form-grid" formArrayName="phones">
-            @for (phone of phonesArray.controls; track phone; let i = $index) {
+            @for (phone of phonesArray.controls; track $index; let i = $index) {
                 <div class="input-group col-4">
                     <label>Telefone {{ i + 1 }}</label>
                     <div class="phone-row">

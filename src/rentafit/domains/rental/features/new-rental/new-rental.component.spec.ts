@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+import { IRentalContractResponse } from '../../data/rental-contract-response.interface';
 const emptyQueryParams = of({});
 import { EmployeeService } from '../../../admin/service/employee.service';
 import { CustomerService } from '../../../customer/service/customer.service';
@@ -184,5 +185,92 @@ describe('NewRental item attendant', () => {
       expect.stringContaining('/rental/new'),
       'Nova Locação'
     );
+  });
+});
+
+describe('Home last contract link', () => {
+  let queryParams$: BehaviorSubject<Record<string, string>>;
+  let rentalContractService: { getById: ReturnType<typeof vi.fn> };
+  let tabServiceMock: { closeActiveIf: ReturnType<typeof vi.fn>; getTabId: ReturnType<typeof vi.fn>; updateTitle: ReturnType<typeof vi.fn> };
+  let component: NewRental;
+
+  const buildContractResponse = (id: string, legacyId: string): IRentalContractResponse => ({
+    id,
+    legacyId,
+    status: 0,
+    statusDescription: 'Rascunho',
+    isReturned: false,
+    contractType: 1,
+    customerId: 'customer-1',
+    customerName: 'João Silva',
+    customerDocument: '12345678901',
+    pickupDate: '2024-01-01',
+    eventDate: '2024-01-05',
+    returnDate: '2024-01-10',
+    totalValue: 100,
+    paidValue: 0,
+    remainingValue: 100,
+    items: [],
+    payments: [],
+    createdAt: '2024-01-01T00:00:00Z',
+  });
+
+  beforeEach(() => {
+    queryParams$ = new BehaviorSubject<Record<string, string>>({});
+    rentalContractService = { getById: vi.fn() };
+    tabServiceMock = { closeActiveIf: vi.fn(), getTabId: vi.fn((path, draftId) => `${path}::${draftId}`), updateTitle: vi.fn() };
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} }, queryParams: queryParams$.asObservable() } },
+        { provide: EmployeeService, useValue: { listActiveAttendants: vi.fn().mockReturnValue(of([])) } },
+        { provide: CustomerService, useValue: {} },
+        { provide: ProductService, useValue: {} },
+        { provide: HolidayService, useValue: { getHolidays: vi.fn().mockReturnValue(of(new Set<string>())) } },
+        { provide: RentalContractService, useValue: rentalContractService },
+        { provide: AutosaveService, useValue: { status$: of('idle'), lastError: null } },
+        { provide: SessionFormStorageService, useValue: { saveDraft: vi.fn(), loadDraft: vi.fn().mockReturnValue(null), clearDraft: vi.fn() } },
+        { provide: TabService, useValue: tabServiceMock },
+        { provide: APP_CONFIG, useValue: { appName: 'RentAFit Test', apiBaseUrl: '', s3BucketUrl: '' } },
+      ],
+    });
+
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    component = TestBed.runInInjectionContext(() => new NewRental());
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('carrega contrato quando queryParam id é emitido após inicialização', () => {
+    const response = buildContractResponse('contract-1', '2024-001');
+    rentalContractService.getById.mockReturnValue(of(response));
+
+    component.ngOnInit();
+
+    queryParams$.next({ id: 'contract-1' });
+
+    expect(rentalContractService.getById).toHaveBeenCalledWith('contract-1');
+    expect(component.contractId).toBe('contract-1');
+    expect(component.contract.clienteNome).toBe('João Silva');
+    expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
+      expect.stringContaining('/rental/new'),
+      'Contrato 2024-001'
+    );
+  });
+
+  it('carrega outro contrato quando queryParam id muda', () => {
+    rentalContractService.getById
+      .mockReturnValueOnce(of(buildContractResponse('contract-1', '2024-001')))
+      .mockReturnValueOnce(of(buildContractResponse('contract-2', '2024-002')));
+
+    component.ngOnInit();
+    queryParams$.next({ id: 'contract-1' });
+    queryParams$.next({ id: 'contract-2' });
+
+    expect(rentalContractService.getById).toHaveBeenCalledTimes(2);
+    expect(component.contractId).toBe('contract-2');
+    expect(component.contract.clienteNome).toBe('João Silva');
   });
 });

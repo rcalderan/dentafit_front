@@ -214,13 +214,31 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     this.route.queryParams
       .pipe(
         takeUntil(this.destroy$),
-        distinctUntilChanged((a, b) => a['draftId'] === b['draftId'])
+        distinctUntilChanged((a, b) => a['draftId'] === b['draftId'] && a['id'] === b['id'])
       )
       .subscribe(params => {
         const newDraftId = params['draftId'];
+        const newId = params['id'];
+
         if (newDraftId && newDraftId !== this.draftId) {
           this.draftId = newDraftId;
           this.contract = this.createEmptyContract();
+          if (newId) {
+            this.loadContractById(newId);
+          } else {
+            this.restoreDraft();
+            this.updateTabTitle();
+          }
+          return;
+        }
+
+        if (newId && newId !== this.contractId) {
+          this.contract = this.createEmptyContract();
+          this.loadContractById(newId);
+          return;
+        }
+
+        if (!newId && !newDraftId) {
           this.restoreDraft();
           this.updateTabTitle();
         }
@@ -232,13 +250,6 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
       this.autosaveStatus = status;
       this.autosaveError = this.autosaveService.lastError;
     });
-
-    const idParam = this.route.snapshot.queryParams['id'];
-    if (idParam) {
-      this.loadContractById(idParam);
-    } else {
-      this.restoreDraft();
-    }
 
     const currentYear = new Date().getFullYear();
     const years = [currentYear - 1, currentYear, currentYear + 1];
@@ -1064,7 +1075,10 @@ export class NewRental implements OnInit, AfterViewInit, OnDestroy {
     this.rentalContractService.getById(id)
       .pipe(finalize(() => (this.contractLookupLoading = false)))
       .subscribe({
-        next: (response) => this.mapResponseToContract(response),
+        next: (response) => {
+          this.mapResponseToContract(response);
+          this.updateTabTitle();
+        },
         error: (err: Error) => {
           this.contractLookupError = err.message || 'Contrato não encontrado.';
         },

@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, OnInit, signal, effect, computed, OnDestroy } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, signal, OnDestroy } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, Subject } from 'rxjs';
@@ -104,9 +104,6 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   errorMessage = signal<string[] | string | null>(null);
   successMessage = signal<string | null>(null);
 
-  customerData = computed(() => this.customer);
-
-
   address$ = this.zipCodeSubject$.pipe(
     tap(() => {
       this.isSearchingAddress.set(true);
@@ -154,38 +151,27 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     });
     this.customer = this.form.getRawValue();
 
-    effect(() => {
-      const customer = this.customerData();
-      if (customer) {
-        this.form.patchValue({ ...customer });
-      }
-    });
-
     this.form.valueChanges
       .pipe(debounceTime(800), takeUntil(this.destroy$))
       .subscribe(() => {
         this.persistDraft();
         this.updateTabTitle(this.form.getRawValue().name);
       });
-
-    effect(() => {
-      const customer = this.customerData();
-      this.updateTabTitle(customer?.name ?? this.form.getRawValue().name);
-    });
   }
 
   private updateTabTitle(name: string | null | undefined): void {
-    const initials = this.getInitials(name);
-    const title = initials ? `Cli: ${initials}` : 'Clientes';
+    const displayName = this.buildDisplayName(name);
+    const title = displayName || 'Clientes';
     const tabId = this.tabService.getTabId('/customer/registration', this.draftId);
     this.tabService.updateTitle(tabId, title);
   }
 
-  private getInitials(name: string | null | undefined): string | null {
+  private buildDisplayName(name: string | null | undefined): string | null {
     if (!name) return null;
-    const parts = name.trim().split(/\s+/);
-    const initials = parts.slice(0, 3).map(p => p[0]?.toUpperCase() ?? '').join('');
-    return initials || null;
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return null;
+    if (parts.length === 1) return parts[0];
+    return `${parts[0]} ${parts[parts.length - 1]}`;
   }
 
   private generateDraftId(): string {
@@ -201,28 +187,27 @@ export class RegistrationComponent implements OnInit, OnDestroy {
 
   private restoreDraft(): void {
     const draft = this.formStorage.loadDraft<ICustomer>(this.formType, this.draftId);
-    if (draft) {
-      this.setPhones(draft.phones ?? []);
-      this.form.setValue({
-        id: draft.id ?? '',
-        legacyId: draft.legacyId ?? '',
-        name: draft.name ?? '',
-        document: draft.document ?? '',
-        isAuthenticated: draft.isAuthenticated ?? false,
-        address: {
-          street: draft.address?.street ?? '',
-          neighborhood: draft.address?.neighborhood ?? '',
-          city: draft.address?.city ?? '',
-          state: draft.address?.state ?? '',
-          zipCode: draft.address?.zipCode ?? '',
-        },
-        phones: draft.phones ?? [''],
-        email: draft.email ?? '',
-        number: draft.number ?? '',
-        complement: draft.complement ?? '',
-        notes: draft.notes ?? '',
-      });
-    }
+    if (!draft) return;
+
+    this.setPhones(draft.phones ?? []);
+    this.form.patchValue({
+      id: draft.id ?? '',
+      legacyId: draft.legacyId ?? '',
+      name: draft.name ?? '',
+      document: draft.document ?? '',
+      isAuthenticated: draft.isAuthenticated ?? false,
+      address: {
+        street: draft.address?.street ?? '',
+        neighborhood: draft.address?.neighborhood ?? '',
+        city: draft.address?.city ?? '',
+        state: draft.address?.state ?? '',
+        zipCode: draft.address?.zipCode ?? '',
+      },
+      email: draft.email ?? '',
+      number: draft.number ?? '',
+      complement: draft.complement ?? '',
+      notes: draft.notes ?? '',
+    });
   }
 
   getControlStatus(controlName: string, groupName?: string): 'VALID' | 'INVALID' | 'PENDING' | 'NONE' {
