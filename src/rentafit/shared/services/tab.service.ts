@@ -204,7 +204,14 @@ export class TabService {
         const existing = this.tabs().find(t => t.id === id);
 
         if (existing) {
+          const previousActive = this.activeTabId();
           this.activeTabId.set(existing.id);
+          // Only replace the previous tab when opening a specific entity (e.g. customer id/legacyId,
+          // contract id) that is already open. Opening a generic blank tab must keep existing tabs.
+          const opensSpecificEntity = !!queryParams['id'] || !!queryParams['legacyId'];
+          if (opensSpecificEntity && previousActive && previousActive !== existing.id) {
+            this.close(previousActive);
+          }
         } else {
           // The user landed here without a tab — add one if the route belongs to a group.
           const title = this.resolveTitle(path);

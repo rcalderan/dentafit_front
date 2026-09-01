@@ -141,4 +141,51 @@ describe('TabService', () => {
       expect.objectContaining({ queryParams: { id: 'contract-1', draftId: 'contract-1' } })
     );
   });
+
+  it('closes the current tab when opening an entity that is already open', () => {
+    const existingDraft = service.open('/rental/new', 'Locação', 'rental', 'contract-1', { id: 'contract-1' });
+    expect(service.activeTabId()).toBe(service.getTabId('/rental/new', existingDraft));
+
+    const url = '/rental/new?id=contract-1';
+    (router as any).routerState.snapshot.url = url;
+    (router as any).parseUrl = (u: string) => ({
+      root: {
+        children: {
+          primary: {
+            segments: u.replace(/^\//, '').split('?')[0].split('/').filter(Boolean).map(path => ({ path })),
+          },
+        },
+      },
+      queryParams: { id: 'contract-1' },
+    });
+
+    routerEvents$.next(new NavigationEnd(1, url, url));
+
+    expect(service.tabs().length).toBe(1);
+    expect(service.activeTabId()).toBe(service.getTabId('/rental/new', existingDraft));
+  });
+
+  it('does not close the current tab when opening a generic blank tab', () => {
+    const firstDraft = service.open('/customer/registration', 'Clientes', 'customer');
+    expect(service.tabs().length).toBe(1);
+
+    const url = '/customer/registration?draftId=new-draft';
+    (router as any).routerState.snapshot.url = url;
+    (router as any).parseUrl = (u: string) => ({
+      root: {
+        children: {
+          primary: {
+            segments: u.replace(/^\//, '').split('?')[0].split('/').filter(Boolean).map(path => ({ path })),
+          },
+        },
+      },
+      queryParams: { draftId: 'new-draft' },
+    });
+
+    routerEvents$.next(new NavigationEnd(1, url, url));
+
+    expect(service.tabs().length).toBe(2);
+    expect(service.activeTabId()).toBe(service.getTabId('/customer/registration', 'new-draft'));
+    expect(service.tabs().some(t => t.id === service.getTabId('/customer/registration', firstDraft))).toBe(true);
+  });
 });
