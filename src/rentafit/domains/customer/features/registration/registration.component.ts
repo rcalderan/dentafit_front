@@ -1,13 +1,15 @@
-import { Component, ElementRef, inject, OnInit, signal, effect, computed, OnDestroy } from '@angular/core';
+import { Component, ElementRef, inject, OnInit, signal, OnDestroy } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, Subject } from 'rxjs';
-import { switchMap, tap, takeUntil, catchError, finalize } from 'rxjs/operators';
+import { switchMap, tap, takeUntil, catchError, finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ICustomer } from '../../data/Customer.interface';
 import { CustomerService } from '../../service/customer.service';
 import { AddressService } from '../../service/address.service';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { HttpErrorResponse } from '@angular/common/http';
+import { SessionFormStorageService } from '../../../../shared/services/session-form-storage.service';
+import { TabService } from '../../../../shared/services/tab.service';
 
 export function cpfCnpjValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value?.replace(/[^\d]+/g, '');
@@ -78,8 +80,12 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   private addressService = inject(AddressService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private formStorage = inject(SessionFormStorageService);
+  private tabService = inject(TabService);
   private readonly maxPhones = 5;
   private readonly phonePattern = /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/;
+  private readonly formType = 'customer';
+  private draftId = this.generateDraftId();
   private readonly phoneValidator = (control: AbstractControl): ValidationErrors | null => {
     const value = (control.value ?? '').toString().trim();
     if (!value) return null;
@@ -97,9 +103,6 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   isSearchingAddress = signal(false);
   errorMessage = signal<string[] | string | null>(null);
   successMessage = signal<string | null>(null);
-
-  customerData = computed(() => this.customer);
-
 
   address$ = this.zipCodeSubject$.pipe(
     tap(() => {
@@ -148,11 +151,62 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     });
     this.customer = this.form.getRawValue();
 
-    effect(() => {
-      const customer = this.customerData();
-      if (customer) {
-        this.form.patchValue({ ...customer });
-      }
+    this.form.valueChanges
+      .pipe(debounceTime(800), takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.persistDraft();
+        this.updateTabTitle(this.form.getRawValue().name);
+      });
+  }
+
+  private updateTabTitle(name: string | null | undefined): void {
+    const displayName = this.buildDisplayName(name);
+    const title = displayName || 'Clientes';
+    const tabId = this.tabService.getTabId('/customer/registration', this.draftId);
+    this.tabService.updateTitle(tabId, title);
+  }
+
+  private buildDisplayName(name: string | null | undefined): string | null {
+    if (!name) return null;
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return null;
+    if (parts.length === 1) return parts[0];
+    return `${parts[0]} ${parts[parts.length - 1]}`;
+  }
+
+  private generateDraftId(): string {
+    if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+      return crypto.randomUUID();
+    }
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+  }
+
+  private persistDraft(): void {
+    this.formStorage.saveDraft(this.formType, this.draftId, this.form.getRawValue());
+  }
+
+  private restoreDraft(): void {
+    const draft = this.formStorage.loadDraft<ICustomer>(this.formType, this.draftId);
+    if (!draft) return;
+
+    this.setPhones(draft.phones ?? []);
+    this.form.patchValue({
+      id: draft.id ?? '',
+      legacyId: draft.legacyId ?? '',
+      name: draft.name ?? '',
+      document: draft.document ?? '',
+      isAuthenticated: draft.isAuthenticated ?? false,
+      address: {
+        street: draft.address?.street ?? '',
+        neighborhood: draft.address?.neighborhood ?? '',
+        city: draft.address?.city ?? '',
+        state: draft.address?.state ?? '',
+        zipCode: draft.address?.zipCode ?? '',
+      },
+      email: draft.email ?? '',
+      number: draft.number ?? '',
+      complement: draft.complement ?? '',
+      notes: draft.notes ?? '',
     });
   }
 
@@ -286,25 +340,25 @@ export class RegistrationComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.customer = {
-      name: "",
-      document: "",
-      email: "",
-      isAuthenticated: false,
-      notes: "",
-      address: {
-        zipCode: "",
-        street: "",
-        neighborhood: "",
-        city: "",
-        state: ""
-      },
-      number: "",
-      complement: "",
-      phones: [],
-    };
-
+    this.initCustomer();
     this.setPhones(this.customer.phones);
+    this.restoreDraft();
+
+    this.route.queryParams
+      .pipe(
+        takeUntil(this.destroy$),
+        distinctUntilChanged((a, b) => a['draftId'] === b['draftId'])
+      )
+      .subscribe(params => {
+        const newDraftId = params['draftId'];
+        if (newDraftId && newDraftId !== this.draftId) {
+          this.draftId = newDraftId;
+          this.initCustomer();
+          this.setPhones(this.customer.phones);
+          this.restoreDraft();
+          this.updateTabTitle(this.form.getRawValue().name);
+        }
+      });
 
     const legacyIdParam = this.route.snapshot.queryParams['legacyId'];
     const idParam = this.route.snapshot.queryParams['id'];
@@ -333,6 +387,26 @@ export class RegistrationComponent implements OnInit, OnDestroy {
     });
   }
 
+  private initCustomer(): void {
+    this.customer = {
+      name: "",
+      document: "",
+      email: "",
+      isAuthenticated: false,
+      notes: "",
+      address: {
+        zipCode: "",
+        street: "",
+        neighborhood: "",
+        city: "",
+        state: ""
+      },
+      number: "",
+      complement: "",
+      phones: [],
+    };
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -351,6 +425,8 @@ export class RegistrationComponent implements OnInit, OnDestroy {
       {
         next: (customer: ICustomer) => {
           console.log('Cliente Salvo:', customer);
+          this.formStorage.clearDraft(this.formType, this.draftId);
+          this.tabService.closeActiveIf('/customer/registration');
           this.loadCustomerForm(customer);
           this.successMessage.set('Cliente salvo com sucesso!');
         },

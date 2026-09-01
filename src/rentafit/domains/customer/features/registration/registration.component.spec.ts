@@ -1,12 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
-import { of, EMPTY, throwError } from 'rxjs';
+import { of, EMPTY, throwError, BehaviorSubject } from 'rxjs';
 import { vi } from 'vitest';
 import { RegistrationComponent } from './registration.component';
 import { CustomerService } from '../../service/customer.service';
 import { AddressService } from '../../service/address.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ICustomer } from '../../data/Customer.interface';
+import { SessionFormStorageService } from '../../../../shared/services/session-form-storage.service';
+import { TabService } from '../../../../shared/services/tab.service';
+import { APP_CONFIG } from '../../../../shared/data/app-config.token';
 
 describe('RegistrationComponent', () => {
   let customerService: {
@@ -17,6 +20,9 @@ describe('RegistrationComponent', () => {
   };
   let addressService: { searchByZipCode: ReturnType<typeof vi.fn> };
   let router: { navigate: ReturnType<typeof vi.fn> };
+  let tabServiceMock: { closeActiveIf: ReturnType<typeof vi.fn>; getTabId: ReturnType<typeof vi.fn>; updateTitle: ReturnType<typeof vi.fn> };
+  let queryParams$: BehaviorSubject<Record<string, string>>;
+  let draftStorage: Record<string, unknown>;
 
   const buildValidForm = (component: RegistrationComponent) => {
     component.form.patchValue({
@@ -65,6 +71,9 @@ describe('RegistrationComponent', () => {
     };
     addressService = { searchByZipCode: vi.fn().mockReturnValue(EMPTY) };
     router = { navigate: vi.fn() };
+    tabServiceMock = { closeActiveIf: vi.fn(), getTabId: vi.fn((path, draftId) => `${path}::${draftId}`), updateTitle: vi.fn() };
+    queryParams$ = new BehaviorSubject<Record<string, string>>({});
+    draftStorage = {};
 
     await TestBed.configureTestingModule({
       imports: [RegistrationComponent],
@@ -72,7 +81,10 @@ describe('RegistrationComponent', () => {
         { provide: CustomerService, useValue: customerService },
         { provide: AddressService, useValue: addressService },
         { provide: Router, useValue: router },
-        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} } } }
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} }, queryParams: queryParams$.asObservable() } },
+        { provide: SessionFormStorageService, useValue: { saveDraft: vi.fn((formType, draftId, data) => { draftStorage[draftId] = data; }), loadDraft: vi.fn((formType, draftId) => draftStorage[draftId] ?? null), clearDraft: vi.fn(), listDraftIds: vi.fn().mockReturnValue([]), clearAllDraftsOfType: vi.fn() } },
+        { provide: TabService, useValue: tabServiceMock },
+        { provide: APP_CONFIG, useValue: { appName: 'RentAFit Test', apiBaseUrl: '', s3BucketUrl: '' } }
       ]
     }).compileComponents();
   });
@@ -459,7 +471,7 @@ describe('RegistrationComponent', () => {
     customerService.getCustomerByLegacyId.mockReturnValue(of(customer));
 
     await TestBed.overrideProvider(ActivatedRoute, {
-      useValue: { snapshot: { queryParams: { legacyId: '42' } } }
+      useValue: { snapshot: { queryParams: { legacyId: '42' } }, queryParams: of({ legacyId: '42' }) }
     }).compileComponents();
 
     const fixture = TestBed.createComponent(RegistrationComponent);
@@ -475,7 +487,7 @@ describe('RegistrationComponent', () => {
     );
 
     await TestBed.overrideProvider(ActivatedRoute, {
-      useValue: { snapshot: { queryParams: { legacyId: '99' } } }
+      useValue: { snapshot: { queryParams: { legacyId: '99' } }, queryParams: of({ legacyId: '99' }) }
     }).compileComponents();
 
     const fixture = TestBed.createComponent(RegistrationComponent);
@@ -489,7 +501,7 @@ describe('RegistrationComponent', () => {
     customerService.getCustomerById.mockReturnValue(of(customer));
 
     await TestBed.overrideProvider(ActivatedRoute, {
-      useValue: { snapshot: { queryParams: { id: 'c-uuid-1' } } }
+      useValue: { snapshot: { queryParams: { id: 'c-uuid-1' } }, queryParams: of({ id: 'c-uuid-1' }) }
     }).compileComponents();
 
     const fixture = TestBed.createComponent(RegistrationComponent);
@@ -505,7 +517,7 @@ describe('RegistrationComponent', () => {
     );
 
     await TestBed.overrideProvider(ActivatedRoute, {
-      useValue: { snapshot: { queryParams: { id: 'c-invalido' } } }
+      useValue: { snapshot: { queryParams: { id: 'c-invalido' } }, queryParams: of({ id: 'c-invalido' }) }
     }).compileComponents();
 
     const fixture = TestBed.createComponent(RegistrationComponent);
@@ -687,5 +699,79 @@ describe('RegistrationComponent', () => {
 
     component.form.patchValue({ document: '11222333000181' });
     expect(component.form.get('document')?.valid).toBe(true);
+  });
+
+  //  tab persistence & dynamic titles
+
+  it('atualiza título da aba com primeiro e último nome do cliente', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    (component as any).updateTabTitle('João Carlos Mendonça');
+
+    expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
+      expect.stringContaining('/customer/registration'),
+      'João Mendonça'
+    );
+  });
+
+  it('mantém título com nome único quando há apenas uma palavra', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    (component as any).updateTabTitle('Madonna');
+
+    expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
+      expect.stringContaining('/customer/registration'),
+      'Madonna'
+    );
+  });
+
+  it('mantém título genérico quando o nome está vazio', () => {
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    (component as any).updateTabTitle('');
+
+    expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
+      expect.stringContaining('/customer/registration'),
+      'Clientes'
+    );
+  });
+
+  it('restaura rascunho correto ao trocar de draftId', () => {
+    const draftA = 'draft-a';
+    const draftB = 'draft-b';
+    draftStorage[draftA] = { name: 'João Silva', document: '', email: '', address: {}, phones: [], number: '', complement: '', notes: '' };
+    draftStorage[draftB] = { name: 'Maria Souza', document: '', email: '', address: {}, phones: [], number: '', complement: '', notes: '' };
+
+    queryParams$.next({ draftId: draftA });
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.form.getRawValue().name).toBe('João Silva');
+
+    queryParams$.next({ draftId: draftB });
+    fixture.detectChanges();
+
+    expect(component.form.getRawValue().name).toBe('Maria Souza');
+  });
+
+  it('atualiza título da aba ao trocar de draftId', () => {
+    const draftA = 'draft-a';
+    draftStorage[draftA] = { name: 'João Carlos Mendonça', document: '', email: '', address: {}, phones: [], number: '', complement: '', notes: '' };
+
+    queryParams$.next({ draftId: draftA });
+    const fixture = TestBed.createComponent(RegistrationComponent);
+    fixture.detectChanges();
+
+    expect(tabServiceMock.updateTitle).toHaveBeenCalledWith(
+      expect.stringContaining('/customer/registration'),
+      'João Mendonça'
+    );
   });
 });

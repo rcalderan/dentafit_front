@@ -3,12 +3,15 @@ import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+const emptyQueryParams = of({});
 import { RetailRegistration } from './retail-registration.component';
 import { ProductService } from '../../service/product.service';
 import { CategoryService } from '../../service/category.service';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { IRetailItem, ICategory } from '../../data/Product.interface';
 import { APP_CONFIG } from '../../../../shared/data/app-config.token';
+import { SessionFormStorageService } from '../../../../shared/services/session-form-storage.service';
+import { TabService } from '../../../../shared/services/tab.service';
 
 describe('RetailRegistration', () => {
   let productService: { saveRetailItem: ReturnType<typeof vi.fn> };
@@ -51,6 +54,9 @@ describe('RetailRegistration', () => {
         { provide: ProductService, useValue: productService },
         { provide: CategoryService, useValue: { getByType: vi.fn().mockReturnValue(of([])) } },
         { provide: Router, useValue: router },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} }, queryParams: emptyQueryParams } },
+        { provide: SessionFormStorageService, useValue: { saveDraft: vi.fn(), loadDraft: vi.fn().mockReturnValue(null), clearDraft: vi.fn() } },
+        { provide: TabService, useValue: { closeActiveIf: vi.fn(), getTabId: vi.fn(), updateTitle: vi.fn() } },
         // Stock (child) injeta StockService/AuthService que dependem de HttpClient + APP_CONFIG
         provideHttpClient(),
         provideHttpClientTesting(),

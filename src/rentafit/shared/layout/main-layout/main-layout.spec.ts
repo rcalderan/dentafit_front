@@ -6,6 +6,8 @@ import { vi } from 'vitest';
 import { MainLayout } from './main-layout';
 import { AuthService } from '../../../domains/auth/services/auth.service';
 import { UiVariantService } from '../../services/ui-variant.service';
+import { TabService } from '../../services/tab.service';
+import { TabGroup } from '../../data/tab.model';
 
 class MockUiVariantService {
   readonly isMobile = signal(false);
@@ -20,6 +22,14 @@ class MockAuthService {
     return true;
   }
   logout() {}
+}
+
+class MockTabService {
+  readonly tabs = signal([]);
+  readonly activeTabId = signal<string | null>(null);
+  open = vi.fn((path: string, title: string, _group: TabGroup) => path);
+  activate = vi.fn();
+  close = vi.fn();
 }
 
 const mockActivatedRoute = {
@@ -42,6 +52,7 @@ describe('MainLayout', () => {
         provideRouter([]),
         { provide: UiVariantService, useClass: MockUiVariantService },
         { provide: AuthService, useClass: MockAuthService },
+        { provide: TabService, useClass: MockTabService },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
         {
           provide: Router,
@@ -134,5 +145,15 @@ describe('MainLayout', () => {
 
     (component as any).toggleAdminSubmenu();
     expect(component['isAdminSubmenuOpen']()).toBe(false);
+  });
+
+  it('opens a tab through the menu and closes submenus', () => {
+    fixture.detectChanges();
+    const tabService = TestBed.inject(TabService) as unknown as MockTabService;
+
+    (component as any).openTab('/customer/registration', 'Clientes', 'customer');
+
+    expect(tabService.open).toHaveBeenCalledWith('/customer/registration', 'Clientes', 'customer');
+    expect(component['isCustomerSubmenuOpen']()).toBe(false);
   });
 });

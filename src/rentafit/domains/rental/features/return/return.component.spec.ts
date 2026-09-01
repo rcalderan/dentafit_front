@@ -8,6 +8,7 @@ import { ReturnApiPort } from './data/return-api.port';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ReturnSummaryModel, ReturnFormState } from './data/return.model';
 import { APP_CONFIG } from '../../../../shared/data/app-config.token';
+import { TabService } from '../../../../shared/services/tab.service';
 
 const buildReturnSummary = (overrides: Partial<ReturnSummaryModel> = {}): ReturnSummaryModel => ({
   contractId: 'contract-123',
@@ -58,6 +59,7 @@ describe('ReturnComponent', () => {
   let facade: MockFacade;
   let router: { navigate: ReturnType<typeof vi.fn> };
   let route: { snapshot: { paramMap: { get: ReturnType<typeof vi.fn> } } };
+  let tabServiceMock: { getTabId: ReturnType<typeof vi.fn>; updateTitle: ReturnType<typeof vi.fn>; updateActiveTitle: ReturnType<typeof vi.fn> };
 
   const makeComponent = () => TestBed.createComponent(ReturnComponent).componentInstance;
 
@@ -93,6 +95,7 @@ describe('ReturnComponent', () => {
         },
       },
     };
+    tabServiceMock = { getTabId: vi.fn(), updateTitle: vi.fn(), updateActiveTitle: vi.fn() };
 
     TestBed.configureTestingModule({
       imports: [ReturnComponent],
@@ -107,6 +110,7 @@ describe('ReturnComponent', () => {
             s3BucketUrl: 'https://test-bucket.s3.amazonaws.com',
           },
         },
+        { provide: TabService, useValue: tabServiceMock },
       ],
     });
 
@@ -192,5 +196,14 @@ describe('ReturnComponent', () => {
       expect(router.navigate).toHaveBeenCalledWith(['/']);
       expect(facade.loadContract).not.toHaveBeenCalled();
     });
+  });
+
+  it('atualiza título da aba com legacyId da devolução', () => {
+    const fixture = TestBed.createComponent(ReturnComponent);
+    fixture.detectChanges();
+    facade.summary.set(buildReturnSummary({ legacyId: '2024-007' }));
+    fixture.detectChanges();
+
+    expect(tabServiceMock.updateActiveTitle).toHaveBeenCalledWith('Devolução 2024-007');
   });
 });

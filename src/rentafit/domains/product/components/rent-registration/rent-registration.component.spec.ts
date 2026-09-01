@@ -2,11 +2,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+const emptyQueryParams = of({});
 import { Registration } from './rent-registration.component';
 import { ProductService } from '../../service/product.service';
 import { CategoryService } from '../../service/category.service';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { IRentalItem, ICategory } from '../../data/Product.interface';
+import { SessionFormStorageService } from '../../../../shared/services/session-form-storage.service';
+import { TabService } from '../../../../shared/services/tab.service';
 
 describe('Registration', () => {
   let productService: { saveRentalItem: ReturnType<typeof vi.fn>; getRentalItemByLegacyId: ReturnType<typeof vi.fn> };
@@ -39,7 +42,10 @@ describe('Registration', () => {
       providers: [
         { provide: ProductService, useValue: productService },
         { provide: CategoryService, useValue: { getByType: vi.fn().mockReturnValue(of([])) } },
-        { provide: Router, useValue: router }
+        { provide: Router, useValue: router },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {} }, queryParams: emptyQueryParams } },
+        { provide: SessionFormStorageService, useValue: { saveDraft: vi.fn(), loadDraft: vi.fn().mockReturnValue(null), clearDraft: vi.fn() } },
+        { provide: TabService, useValue: { closeActiveIf: vi.fn(), getTabId: vi.fn(), updateTitle: vi.fn() } }
       ]
     }).compileComponents();
   });
