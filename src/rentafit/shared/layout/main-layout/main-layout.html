@@ -131,6 +131,12 @@
                             role="menuitem" (click)="openTab('/admin/system', 'Sistema', 'admin')">
                         <span>Sistema</span>
                     </button>
+                    @if (hasRole(UserRole.ADMIN)) {
+                    <button type="button" class="submenu-item"
+                            role="menuitem" (click)="openTab('/admin/migration', 'Migração', 'admin')">
+                        <span>Migração</span>
+                    </button>
+                    }
                 </div>
                 }
             </div>
