@@ -126,3 +126,13 @@ h1 {
         gap: 1rem;
     }
 }
+
+.migration-section {
+    width: 100%;
+    max-width: 1100px;
+}
+
+.migration-section app-migration {
+    display: block;
+    margin-top: 1rem;
+}

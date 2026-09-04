@@ -42,9 +42,11 @@
         </div>
     </div>
 
-    <div class="section-card">
+    @if (isAdmin) {
+    <div class="section-card migration-section">
         <span class="section-title">Migração de Dados</span>
         <p>Migrar dados do sistema legado noivabd.</p>
-        <button class="btn btn-update" (click)="openMigration()" style="width: 100%; margin-top: 1rem;">Acessar Migração</button>
+        <app-migration />
     </div>
+    }
 </div>

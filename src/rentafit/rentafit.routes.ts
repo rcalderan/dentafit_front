@@ -194,12 +194,6 @@ export const routes: Routes = [
                 loadComponent: () => import('./domains/admin/features/system/system.component').then(m => m.SystemComponent),
                 canActivate: [roleGuard],
                 data: { roles: [UserRole.ADMIN, UserRole.MANAGER], title: 'Sistema', tabGroup: 'admin' }
-            },
-            {
-                path: 'admin/migration',
-                loadComponent: () => import('./domains/admin/features/migration/migration.component').then(m => m.MigrationComponent),
-                canActivate: [roleGuard],
-                data: { roles: [UserRole.ADMIN], title: 'Migração', tabGroup: 'admin' }
             }
         ]
     },

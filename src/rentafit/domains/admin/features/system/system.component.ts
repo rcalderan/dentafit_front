@@ -1,19 +1,22 @@
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { UiVariantSelectorComponent } from './ui-variant-selector.component';
-import { TabService } from '../../../../shared/services/tab.service';
+import { MigrationComponent } from '../migration/migration.component';
+import { AuthService } from '../../../auth/services/auth.service';
+import { UserRole } from '../../../auth/data/user.model';
 
 @Component({
   selector: 'rentafit-system',
   standalone: true,
-  imports: [UiVariantSelectorComponent, RouterModule],
+  imports: [UiVariantSelectorComponent, RouterModule, MigrationComponent],
   templateUrl: './system.component.html',
   styleUrl: './system.component.css',
 })
 export class SystemComponent {
-  private readonly tabService = inject(TabService);
+  private readonly authService = inject(AuthService);
+  protected readonly UserRole = UserRole;
 
-  openMigration(): void {
-    this.tabService.open('/admin/migration', 'Migração', 'admin');
+  get isAdmin(): boolean {
+    return this.authService.hasRole(UserRole.ADMIN);
   }
 }
