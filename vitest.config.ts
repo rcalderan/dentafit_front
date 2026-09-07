@@ -1,13 +1,14 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vitest/config';
-import { angularVitestPlugin } from '@angular/build/vitest';
 
+// Nota: O builder @angular/build:unit-test usa vitest-base.config.ts (via runnerConfig: true).
+// Este arquivo e usado apenas por `vitest --ui` standalone. Para testes Angular, use `ng test`.
+// O plugin angularVitestPlugin nao e exportado publicamente por @angular/build@21.0.x;
+// a integracao Angular+Vitest e gerenciada internamente pelo builder `ng test`.
 export default defineConfig({
-  plugins: [angularVitestPlugin()],
   test: {
     globals: true,
     environment: 'jsdom',
-    // Compilação de componentes Angular no vitest pode estourar 5s no cold start sob carga
     testTimeout: 20000,
     setupFiles: ['src/test-setup.ts'],
     include: ['src/**/*.spec.ts'],

@@ -83,7 +83,17 @@
             "runnerConfig": true,
             "watch": false,
             "coverage": true,
-            "coverageReporters": ["text", "html", "lcov"]
+            "coverageReporters": ["text", "html", "lcov"],
+            "coverageInclude": [
+              "src/rentafit/domains/account/services/account.service.ts",
+              "src/rentafit/domains/account/features/profile/account-profile.component.ts"
+            ],
+            "coverageThresholds": {
+              "lines": 90,
+              "functions": 90,
+              "branches": 85,
+              "statements": 90
+            }
           }
         }
       }
