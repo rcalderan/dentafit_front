@@ -41,4 +41,12 @@
             <button class="btn btn-update" style="width: 100%; margin-top: 1rem;">Editar Preços</button>
         </div>
     </div>
+
+    @if (isAdmin) {
+    <div class="section-card migration-section">
+        <span class="section-title">Migração de Dados</span>
+        <p>Migrar dados do sistema legado noivabd.</p>
+        <app-migration />
+    </div>
+    }
 </div>

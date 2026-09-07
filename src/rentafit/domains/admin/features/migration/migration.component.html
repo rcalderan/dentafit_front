@@ -1,0 +1,87 @@
+<div class="migration-container">
+    <div class="actions">
+        <button class="btn btn-update" (click)="startSession()" [disabled]="loading()">Nova Sessão</button>
+        <button class="btn btn-validate" (click)="validate()" [disabled]="!session() || loading()">Validar</button>
+        <button class="btn btn-clone" (click)="clone()" [disabled]="!session() || loading()">Clonar Banco</button>
+        <button class="btn btn-run" (click)="run()" [disabled]="!session() || loading()">Executar Migração</button>
+        <button class="btn btn-backup" (click)="backup()" [disabled]="loading()">Backup</button>
+        <button class="btn btn-promote" (click)="promote()" [disabled]="loading()">Promover</button>
+    </div>
+
+    <div *ngIf="loading()" class="spinner">
+        <span>Processando...</span>
+    </div>
+
+    <div class="drop-zone" (drop)="onDrop($event)" (dragover)="onDragOver($event)">
+        <p>Arraste arquivos .bson aqui ou clique para selecionar</p>
+        <input type="file" multiple (change)="onFileSelected($event)" accept=".bson" />
+    </div>
+
+    <div *ngIf="session()" class="session-card">
+        <h2>Sessão {{ session()!.id }}</h2>
+        <p>Status: {{ session()!.status }}</p>
+        <table *ngIf="session()!.files.length">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Tamanho</th>
+                    <th>Tipo</th>
+                    <th>Status</th>
+                    <th>Erro</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let file of session()!.files">
+                    <td>{{ file.name }}</td>
+                    <td>{{ file.size }}</td>
+                    <td>{{ file.type }}</td>
+                    <td>{{ file.status }}</td>
+                    <td>{{ file.error || '-' }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div *ngIf="report()" class="report-card">
+        <h2>Relatório</h2>
+        <p>Status: {{ report()!.status }}</p>
+        <p>Clientes: {{ report()!.customersMigrated }}</p>
+        <p>Funcionários: {{ report()!.employeesMigrated }}</p>
+        <p>Categorias: {{ report()!.categoriesMigrated }}</p>
+        <p>Roupas: {{ report()!.rentalItemsMigrated }}</p>
+        <p>Contratos: {{ report()!.contractsMigrated }}</p>
+        <ul *ngIf="report()!.errors.length">
+            <li *ngFor="let error of report()!.errors" class="error">{{ error }}</li>
+        </ul>
+        <ul *ngIf="report()!.warnings.length">
+            <li *ngFor="let warning of report()!.warnings" class="warning">{{ warning }}</li>
+        </ul>
+    </div>
+
+    <div *ngIf="comparison()" class="comparison-card">
+        <h2>Comparação</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Tabela</th>
+                    <th>Original</th>
+                    <th>Dump</th>
+                    <th>Diferença</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let t of comparison()!.tables">
+                    <td>{{ t.tableName }}</td>
+                    <td>{{ t.originalCount }}</td>
+                    <td>{{ t.dumpCount }}</td>
+                    <td>{{ t.difference }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div *ngIf="logs().length" class="log-card">
+        <h2>Logs</h2>
+        <pre>{{ logs().join('\n') }}</pre>
+    </div>
+</div>
